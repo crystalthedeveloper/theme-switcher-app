@@ -1,18 +1,18 @@
 // pages/callback.js
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 
 export default function Callback() {
   const router = useRouter();
   const { code } = router.query;
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!code) return;
 
     const exchangeToken = async () => {
       try {
-        // 1. Exchange code for access token
         const tokenRes = await fetch('https://api.webflow.com/oauth/access_token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -34,14 +34,14 @@ export default function Callback() {
         const accessToken = tokenData.access_token;
         console.log('✅ Access Token:', accessToken);
 
-        // 2. Save token for use in other pages
         localStorage.setItem('wf_token', accessToken);
-
-        // 3. Redirect to site selection page
         router.push('/select-site');
       } catch (err) {
         console.error('❌ OAuth exchange failed:', err);
-        alert('Failed to authorize with Webflow. Please try again.');
+        alert('Authorization failed. Redirecting to home.');
+        router.push('/');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -49,8 +49,12 @@ export default function Callback() {
   }, [code, router]);
 
   return (
-    <p style={{ textAlign: 'center', marginTop: '5rem' }}>
-      Exchanging code for access token...
-    </p>
+    <main style={{ textAlign: 'center', marginTop: '5rem' }}>
+      {loading ? (
+        <p>Exchanging code for access token...</p>
+      ) : (
+        <p style={{ color: 'red' }}>Something went wrong. Redirecting...</p>
+      )}
+    </main>
   );
 }
