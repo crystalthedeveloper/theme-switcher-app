@@ -9,14 +9,19 @@ export default function Home() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Avoid SSR issues
     const id = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID;
     const url = process.env.NEXT_PUBLIC_BASE_URL;
+
+    console.log("🔍 ENV DEBUG:", {
+      NEXT_PUBLIC_WEBFLOW_CLIENT_ID: id,
+      NEXT_PUBLIC_BASE_URL: url
+    });
+
     setClientId(id);
     setBaseUrl(url);
 
     if (!id || !url) {
-      console.warn("Missing environment variables.");
+      console.warn("⚠️ Missing environment variables.");
       setError('⚠️ Missing Webflow OAuth environment variables.');
     }
   }, []);
