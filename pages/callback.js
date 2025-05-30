@@ -1,4 +1,5 @@
 // pages/callback.js
+
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 
