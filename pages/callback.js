@@ -1,5 +1,4 @@
 // pages/callback.js
-
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 
@@ -13,7 +12,7 @@ export default function Callback() {
 
     const exchangeToken = async () => {
       try {
-        const tokenRes = await fetch('https://api.webflow.com/oauth/access_token', {
+        const response = await fetch('https://api.webflow.com/oauth/access_token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -25,16 +24,14 @@ export default function Callback() {
           })
         });
 
-        const tokenData = await tokenRes.json();
+        const tokenData = await response.json();
+        console.log('🔁 Webflow Token Response:', tokenData);
 
         if (!tokenData.access_token) {
-          throw new Error('Access token not returned. Check client ID/secret and redirect URI.');
+          throw new Error(tokenData.msg || 'Access token not returned. Check client ID/secret and redirect URI.');
         }
 
-        const accessToken = tokenData.access_token;
-        console.log('✅ Access Token:', accessToken);
-
-        localStorage.setItem('wf_token', accessToken);
+        localStorage.setItem('wf_token', tokenData.access_token);
         router.push('/select-site');
       } catch (err) {
         console.error('❌ OAuth exchange failed:', err);
