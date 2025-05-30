@@ -67,7 +67,7 @@ export default function Callback() {
         // 5. Redirect to success page
         router.push('/success');
       } catch (err) {
-        console.error('❌ Error during OAuth or injection:', err);
+        console.error('❌ Error for during OAuth or injection:', err);
       }
     };
 
