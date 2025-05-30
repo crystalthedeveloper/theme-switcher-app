@@ -29,7 +29,13 @@ export default function Home() {
     );
   }
 
-  if (!clientId || !baseUrl) return null; // SSR-safe wait
+  if (!clientId || !baseUrl) {
+    return (
+      <main style={{ textAlign: 'center', marginTop: '5rem' }}>
+        <p>Loading...</p>
+      </main>
+    );
+  }
 
   const redirectUri = encodeURIComponent(`${baseUrl}/callback`);
   const scopes = 'sites:read pages:read pages:write custom_code:write';
