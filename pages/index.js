@@ -1,5 +1,3 @@
-// pages/index.js
-
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 
@@ -9,7 +7,6 @@ export default function Home() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Client-only env vars must start with NEXT_PUBLIC_
     const id = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID || '';
     const url = process.env.NEXT_PUBLIC_BASE_URL || '';
 
@@ -17,7 +14,7 @@ export default function Home() {
     setBaseUrl(url);
 
     if (!id || !url) {
-      console.warn("⚠️ Missing env variables:");
+      console.warn("⚠️ Missing environment variables:");
       console.warn({ id, url });
       setError('⚠️ Missing Webflow OAuth environment variables.');
     }
@@ -27,9 +24,6 @@ export default function Home() {
     return (
       <main style={{ textAlign: 'center', marginTop: '5rem' }}>
         <p style={{ color: 'red' }}>{error}</p>
-        <pre style={{ marginTop: '1rem', color: '#555' }}>
-          ENV DEBUG: {JSON.stringify({ clientId, baseUrl }, null, 2)}
-        </pre>
       </main>
     );
   }
@@ -37,10 +31,7 @@ export default function Home() {
   if (!clientId || !baseUrl) {
     return (
       <main style={{ textAlign: 'center', marginTop: '5rem' }}>
-        <p>Loading environment variables...</p>
-        <pre style={{ marginTop: '1rem', color: '#555' }}>
-          ENV DEBUG: {JSON.stringify({ clientId, baseUrl }, null, 2)}
-        </pre>
+        <p>Loading...</p>
       </main>
     );
   }
@@ -80,10 +71,6 @@ export default function Home() {
             Connect to Webflow
           </button>
         </a>
-
-        <pre style={{ marginTop: '3rem', color: '#555', fontSize: '0.8rem' }}>
-          ENV DEBUG: {JSON.stringify({ clientId, baseUrl }, null, 2)}
-        </pre>
       </main>
     </>
   );
