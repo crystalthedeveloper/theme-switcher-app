@@ -1,4 +1,4 @@
 // pages/_app.js
-export default function App({ Component, pageProps }) {
+export default function MyApp({ Component, pageProps }) {
   return <Component {...pageProps} />;
 }
