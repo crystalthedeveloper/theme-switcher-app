@@ -4,24 +4,21 @@ import { useEffect, useState } from 'react';
 import Head from 'next/head';
 
 export default function Home() {
-  const [clientId, setClientId] = useState(null);
-  const [baseUrl, setBaseUrl] = useState(null);
-  const [error, setError] = useState(null);
+  const [clientId, setClientId] = useState('');
+  const [baseUrl, setBaseUrl] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    const id = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID;
-    const url = process.env.NEXT_PUBLIC_BASE_URL;
-
-    console.log("🔍 ENV DEBUG:", {
-      NEXT_PUBLIC_WEBFLOW_CLIENT_ID: id,
-      NEXT_PUBLIC_BASE_URL: url
-    });
+    // Client-only env vars must start with NEXT_PUBLIC_
+    const id = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID || '';
+    const url = process.env.NEXT_PUBLIC_BASE_URL || '';
 
     setClientId(id);
     setBaseUrl(url);
 
     if (!id || !url) {
-      console.warn("⚠️ Missing environment variables.");
+      console.warn("⚠️ Missing environment variables:");
+      console.warn({ id, url });
       setError('⚠️ Missing Webflow OAuth environment variables.');
     }
   }, []);
