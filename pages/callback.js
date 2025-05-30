@@ -1,4 +1,3 @@
-// pages/callback.js
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 
@@ -12,23 +11,17 @@ export default function Callback() {
 
     const exchangeToken = async () => {
       try {
-        const response = await fetch('https://api.webflow.com/oauth/access_token', {
+        const response = await fetch('/api/exchange-token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            client_id: process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID,
-            client_secret: process.env.WEBFLOW_CLIENT_SECRET,
-            code,
-            grant_type: 'authorization_code',
-            redirect_uri: `${process.env.NEXT_PUBLIC_BASE_URL}/callback`
-          })
+          body: JSON.stringify({ code })
         });
 
         const tokenData = await response.json();
         console.log('🔁 Webflow Token Response:', tokenData);
 
         if (!tokenData.access_token) {
-          throw new Error(tokenData.msg || 'Access token not returned. Check client ID/secret and redirect URI.');
+          throw new Error(tokenData.msg || 'Access token not returned.');
         }
 
         localStorage.setItem('wf_token', tokenData.access_token);
