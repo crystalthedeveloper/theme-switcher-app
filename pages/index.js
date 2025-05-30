@@ -27,6 +27,9 @@ export default function Home() {
     return (
       <main style={{ textAlign: 'center', marginTop: '5rem' }}>
         <p style={{ color: 'red' }}>{error}</p>
+        <pre style={{ marginTop: '1rem', color: '#555' }}>
+          ENV DEBUG: {JSON.stringify({ clientId, baseUrl }, null, 2)}
+        </pre>
       </main>
     );
   }
@@ -34,7 +37,10 @@ export default function Home() {
   if (!clientId || !baseUrl) {
     return (
       <main style={{ textAlign: 'center', marginTop: '5rem' }}>
-        <p>Loading...</p>
+        <p>Loading environment variables...</p>
+        <pre style={{ marginTop: '1rem', color: '#555' }}>
+          ENV DEBUG: {JSON.stringify({ clientId, baseUrl }, null, 2)}
+        </pre>
       </main>
     );
   }
@@ -74,6 +80,10 @@ export default function Home() {
             Connect to Webflow
           </button>
         </a>
+
+        <pre style={{ marginTop: '3rem', color: '#555', fontSize: '0.8rem' }}>
+          ENV DEBUG: {JSON.stringify({ clientId, baseUrl }, null, 2)}
+        </pre>
       </main>
     </>
   );
