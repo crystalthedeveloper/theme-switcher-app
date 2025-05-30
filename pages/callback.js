@@ -1,4 +1,5 @@
 // pages/callback.js
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 
@@ -12,16 +13,10 @@ export default function Callback() {
 
     const exchangeToken = async () => {
       try {
-        const tokenRes = await fetch('https://api.webflow.com/oauth/access_token', {
+        const tokenRes = await fetch('/api/exchange-token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            client_id: process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID,
-            client_secret: process.env.WEBFLOW_CLIENT_SECRET,
-            code,
-            grant_type: 'authorization_code',
-            redirect_uri: `${process.env.NEXT_PUBLIC_BASE_URL}/callback`
-          })
+          body: JSON.stringify({ code }),
         });
 
         const tokenData = await tokenRes.json();
@@ -35,11 +30,12 @@ export default function Callback() {
         const siteId = tokenData.site_ids[0];
 
         const pagesRes = await fetch(`https://api.webflow.com/v1/sites/${siteId}/pages`, {
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
+
         const pages = await pagesRes.json();
 
-        if (!pages.length) {
+        if (!Array.isArray(pages) || pages.length === 0) {
           throw new Error('No pages found for the selected site.');
         }
 
@@ -49,13 +45,13 @@ export default function Callback() {
           method: 'PUT',
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            head: "",
+            head: '',
             body: `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`,
-            enabled: true
-          })
+            enabled: true,
+          }),
         });
 
         router.push('/success');
