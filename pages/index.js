@@ -17,7 +17,7 @@ export default function Home() {
     setBaseUrl(url);
 
     if (!id || !url) {
-      console.warn("⚠️ Missing environment variables:");
+      console.warn("⚠️ Missing env variables:");
       console.warn({ id, url });
       setError('⚠️ Missing Webflow OAuth environment variables.');
     }
