@@ -2,7 +2,7 @@
 export default function Success() {
   return (
     <main style={{ textAlign: 'center', marginTop: '5rem' }}>
-      <h1>🎉 Script Installed!</h1>
+      <h1>🎉 Script Installed! 😁</h1>
       <p>Your Theme Switcher script was successfully added to your Webflow site.</p>
 
       <div style={{ marginTop: '2.5rem' }}>
