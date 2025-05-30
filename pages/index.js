@@ -1,7 +1,12 @@
-//pages/index.js
+// pages/index.js
 import Head from 'next/head';
+import { useEffect } from 'react';
 
 export default function Home() {
+  useEffect(() => {
+    console.log("✅ Home component mounted");
+  }, []);
+
   const clientId = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID;
   const redirectUri = encodeURIComponent(`${process.env.NEXT_PUBLIC_BASE_URL}/callback`);
   const scopes = 'sites:read pages:read pages:write custom_code:write';
