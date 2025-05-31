@@ -26,6 +26,12 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Server misconfigured — missing environment variables.' });
   }
 
+  console.log('🔐 Sending token request with:', {
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    code,
+  });
+
   try {
     const tokenRes = await fetch('https://api.webflow.com/oauth/access_token', {
       method: 'POST',
