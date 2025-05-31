@@ -11,9 +11,20 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing authorization code' });
   }
 
+  // ✅ Log and validate environment variables
   const clientId = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID;
   const clientSecret = process.env.WEBFLOW_CLIENT_SECRET;
-  const redirectUri = `${process.env.NEXT_PUBLIC_BASE_URL}/callback`;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+  const redirectUri = `${baseUrl}/callback`;
+
+  if (!clientId || !clientSecret || !baseUrl) {
+    console.error('❌ Missing one or more environment variables:', {
+      clientId,
+      clientSecretPresent: !!clientSecret,
+      baseUrl,
+    });
+    return res.status(500).json({ error: 'Server misconfigured — missing environment variables.' });
+  }
 
   try {
     const tokenRes = await fetch('https://api.webflow.com/oauth/access_token', {
@@ -48,7 +59,7 @@ export default async function handler(req, res) {
       });
 
       const sites = await sitesRes.json();
-      console.log('🌐 Fallback site lookup result:', sites); // ✅ log sites
+      console.log('🌐 Fallback site lookup result:', sites);
 
       if (!Array.isArray(sites) || sites.length === 0) {
         return res.status(400).json({ error: 'No sites found in fallback site lookup.' });
