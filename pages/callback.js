@@ -24,8 +24,14 @@ export default function Callback() {
         const tokenData = await tokenRes.json();
         console.log('🔁 Token Response:', tokenData);
 
-        if (!tokenData.access_token || !tokenData.site_id) {
-          throw new Error('Missing access token or site ID.');
+        // Handle missing site_id with a clear error
+        if (!tokenData.access_token) {
+          throw new Error('Missing access token.');
+        }
+
+        if (!tokenData.site_id) {
+          alert('⚠️ Please select a site when installing the app.');
+          throw new Error('Missing site ID — user likely didn’t select a site.');
         }
 
         const accessToken = tokenData.access_token;

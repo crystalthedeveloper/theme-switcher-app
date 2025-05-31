@@ -18,6 +18,18 @@ export default function Home() {
     } else {
       setClientId(id);
       setBaseUrl(url);
+
+      const scopes = [
+        'sites:read',
+        'pages:read',
+        'pages:write',
+        'custom_code:write',
+      ].join(' ');
+
+      const debugUrl = `https://webflow.com/oauth/authorize?client_id=${id}&response_type=code&redirect_uri=${encodeURIComponent(`${url}/callback`)}&scope=${encodeURIComponent(scopes)}&include_site_ids=true`;
+
+      console.log("🔁 Full OAuth URL:", debugUrl);
+      console.warn("⚠️ Reminder: You must select a site on the OAuth screen or site_ids will be empty.");
     }
   }, []);
 
@@ -47,9 +59,6 @@ export default function Home() {
 
   const oauthUrl = `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&scope=${encodeURIComponent(scopes)}&include_site_ids=true`;
 
-  console.log("🔁 Full OAuth URL:", oauthUrl);
-  console.log("⚠️ Reminder: You must select a site on the OAuth screen or site_ids will be empty.");
-
   return (
     <>
       <Head>
@@ -72,7 +81,7 @@ export default function Home() {
           Seamlessly let your visitors toggle between light and dark mode — no coding required.
         </p>
 
-        <a href={oauthUrl} rel="noopener noreferrer">
+        <a href={oauthUrl} target="_blank" rel="noopener noreferrer">
           <button
             style={{
               padding: '12px 24px',
