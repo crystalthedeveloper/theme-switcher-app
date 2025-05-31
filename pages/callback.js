@@ -5,10 +5,12 @@ import { useRouter } from 'next/router';
 
 export default function Callback() {
   const router = useRouter();
-  const { code } = router.query;
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!router.isReady) return;
+
+    const { code } = router.query;
     if (!code) return;
 
     const exchangeToken = async () => {
@@ -65,7 +67,7 @@ export default function Callback() {
     };
 
     exchangeToken();
-  }, [code, router]);
+  }, [router.isReady, router.query, router]);
 
   return (
     <main style={{ textAlign: 'center', marginTop: '5rem' }}>

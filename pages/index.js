@@ -1,4 +1,5 @@
-//pages/index.js
+// pages/index.js
+
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 
@@ -11,13 +12,12 @@ export default function Home() {
     const id = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID || '';
     const url = process.env.NEXT_PUBLIC_BASE_URL || '';
 
-    setClientId(id);
-    setBaseUrl(url);
-
     if (!id || !url) {
-      console.warn("⚠️ Missing environment variables:");
-      console.warn({ id, url });
+      console.warn('⚠️ Missing environment variables:', { id, url });
       setError('⚠️ Missing Webflow OAuth environment variables.');
+    } else {
+      setClientId(id);
+      setBaseUrl(url);
     }
   }, []);
 
@@ -37,16 +37,26 @@ export default function Home() {
     );
   }
 
-  // ✅ Updated scope and URL
   const redirectUri = encodeURIComponent(`${baseUrl}/callback`);
-  const scopes = 'sites:read pages:read pages:write custom_code:write site:write';
-  const oauthUrl = `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&scope=${scopes}&include_site_ids=true`;
+  console.log("🔁 Redirect URI:", `${baseUrl}/callback`);
+
+  const scopes = [
+    'sites:read',
+    'pages:read',
+    'pages:write',
+    'custom_code:write',
+  ].join(' ');
+
+  const oauthUrl = `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&scope=${encodeURIComponent(scopes)}&include_site_ids=true`;
 
   return (
     <>
       <Head>
         <title>Theme Switcher for Webflow</title>
-        <meta name="description" content="Easily add light/dark theme toggling to your Webflow site. No code needed." />
+        <meta
+          name="description"
+          content="Easily add light/dark theme toggling to your Webflow site. No code needed."
+        />
       </Head>
 
       <main style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }}>
@@ -67,7 +77,7 @@ export default function Home() {
               padding: '12px 24px',
               marginTop: '2rem',
               fontSize: '1rem',
-              cursor: 'pointer'
+              cursor: 'pointer',
             }}
           >
             Connect to Webflow
