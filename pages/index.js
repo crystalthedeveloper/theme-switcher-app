@@ -38,8 +38,6 @@ export default function Home() {
   }
 
   const redirectUri = encodeURIComponent(`${baseUrl}/callback`);
-  console.log("🔁 Redirect URI:", `${baseUrl}/callback`);
-
   const scopes = [
     'sites:read',
     'pages:read',
@@ -48,6 +46,9 @@ export default function Home() {
   ].join(' ');
 
   const oauthUrl = `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&scope=${encodeURIComponent(scopes)}&include_site_ids=true`;
+
+  console.log("🔁 Full OAuth URL:", oauthUrl);
+  console.log("⚠️ Reminder: You must select a site on the OAuth screen or site_ids will be empty.");
 
   return (
     <>
