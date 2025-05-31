@@ -40,12 +40,15 @@ export default async function handler(req, res) {
 
     // 🛠 Fallback: fetch site list if not returned in token
     let siteId = tokenData.site_ids?.[0];
+
     if (!siteId) {
       console.warn('⚠️ site_ids missing from token, fetching sites manually...');
       const sitesRes = await fetch('https://api.webflow.com/v1/sites', {
         headers: { Authorization: `Bearer ${tokenData.access_token}` },
       });
+
       const sites = await sitesRes.json();
+      console.log('🌐 Fallback site lookup result:', sites); // ✅ log sites
 
       if (!Array.isArray(sites) || sites.length === 0) {
         return res.status(400).json({ error: 'No sites found in fallback site lookup.' });
