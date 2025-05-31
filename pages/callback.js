@@ -24,28 +24,12 @@ export default function Callback() {
         const tokenData = await tokenRes.json();
         console.log('🔁 Token Response:', tokenData);
 
-        if (!tokenData.access_token) {
-          throw new Error('Missing access token.');
+        if (!tokenData.access_token || !tokenData.site_id) {
+          throw new Error('Missing access token or site ID.');
         }
 
         const accessToken = tokenData.access_token;
-        let siteId = tokenData.site_ids?.[0];
-
-        // 🛠 Fallback: fetch user's sites if site_ids is empty
-        if (!siteId) {
-          console.warn('⚠️ No site_id returned in token. Fetching sites manually...');
-          const sitesRes = await fetch('https://api.webflow.com/v1/sites', {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          });
-          const sites = await sitesRes.json();
-
-          if (!Array.isArray(sites) || sites.length === 0) {
-            throw new Error('No sites found for the authenticated user.');
-          }
-
-          siteId = sites[0]._id;
-          console.log('✅ Fallback site ID:', siteId);
-        }
+        const siteId = tokenData.site_id;
 
         const pagesRes = await fetch(`https://api.webflow.com/v1/sites/${siteId}/pages`, {
           headers: { Authorization: `Bearer ${accessToken}` },

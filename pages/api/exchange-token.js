@@ -15,10 +15,6 @@ export default async function handler(req, res) {
   const clientSecret = process.env.WEBFLOW_CLIENT_SECRET;
   const redirectUri = `${process.env.NEXT_PUBLIC_BASE_URL}/callback`;
 
-  if (!clientId || !clientSecret || !redirectUri) {
-    console.warn('⚠️ Missing environment variables:', { clientId, clientSecret, redirectUri });
-  }
-
   try {
     const tokenRes = await fetch('https://api.webflow.com/oauth/access_token', {
       method: 'POST',
@@ -35,21 +31,33 @@ export default async function handler(req, res) {
     const tokenData = await tokenRes.json();
     console.log('🔁 Full Token Response from Webflow:', tokenData);
 
-    if (tokenData.error) {
+    if (!tokenRes.ok || tokenData.error) {
       return res.status(400).json({
-        error: tokenData.error_description || tokenData.error,
+        error: tokenData.error_description || tokenData.msg || 'Token request failed',
         details: tokenData,
       });
     }
 
-    if (!tokenRes.ok) {
-      return res.status(tokenRes.status).json({
-        error: tokenData.msg || 'Token request failed',
-        details: tokenData,
+    // 🛠 Fallback: fetch site list if not returned in token
+    let siteId = tokenData.site_ids?.[0];
+    if (!siteId) {
+      console.warn('⚠️ site_ids missing from token, fetching sites manually...');
+      const sitesRes = await fetch('https://api.webflow.com/v1/sites', {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` },
       });
+      const sites = await sitesRes.json();
+
+      if (!Array.isArray(sites) || sites.length === 0) {
+        return res.status(400).json({ error: 'No sites found in fallback site lookup.' });
+      }
+
+      siteId = sites[0]._id;
     }
 
-    res.status(200).json(tokenData);
+    res.status(200).json({
+      access_token: tokenData.access_token,
+      site_id: siteId,
+    });
   } catch (err) {
     console.error('❌ Token exchange failed:', err);
     res.status(500).json({ error: 'Internal server error during token exchange.' });
