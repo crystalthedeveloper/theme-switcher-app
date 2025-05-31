@@ -1,3 +1,4 @@
+//pages/index.js
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 
@@ -36,9 +37,10 @@ export default function Home() {
     );
   }
 
+  // ✅ Updated scope and URL
   const redirectUri = encodeURIComponent(`${baseUrl}/callback`);
-  const scopes = 'sites:read pages:read pages:write custom_code:write';
-  const oauthUrl = `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&scope=${scopes}`;
+  const scopes = 'sites:read pages:read pages:write custom_code:write site:write';
+  const oauthUrl = `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&scope=${scopes}&include_site_ids=true`;
 
   return (
     <>
