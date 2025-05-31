@@ -24,12 +24,16 @@ export default async function handler(req, res) {
       }),
     });
 
+    const tokenData = await tokenRes.json();
+    console.log('🔁 Full Token Response from Webflow:', tokenData); // helpful for debugging
+
     if (!tokenRes.ok) {
-      const error = await tokenRes.json();
-      return res.status(tokenRes.status).json({ error: error.msg || 'Token request failed' });
+      return res.status(tokenRes.status).json({
+        error: tokenData.msg || 'Token request failed',
+        details: tokenData,
+      });
     }
 
-    const tokenData = await tokenRes.json();
     res.status(200).json(tokenData);
   } catch (err) {
     console.error('❌ Token exchange failed:', err);
