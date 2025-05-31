@@ -1,12 +1,19 @@
 // pages/index.js
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Head from 'next/head';
 
 export default function Home() {
   const [clientId, setClientId] = useState('');
   const [baseUrl, setBaseUrl] = useState('');
   const [error, setError] = useState('');
+
+  const scopes = [
+    'sites:read',
+    'pages:read',
+    'pages:write',
+    'custom_code:write',
+  ].join(' ');
 
   useEffect(() => {
     const id = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID || '';
@@ -19,19 +26,17 @@ export default function Home() {
       setClientId(id);
       setBaseUrl(url);
 
-      const scopes = [
-        'sites:read',
-        'pages:read',
-        'pages:write',
-        'custom_code:write',
-      ].join(' ');
-
       const debugUrl = `https://webflow.com/oauth/authorize?client_id=${id}&response_type=code&redirect_uri=${encodeURIComponent(`${url}/callback`)}&scope=${encodeURIComponent(scopes)}&include_site_ids=true`;
-
-      console.log("🔁 Full OAuth URL:", debugUrl);
-      console.warn("⚠️ Reminder: You must select a site on the OAuth screen or site_ids will be empty.");
+      console.log('🔁 Full OAuth URL:', debugUrl);
+      console.warn('⚠️ Reminder: You must select a site on the OAuth screen or site_ids will be empty.');
     }
   }, []);
+
+  const oauthUrl = useMemo(() => {
+    if (!clientId || !baseUrl) return '';
+    const redirectUri = encodeURIComponent(`${baseUrl}/callback`);
+    return `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&scope=${encodeURIComponent(scopes)}&include_site_ids=true`;
+  }, [clientId, baseUrl]);
 
   if (error) {
     return (
@@ -41,23 +46,13 @@ export default function Home() {
     );
   }
 
-  if (!clientId || !baseUrl) {
+  if (!oauthUrl) {
     return (
       <main style={{ textAlign: 'center', marginTop: '5rem' }}>
-        <p>Loading...</p>
+        <p>Loading configuration...</p>
       </main>
     );
   }
-
-  const redirectUri = encodeURIComponent(`${baseUrl}/callback`);
-  const scopes = [
-    'sites:read',
-    'pages:read',
-    'pages:write',
-    'custom_code:write',
-  ].join(' ');
-
-  const oauthUrl = `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&scope=${encodeURIComponent(scopes)}&include_site_ids=true`;
 
   return (
     <>

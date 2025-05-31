@@ -48,14 +48,14 @@ export default async function handler(req, res) {
     const tokenData = await tokenRes.json();
     console.log('🔁 Full Token Response from Webflow:', tokenData);
 
-    if (!tokenRes.ok || tokenData.error) {
+    if (!tokenRes.ok || tokenData.error || !tokenData.access_token) {
+      console.error('❌ Token exchange failed. Details:', tokenData);
       return res.status(400).json({
         error: tokenData.error_description || tokenData.msg || 'Token request failed',
         details: tokenData,
       });
     }
 
-    // 🛠 Fallback: fetch site list if not returned in token
     let siteId = tokenData.site_ids?.[0];
 
     if (!siteId) {
@@ -79,7 +79,7 @@ export default async function handler(req, res) {
       site_id: siteId,
     });
   } catch (err) {
-    console.error('❌ Token exchange failed:', err);
+    console.error('❌ Token exchange failed with exception:', err);
     res.status(500).json({ error: 'Internal server error during token exchange.' });
   }
 }

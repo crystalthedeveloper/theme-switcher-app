@@ -24,47 +24,59 @@ export default function Callback() {
         const tokenData = await tokenRes.json();
         console.log('🔁 Token Response:', tokenData);
 
-        // Handle missing site_id with a clear error
         if (!tokenData.access_token) {
+          console.error('❌ Missing access token.');
           throw new Error('Missing access token.');
         }
 
         if (!tokenData.site_id) {
-          alert('⚠️ Please select a site when installing the app.');
-          throw new Error('Missing site ID — user likely didn’t select a site.');
+          alert('⚠️ You must select a site during app installation.');
+          console.error('❌ Missing site_id — likely user did not select a site.');
+          throw new Error('Missing site ID.');
         }
 
-        const accessToken = tokenData.access_token;
-        const siteId = tokenData.site_id;
+        const { access_token: accessToken, site_id: siteId } = tokenData;
 
         const pagesRes = await fetch(`https://api.webflow.com/v1/sites/${siteId}/pages`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
 
         const pages = await pagesRes.json();
+        console.log('📄 Pages retrieved:', pages);
 
         if (!Array.isArray(pages) || pages.length === 0) {
           throw new Error('No pages found for the selected site.');
         }
 
         const firstPage = pages[0];
+        console.log('📄 Targeting first page ID:', firstPage._id);
 
-        await fetch(`https://api.webflow.com/v1/sites/${siteId}/pages/${firstPage._id}/custom-code`, {
-          method: 'PUT',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            head: '',
-            body: `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`,
-            enabled: true,
-          }),
-        });
+        const customCodeRes = await fetch(
+          `https://api.webflow.com/v1/sites/${siteId}/pages/${firstPage._id}/custom-code`,
+          {
+            method: 'PUT',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              head: '',
+              body: `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`,
+              enabled: true,
+            }),
+          }
+        );
 
+        if (!customCodeRes.ok) {
+          const errorText = await customCodeRes.text();
+          console.error('❌ Failed to install script:', errorText);
+          throw new Error('Failed to install script to the page.');
+        }
+
+        console.log('✅ Script installed successfully.');
         router.push('/success');
       } catch (err) {
-        console.error('❌ OAuth flow failed:', err);
+        console.error('❌ OAuth flow failed:', err.message || err);
         alert('Authorization failed. Redirecting to home.');
         router.push('/');
       } finally {
