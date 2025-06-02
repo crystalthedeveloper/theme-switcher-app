@@ -16,6 +16,7 @@ export default function Callback() {
 
     const exchangeToken = async () => {
       try {
+        console.log('🔄 Starting token exchange...');
         const tokenRes = await fetch('/api/exchange-token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -26,7 +27,7 @@ export default function Callback() {
         console.log('🔁 Token Response:', tokenData);
 
         if (!tokenData.access_token) {
-          throw new Error('Missing access token.');
+          throw new Error('Missing access token. Check exchange-token logs.');
         }
 
         if (!tokenData.site_id) {
@@ -34,21 +35,29 @@ export default function Callback() {
         }
 
         const { access_token: accessToken, site_id: siteId } = tokenData;
+        console.log('✅ Access token and Site ID received:', { accessToken, siteId });
 
+        // Get pages
+        console.log(`📡 Fetching pages for site: ${siteId}`);
         const pagesRes = await fetch(`https://api.webflow.com/v1/sites/${siteId}/pages`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'accept-version': '1.0.0',
+          },
         });
 
         const pages = await pagesRes.json();
-        console.log('📄 Pages retrieved:', pages);
+        console.log('📄 Pages received:', pages);
 
         if (!Array.isArray(pages) || pages.length === 0) {
           throw new Error('No pages found for the selected site.');
         }
 
         const firstPage = pages[0];
-        console.log('📄 Targeting first page ID:', firstPage._id);
+        console.log('🎯 Using first page ID:', firstPage._id);
 
+        // Inject custom code
+        console.log('💉 Injecting custom script...');
         const customCodeRes = await fetch(
           `https://api.webflow.com/v1/sites/${siteId}/pages/${firstPage._id}/custom-code`,
           {
@@ -56,6 +65,7 @@ export default function Callback() {
             headers: {
               Authorization: `Bearer ${accessToken}`,
               'Content-Type': 'application/json',
+              'accept-version': '1.0.0',
             },
             body: JSON.stringify({
               head: '',
@@ -67,10 +77,11 @@ export default function Callback() {
 
         if (!customCodeRes.ok) {
           const errorText = await customCodeRes.text();
-          throw new Error('Failed to install script: ' + errorText);
+          console.error('❌ Webflow PUT /custom-code failed:', errorText);
+          throw new Error('Failed to inject script. Check response for details.');
         }
 
-        console.log('✅ Script installed successfully.');
+        console.log('✅ Script installed successfully!');
         router.push('/success');
       } catch (err) {
         console.error('❌ OAuth flow failed:', err.message || err);
