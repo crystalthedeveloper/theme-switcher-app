@@ -44,7 +44,7 @@ export default async function handler(req, res) {
       }),
     });
 
-    const rawText = await tokenRes.text(); // 👈 Get raw response for debugging
+    const rawText = await tokenRes.text();
     console.log('📦 Raw token response:', rawText);
 
     let tokenData;
@@ -79,6 +79,7 @@ export default async function handler(req, res) {
 
     if (!siteId) {
       console.warn('⚠️ site_ids missing. Performing fallback site lookup...');
+
       const sitesRes = await fetch('https://api.webflow.com/v1/sites', {
         headers: {
           Authorization: `Bearer ${tokenData.access_token}`,
@@ -90,7 +91,12 @@ export default async function handler(req, res) {
       console.log('🌐 Fallback site list:', sites);
 
       if (!Array.isArray(sites) || sites.length === 0) {
-        return res.status(400).json({ error: 'No sites found in fallback site lookup.' });
+        return res.status(400).json({
+          error: 'No sites found in fallback site lookup.',
+          tokenData,
+          rawText,
+          hint: 'Double-check that you selected a valid site during the OAuth install flow. Webflow sometimes returns an empty list even if you select one.',
+        });
       }
 
       siteId = sites[0]._id;
