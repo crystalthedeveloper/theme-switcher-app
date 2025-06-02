@@ -6,6 +6,7 @@ export default async function handler(req, res) {
   }
 
   const { code } = req.body;
+  console.log('📥 Incoming code from client:', code);
 
   if (!code) {
     return res.status(400).json({ error: 'Missing authorization code' });
@@ -25,10 +26,12 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Server misconfigured — missing environment variables.' });
   }
 
-  console.log('🔐 Sending token request with:', {
+  console.log('🔐 Sending POST to Webflow with:', {
     client_id: clientId,
-    redirect_uri: redirectUri,
+    client_secret: 'HIDDEN',
     code,
+    grant_type: 'authorization_code',
+    redirect_uri: redirectUri,
   });
 
   try {
@@ -45,74 +48,35 @@ export default async function handler(req, res) {
     });
 
     const rawText = await tokenRes.text();
-    console.log('📦 Raw token response:', rawText);
+    console.log('📦 Raw token response text:', rawText);
 
     let tokenData;
     try {
       tokenData = JSON.parse(rawText);
-    } catch (parseErr) {
-      console.error('❌ Failed to parse token response JSON:', parseErr);
-      return res.status(500).json({ error: 'Invalid JSON in token response', rawText });
+    } catch (err) {
+      console.error('❌ JSON parse error from token response:', err);
+      return res.status(500).json({ error: 'Failed to parse token JSON.', rawText });
     }
 
-    console.log('🔁 Full token data:', tokenData);
+    console.log('🔁 Parsed Webflow Token Response:', tokenData);
 
     if (!tokenRes.ok || tokenData.error || !tokenData.access_token) {
-      console.error('❌ Token request failed:', {
-        status: tokenRes.status,
-        response: tokenData,
-      });
-
-      let hint = 'Ensure you selected a site and are using the correct redirect URI.';
-      if (tokenData.error === 'invalid_grant') {
-        hint = 'The authorization code may have expired or already been used. Try the flow again.';
-      }
-
       return res.status(400).json({
         error: tokenData.error_description || 'Token exchange failed.',
-        hint,
-        details: tokenData,
+        tokenData,
+        hint: 'Check that your Webflow client_id, client_secret, and redirect_uri match the app settings exactly.',
       });
     }
 
-    let siteId = tokenData.site_ids?.[0];
-    console.log('📎 site_ids from token:', tokenData.site_ids);
-
-    // Fallback using /v2/user/sites if site_ids is missing
-    if (!siteId) {
-      console.warn('⚠️ site_ids missing. Trying /v2/user/sites...');
-
-      const userSitesRes = await fetch('https://api.webflow.com/v2/user/sites', {
-        headers: {
-          Authorization: `Bearer ${tokenData.access_token}`,
-          'accept-version': '2.0.0',
-        },
-      });
-
-      const userSitesData = await userSitesRes.json();
-      console.log('🌐 /user/sites response:', userSitesData);
-
-      if (!Array.isArray(userSitesData.sites) || userSitesData.sites.length === 0) {
-        return res.status(400).json({
-          error: 'No sites returned from /user/sites.',
-          tokenData,
-          rawText,
-          hint: 'Ensure you selected a site during OAuth install. Webflow sometimes skips it.',
-        });
-      }
-
-      siteId = userSitesData.sites[0].id;
-    }
-
-    console.log('✅ Final site ID:', siteId);
+    const siteId = tokenData.site_ids?.[0] || null;
+    console.log('📎 site_id:', siteId);
 
     return res.status(200).json({
       access_token: tokenData.access_token,
       site_id: siteId,
     });
-
   } catch (err) {
-    console.error('❌ Exception during token exchange:', err);
-    return res.status(500).json({ error: 'Unexpected error during token exchange.' });
+    console.error('❌ Token exchange failed:', err);
+    return res.status(500).json({ error: 'Unexpected token exchange error.' });
   }
 }
