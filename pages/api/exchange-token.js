@@ -11,14 +11,13 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing authorization code' });
   }
 
-  // ✅ Log and validate environment variables
   const clientId = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID;
   const clientSecret = process.env.WEBFLOW_CLIENT_SECRET;
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
   const redirectUri = `${baseUrl}/callback`;
 
   if (!clientId || !clientSecret || !baseUrl) {
-    console.error('❌ Missing one or more environment variables:', {
+    console.error('❌ Missing env variables:', {
       clientId,
       clientSecretPresent: !!clientSecret,
       baseUrl,
@@ -46,12 +45,23 @@ export default async function handler(req, res) {
     });
 
     const tokenData = await tokenRes.json();
-    console.log('🔁 Full Token Response from Webflow:', tokenData);
+
+    console.log('🔁 Webflow Token Response:', tokenData);
 
     if (!tokenRes.ok || tokenData.error || !tokenData.access_token) {
-      console.error('❌ Token exchange failed. Details:', tokenData);
+      console.error('❌ Token request failed:', {
+        status: tokenRes.status,
+        response: tokenData,
+      });
+
+      let hint = 'Ensure you selected a site and are using the correct redirect URI.';
+      if (tokenData.error === 'invalid_grant') {
+        hint = 'The authorization code may have expired or already been used. Try the flow again.';
+      }
+
       return res.status(400).json({
-        error: tokenData.error_description || tokenData.msg || 'Token request failed',
+        error: tokenData.error_description || 'Token exchange failed.',
+        hint,
         details: tokenData,
       });
     }
@@ -59,13 +69,16 @@ export default async function handler(req, res) {
     let siteId = tokenData.site_ids?.[0];
 
     if (!siteId) {
-      console.warn('⚠️ site_ids missing from token, fetching sites manually...');
+      console.warn('⚠️ site_ids missing. Performing fallback site lookup...');
       const sitesRes = await fetch('https://api.webflow.com/v1/sites', {
-        headers: { Authorization: `Bearer ${tokenData.access_token}` },
+        headers: {
+          Authorization: `Bearer ${tokenData.access_token}`,
+          'accept-version': '1.0.0',
+        },
       });
 
       const sites = await sitesRes.json();
-      console.log('🌐 Fallback site lookup result:', sites);
+      console.log('🌐 Fallback site list:', sites);
 
       if (!Array.isArray(sites) || sites.length === 0) {
         return res.status(400).json({ error: 'No sites found in fallback site lookup.' });
@@ -74,12 +87,13 @@ export default async function handler(req, res) {
       siteId = sites[0]._id;
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       access_token: tokenData.access_token,
       site_id: siteId,
     });
+
   } catch (err) {
-    console.error('❌ Token exchange failed with exception:', err);
-    res.status(500).json({ error: 'Internal server error during token exchange.' });
+    console.error('❌ Exception during token exchange:', err);
+    return res.status(500).json({ error: 'Unexpected error during token exchange.' });
   }
 }
