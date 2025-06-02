@@ -11,6 +11,7 @@ export default function Callback() {
     if (!router.isReady) return;
 
     const { code } = router.query;
+    console.log('🔍 Code from URL:', code);
     if (!code) return;
 
     const exchangeToken = async () => {
@@ -25,14 +26,11 @@ export default function Callback() {
         console.log('🔁 Token Response:', tokenData);
 
         if (!tokenData.access_token) {
-          console.error('❌ Missing access token.');
           throw new Error('Missing access token.');
         }
 
         if (!tokenData.site_id) {
-          alert('⚠️ You must select a site during app installation.');
-          console.error('❌ Missing site_id — likely user did not select a site.');
-          throw new Error('Missing site ID.');
+          throw new Error('Missing site ID. You must select a site during app installation.');
         }
 
         const { access_token: accessToken, site_id: siteId } = tokenData;
@@ -69,15 +67,14 @@ export default function Callback() {
 
         if (!customCodeRes.ok) {
           const errorText = await customCodeRes.text();
-          console.error('❌ Failed to install script:', errorText);
-          throw new Error('Failed to install script to the page.');
+          throw new Error('Failed to install script: ' + errorText);
         }
 
         console.log('✅ Script installed successfully.');
         router.push('/success');
       } catch (err) {
         console.error('❌ OAuth flow failed:', err.message || err);
-        alert('Authorization failed. Redirecting to home.');
+        alert(err.message || 'Authorization failed. Please try again.');
         router.push('/');
       } finally {
         setLoading(false);
@@ -85,7 +82,7 @@ export default function Callback() {
     };
 
     exchangeToken();
-  }, [router.isReady, router.query, router]);
+  }, [router.isReady, router.query.code]);
 
   return (
     <main style={{ textAlign: 'center', marginTop: '5rem' }}>
