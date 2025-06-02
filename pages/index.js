@@ -8,6 +8,7 @@ export default function Home() {
   const [baseUrl, setBaseUrl] = useState('');
   const [error, setError] = useState('');
 
+  // Webflow scopes required for this app
   const scopes = [
     'sites:read',
     'pages:read',
@@ -20,15 +21,15 @@ export default function Home() {
     const url = process.env.NEXT_PUBLIC_BASE_URL || '';
 
     if (!id || !url) {
-      console.warn('⚠️ Missing environment variables:', { id, url });
-      setError('⚠️ Missing Webflow OAuth environment variables.');
+      console.warn('⚠️ Missing required .env variables:', { id, url });
+      setError('Missing Webflow OAuth environment variables. Check .env config.');
     } else {
       setClientId(id);
       setBaseUrl(url);
 
       const debugUrl = `https://webflow.com/oauth/authorize?client_id=${id}&response_type=code&redirect_uri=${encodeURIComponent(`${url}/callback`)}&scope=${encodeURIComponent(scopes)}&include_site_ids=true`;
-      console.log('🔁 Full OAuth URL:', debugUrl);
-      console.warn('⚠️ Reminder: You must select a site on the OAuth screen or site_ids will be empty.');
+      console.log('🔗 OAuth URL (debug):', debugUrl);
+      console.log('📌 Reminder: You MUST select a site when authorizing or site_id will be missing.');
     }
   }, []);
 
@@ -49,7 +50,7 @@ export default function Home() {
   if (!oauthUrl) {
     return (
       <main style={{ textAlign: 'center', marginTop: '5rem' }}>
-        <p>Loading configuration...</p>
+        <p>Preparing authorization flow...</p>
       </main>
     );
   }
@@ -60,7 +61,7 @@ export default function Home() {
         <title>Theme Switcher for Webflow</title>
         <meta
           name="description"
-          content="Easily add light/dark theme toggling to your Webflow site. No code needed."
+          content="Easily add light/dark theme toggling to your Webflow site. No code required."
         />
       </Head>
 
@@ -73,7 +74,7 @@ export default function Home() {
 
         <h1>🎨 Theme Switcher for Webflow</h1>
         <p style={{ fontSize: '1.1rem', maxWidth: '480px', margin: '0 auto' }}>
-          Seamlessly let your visitors toggle between light and dark mode — no coding required.
+          Let your visitors toggle between light and dark mode — effortlessly.
         </p>
 
         <a href={oauthUrl} target="_blank" rel="noopener noreferrer">

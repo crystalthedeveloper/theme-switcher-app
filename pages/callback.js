@@ -17,6 +17,7 @@ export default function Callback() {
     const exchangeToken = async () => {
       try {
         console.log('🔄 Starting token exchange...');
+
         const tokenRes = await fetch('/api/exchange-token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -27,17 +28,17 @@ export default function Callback() {
         console.log('🔁 Token Response:', tokenData);
 
         if (!tokenData.access_token) {
-          throw new Error('Missing access token. Check exchange-token logs.');
+          throw new Error('Missing access token. Check /api/exchange-token logs.');
         }
 
         if (!tokenData.site_id) {
-          throw new Error('Missing site ID. You must select a site during app installation.');
+          throw new Error('Missing site ID. Ensure a site was selected during OAuth install.');
         }
 
         const { access_token: accessToken, site_id: siteId } = tokenData;
-        console.log('✅ Access token and Site ID received:', { accessToken, siteId });
+        console.log('✅ Received access token and site ID:', { accessToken, siteId });
 
-        // Get pages
+        // Step 1: Get site pages
         console.log(`📡 Fetching pages for site: ${siteId}`);
         const pagesRes = await fetch(`https://api.webflow.com/v1/sites/${siteId}/pages`, {
           headers: {
@@ -50,14 +51,14 @@ export default function Callback() {
         console.log('📄 Pages received:', pages);
 
         if (!Array.isArray(pages) || pages.length === 0) {
-          throw new Error('No pages found for the selected site.');
+          throw new Error('No pages found for the site. Cannot inject script.');
         }
 
         const firstPage = pages[0];
-        console.log('🎯 Using first page ID:', firstPage._id);
+        console.log('🎯 Targeting first page ID:', firstPage._id);
 
-        // Inject custom code
-        console.log('💉 Injecting custom script...');
+        // Step 2: Inject custom script into body
+        console.log('💉 Injecting theme-switcher script...');
         const customCodeRes = await fetch(
           `https://api.webflow.com/v1/sites/${siteId}/pages/${firstPage._id}/custom-code`,
           {
@@ -77,11 +78,11 @@ export default function Callback() {
 
         if (!customCodeRes.ok) {
           const errorText = await customCodeRes.text();
-          console.error('❌ Webflow PUT /custom-code failed:', errorText);
-          throw new Error('Failed to inject script. Check response for details.');
+          console.error('❌ Failed to inject script:', errorText);
+          throw new Error('Failed to inject script. Webflow API PUT /custom-code failed.');
         }
 
-        console.log('✅ Script installed successfully!');
+        console.log('✅ Script installed successfully.');
         router.push('/success');
       } catch (err) {
         console.error('❌ OAuth flow failed:', err.message || err);

@@ -55,7 +55,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Invalid JSON in token response', rawText });
     }
 
-    console.log('🔁 Webflow Token Response:', tokenData);
+    console.log('🔁 Full token data:', tokenData);
 
     if (!tokenRes.ok || tokenData.error || !tokenData.access_token) {
       console.error('❌ Token request failed:', {
@@ -78,6 +78,7 @@ export default async function handler(req, res) {
     let siteId = tokenData.site_ids?.[0];
     console.log('📎 site_ids from token:', tokenData.site_ids);
 
+    // Fallback using /v2/user/sites if site_ids is missing
     if (!siteId) {
       console.warn('⚠️ site_ids missing. Trying /v2/user/sites...');
 

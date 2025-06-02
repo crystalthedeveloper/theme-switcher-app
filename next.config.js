@@ -3,7 +3,7 @@
 const nextConfig = {
   reactStrictMode: true,
   trailingSlash: false,
-  output: 'standalone', // ✅ Ensures Vercel treats this as a serverless app (API routes work)
+  output: 'standalone',
 };
 
 module.exports = nextConfig;

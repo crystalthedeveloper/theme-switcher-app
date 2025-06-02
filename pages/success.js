@@ -1,4 +1,5 @@
 //pages/success.js
+
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 
@@ -14,17 +15,23 @@ export default function Success() {
   }, [router]);
 
   return (
-    <main style={{ textAlign: 'center', marginTop: '5rem' }}>
-      <h1>✅ Script Installed Successfully!</h1>
-      <p>Your Theme Switcher script was successfully added to your Webflow site.</p>
-      <p style={{ marginTop: '1rem', fontStyle: 'italic', color: '#888' }}>
-        Redirecting to home in 10 seconds...
+    <main style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }}>
+      <h1>✅ Script Installed Successfully</h1>
+      <p>Your Theme Switcher has been added to your Webflow site.</p>
+      <p style={{ marginTop: '1rem', fontStyle: 'italic', color: '#666' }}>
+        You’ll be redirected back to the home page in 10 seconds.
       </p>
 
       <div style={{ marginTop: '2.5rem' }}>
         <a href="/">
-          <button style={{ padding: '10px 20px', marginRight: '1rem' }}>
-            Back to Home
+          <button
+            style={{
+              padding: '10px 20px',
+              marginRight: '1rem',
+              cursor: 'pointer',
+            }}
+          >
+            ← Back to Home
           </button>
         </a>
 
@@ -33,8 +40,13 @@ export default function Success() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          <button style={{ padding: '10px 20px' }}>
-            Go to Webflow
+          <button
+            style={{
+              padding: '10px 20px',
+              cursor: 'pointer',
+            }}
+          >
+            Go to Webflow Dashboard
           </button>
         </a>
       </div>
