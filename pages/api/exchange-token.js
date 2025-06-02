@@ -44,7 +44,16 @@ export default async function handler(req, res) {
       }),
     });
 
-    const tokenData = await tokenRes.json();
+    const rawText = await tokenRes.text(); // 👈 Get raw response for debugging
+    console.log('📦 Raw token response:', rawText);
+
+    let tokenData;
+    try {
+      tokenData = JSON.parse(rawText);
+    } catch (parseErr) {
+      console.error('❌ Failed to parse token response JSON:', parseErr);
+      return res.status(500).json({ error: 'Invalid JSON in token response', rawText });
+    }
 
     console.log('🔁 Webflow Token Response:', tokenData);
 
