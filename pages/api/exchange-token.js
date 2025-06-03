@@ -40,8 +40,9 @@ export default async function handler(req, res) {
     });
 
     const rawText = await tokenRes.text();
-    let tokenData;
+    console.log('🔴 RAW TOKEN RESPONSE:', rawText); // ✅ Full debug output
 
+    let tokenData;
     try {
       tokenData = JSON.parse(rawText);
     } catch (err) {
@@ -62,7 +63,7 @@ export default async function handler(req, res) {
     let siteId = tokenData.site_ids?.[0];
     console.log('📎 tokenData.site_ids:', tokenData.site_ids);
 
-    // 🔁 Fallback to /v2/user/sites if site_ids missing
+    // 🔁 Fallback if site_ids is missing
     if (!siteId) {
       console.warn('⚠️ site_ids missing. Trying /v2/user/sites as fallback...');
       const sitesRes = await fetch('https://api.webflow.com/v2/user/sites', {
@@ -83,10 +84,8 @@ export default async function handler(req, res) {
         });
       }
 
-      // Optional: log available site names
       console.log('📋 Available sites:', data.sites.map(s => `${s.name} (${s.id})`).join(', '));
-
-      siteId = data.sites[0].id; // You can let user choose instead in future
+      siteId = data.sites[0].id;
     }
 
     console.log('✅ Final resolved site ID:', siteId);
