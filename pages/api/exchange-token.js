@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
   const redirectUri = `${baseUrl}/callback`;
 
-  // ✅ Log incoming config to debug auth bugs
+  // ✅ Log incoming config
   console.log('🔐 Starting token exchange with:', {
     code,
     clientId,
@@ -83,7 +83,10 @@ export default async function handler(req, res) {
         });
       }
 
-      siteId = data.sites[0].id;
+      // Optional: log available site names
+      console.log('📋 Available sites:', data.sites.map(s => `${s.name} (${s.id})`).join(', '));
+
+      siteId = data.sites[0].id; // You can let user choose instead in future
     }
 
     console.log('✅ Final resolved site ID:', siteId);
