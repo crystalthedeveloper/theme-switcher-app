@@ -11,6 +11,7 @@ export default function Home() {
 
   const scopes = [
     'sites:read',
+    'sites:write',
     'pages:read',
     'pages:write',
     'custom_code:write',
