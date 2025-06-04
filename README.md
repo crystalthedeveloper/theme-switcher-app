@@ -1,20 +1,30 @@
-# Theme Switcher App
+# 🎨 Theme Switcher App for Webflow
 
-This Webflow OAuth app allows users to securely connect their Webflow account and automatically inject the Theme Switcher script into their selected Webflow site using the Custom Code API.
+This Webflow OAuth app allows users to securely connect their Webflow account and inject a light/dark theme toggle script into their selected Webflow site using the Webflow Custom Code API.
+
+> 🛠️ Until Webflow approves this app, script injection will only work on hosted (paid) sites outside of Developer Workspace.
+
+---
 
 ## ✨ Features
 
 - 🔐 Webflow OAuth authentication
-- ⚙️ Script injection via Webflow Custom Code API
-- ✅ Success confirmation screen
-- 🧠 Built with Next.js & deploys easily to Vercel
+- ⚙️ Script injection via Webflow Custom Code API (or manual fallback)
+- 🗂️ Site selection after OAuth
+- ✅ Success screen with install confirmation or manual script
+- 🧠 Built with Next.js and deploys to Vercel
+
+---
 
 ## 🚀 How It Works
 
 1. User clicks **Connect to Webflow**
-2. OAuth redirects and exchanges code for access token
-3. The Theme Switcher script is injected into the first site/page (or optionally selected page)
-4. User is redirected to a success screen
+2. App completes OAuth and exchanges code for access token
+3. User selects which hosted site they want to use
+4. App injects the theme switcher script via API (or shows manual fallback)
+5. User sees a success screen
+
+---
 
 ## 🧩 Script Injected
 
@@ -22,29 +32,55 @@ This Webflow OAuth app allows users to securely connect their Webflow account an
 <script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>
 ```
 
-## 📦 Stack
+This will appear in the footer of the chosen Webflow site — or users can paste it manually into Webflow’s **Project Settings → Custom Code** section.
 
-- Next.js
-- React
-- Webflow REST API
-- Vercel (recommended deployment)
+---
 
-## 📁 Pages
+## 📁 Pages Overview
 
-- `/` – Connect button (starts OAuth flow)
-- `/callback` – Handles Webflow OAuth exchange and script injection
-- `/success` – Confirmation screen
-- `/select-site` – (Optional) Let users choose site/page
+- `/` – Home page with "Connect to Webflow" button
+- `/callback` – Handles Webflow OAuth and sends user to select-site
+- `/select-site` – Lets users choose a hosted Webflow site
+- `/confirm` – Injects the theme script into the selected site’s first page
+- `/success` – Confirmation screen (with `?manual=true` fallback)
 
-## 🔐 Required Env Vars
+---
 
-In your `.env.local` or Vercel project settings:
+## ⚙️ Environment Variables
+
+Create a `.env.local` file or add to your Vercel Project Settings:
 
 ```
 NEXT_PUBLIC_BASE_URL=https://theme-switcher-app.vercel.app
 NEXT_PUBLIC_WEBFLOW_CLIENT_ID=your_webflow_client_id
 WEBFLOW_CLIENT_SECRET=your_webflow_client_secret
 ```
+
+---
+
+## 🧪 Testing Notes
+
+- Works only on hosted (paid) Webflow sites
+- Developer Workspace sites will return no IDs until the app is approved
+- If injection fails, users will be redirected to `/success?manual=true`
+
+---
+
+## 📦 Tech Stack
+
+- [Next.js](https://nextjs.org)
+- [React](https://react.dev)
+- [Webflow REST API](https://developers.webflow.com)
+- [Vercel](https://vercel.com)
+
+---
+
+## 🧾 Marketplace Notes
+
+This app:
+- Uses the `/rest/sites/:id/pages/:page_id/custom-code` endpoint for injection
+- Falls back to manual script copy if injection fails
+- Provides a clear user flow from OAuth to installation
 
 ---
 

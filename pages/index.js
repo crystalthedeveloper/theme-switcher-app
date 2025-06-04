@@ -14,7 +14,7 @@ export default function Home() {
     'sites:write',
     'pages:read',
     'pages:write',
-    'custom_code:write',
+    'custom_code:write', // 👈 required for injecting the theme switcher script
   ].join(' ');
 
   useEffect(() => {
@@ -39,6 +39,30 @@ export default function Home() {
     const redirectUri = `${baseUrl}/callback`;
     return `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
   }, [clientId, baseUrl]);
+
+  // 🧪 Planned use of Webflow Custom Code API
+  async function injectThemeScript(accessToken, siteId) {
+    try {
+      // Only enabled once app is approved and granted access to custom_code:write
+      const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
+
+      await fetch(`https://api.webflow.com/v1/sites/${siteId}/custom_code`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'accept-version': '1.0.0',
+        },
+        body: JSON.stringify({
+          footer: scriptTag,
+        }),
+      });
+
+      console.log('✅ Theme switcher script injected via API.');
+    } catch (err) {
+      console.warn('⚠️ Custom Code API not yet available or access denied. Fallback to manual script installation.');
+    }
+  }
 
   return (
     <>

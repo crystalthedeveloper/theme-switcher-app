@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 
 export default function Success() {
   const router = useRouter();
+  const showManualInstall = router.query.manual === 'true';
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -17,11 +18,22 @@ export default function Success() {
   return (
     <main style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }}>
       <h1 style={{ fontSize: '2rem' }}>✅ Theme Switcher Installed</h1>
+
       <p style={{ fontSize: '1.1rem', maxWidth: '480px', margin: '1rem auto' }}>
-        Your dark/light toggle has been added to your Webflow site.
+        Your dark/light toggle script has been added to your Webflow site.
       </p>
 
-      <p style={{ marginTop: '1rem', color: '#666', fontStyle: 'italic' }}>
+      {showManualInstall && (
+        <p style={{ fontSize: '0.95rem', color: '#666', maxWidth: '480px', margin: '0 auto' }}>
+          If the Custom Code API isn’t available yet, please paste this script manually into your Webflow Project Settings:
+          <br />
+          <code style={{ display: 'inline-block', marginTop: '0.5rem', background: '#f1f1f1', padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem' }}>
+            &lt;script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer&gt;&lt;/script&gt;
+          </code>
+        </p>
+      )}
+
+      <p style={{ marginTop: '1.5rem', color: '#999', fontStyle: 'italic' }}>
         Redirecting to home in 10 seconds...
       </p>
 

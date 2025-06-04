@@ -25,69 +25,26 @@ export default function Callback() {
 
         const tokenData = await tokenRes.json();
 
-        // Handle general token errors
         if (!tokenRes.ok || !tokenData.access_token) {
           console.error('⚠️ Token error:', tokenData);
           throw new Error(tokenData.error || 'Token exchange failed.');
         }
 
-        const { access_token, site_id, sites = [], warning } = tokenData;
+        const { access_token, sites = [], warning } = tokenData;
 
         if (warning) {
           console.warn('⚠️ Warning:', warning);
         }
 
-        if (!site_id) {
-          alert("No site ID found. Please make sure you're using a hosted Webflow site.");
+        if (!sites.length) {
+          alert("No hosted Webflow sites found. Please make sure your site is on a paid plan.");
           throw new Error('No valid site returned.');
         }
 
-        const siteName = sites.find((s) => s.id === site_id)?.name || site_id;
-        console.log(`🔐 Authorized site: ${siteName}`);
+        console.log('🔓 Access token received. Redirecting to site selection...');
 
-        // Step 1: Fetch pages from REST API
-        const pagesRes = await fetch(`https://api.webflow.com/rest/sites/${site_id}/pages`, {
-          headers: {
-            Authorization: `Bearer ${access_token}`,
-            'accept-version': '1.0.0',
-          },
-        });
-
-        const pagesData = await pagesRes.json();
-        const pageArray = pagesData?.pages || pagesData;
-
-        if (!Array.isArray(pageArray) || pageArray.length === 0) {
-          throw new Error('No pages returned from /rest/sites/:id/pages');
-        }
-
-        const firstPage = pageArray[0];
-        console.log(`📄 Injecting script into: ${firstPage.name || firstPage._id}`);
-
-        // Step 2: Inject script
-        const injectRes = await fetch(
-          `https://api.webflow.com/rest/sites/${site_id}/pages/${firstPage._id}/custom-code`,
-          {
-            method: 'PATCH',
-            headers: {
-              Authorization: `Bearer ${access_token}`,
-              'Content-Type': 'application/json',
-              'accept-version': '1.0.0',
-            },
-            body: JSON.stringify({
-              body: `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`,
-              enabled: true,
-            }),
-          }
-        );
-
-        if (!injectRes.ok) {
-          const errorText = await injectRes.text();
-          console.error('❌ Injection failed:', errorText);
-          throw new Error('Failed to inject theme switcher script.');
-        }
-
-        console.log('✅ Script successfully installed.');
-        router.push('/success');
+        // Redirect to site picker
+        router.push(`/select-site?token=${access_token}`);
 
       } catch (err) {
         console.error('❌ Callback Error:', err);
@@ -104,7 +61,7 @@ export default function Callback() {
   return (
     <main style={{ textAlign: 'center', marginTop: '5rem' }}>
       {loading ? (
-        <p>Exchanging code and installing script...</p>
+        <p>Exchanging code and preparing your sites...</p>
       ) : (
         <p style={{ color: 'red' }}>Something went wrong. Redirecting...</p>
       )}
