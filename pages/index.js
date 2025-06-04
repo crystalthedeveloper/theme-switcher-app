@@ -10,7 +10,6 @@ export default function Home() {
   const [ready, setReady] = useState(false);
 
   const scopes = [
-    'user:read',          // ✅ Required for /v2/user/sites
     'sites:read',
     'pages:read',
     'pages:write',
