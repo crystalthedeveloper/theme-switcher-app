@@ -24,13 +24,15 @@ export default function Callback() {
         });
 
         const tokenData = await tokenRes.json();
+
         if (!tokenRes.ok || !tokenData.access_token || !tokenData.site_id) {
+          console.error('⚠️ Token error:', tokenData);
           throw new Error(tokenData.error || 'Token exchange failed. Missing access token or site ID.');
         }
 
         const { access_token, site_id, sites = [] } = tokenData;
-        const siteName = sites.find(s => s.id === site_id)?.name || site_id;
-        console.log(`🔐 Using site: ${siteName}`);
+        const siteName = sites.find((s) => s.id === site_id)?.name || site_id;
+        console.log(`🔐 Authorized site: ${siteName}`);
 
         // Step 1: Fetch pages
         const pagesRes = await fetch(`https://api.webflow.com/v1/sites/${site_id}/pages`, {
@@ -46,7 +48,7 @@ export default function Callback() {
         }
 
         const firstPage = pages[0];
-        console.log(`📄 Injecting script into page: ${firstPage.name || firstPage._id}`);
+        console.log(`📄 Injecting script into: ${firstPage.name || firstPage._id}`);
 
         // Step 2: Inject script into page body
         const injectRes = await fetch(
@@ -68,15 +70,15 @@ export default function Callback() {
 
         if (!injectRes.ok) {
           const errorText = await injectRes.text();
-          console.error('❌ Script injection failed:', errorText);
-          throw new Error('Failed to inject the theme switcher script.');
+          console.error('❌ Injection failed:', errorText);
+          throw new Error('Failed to inject theme switcher script.');
         }
 
-        console.log('✅ Script successfully installed.');
+        console.log('✅ Script installed. Redirecting...');
         router.push('/success');
 
       } catch (err) {
-        console.error('❌ Callback error:', err);
+        console.error('❌ Callback Error:', err);
         alert(err.message || 'Something went wrong during installation.');
         router.push('/');
       } finally {

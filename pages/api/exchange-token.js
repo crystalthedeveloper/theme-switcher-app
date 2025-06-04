@@ -50,33 +50,32 @@ export default async function handler(req, res) {
       });
     }
 
-    // Step 2: Fetch all sites for this user
-    const sitesRes = await fetch('https://api.webflow.com/v2/user/sites', {
+    // Step 2: Fetch sites from REST API (Marketplace-approved)
+    const sitesRes = await fetch('https://api.webflow.com/rest/sites', {
       headers: {
         Authorization: `Bearer ${tokenData.access_token}`,
-        'accept-version': '2.0.0',
+        'accept-version': '1.0.0',
       },
     });
 
-    const sites = await sitesRes.json();
-    if (!Array.isArray(sites.sites) || sites.sites.length === 0) {
+    const sitesData = await sitesRes.json();
+    if (!Array.isArray(sitesData?.sites) || sitesData.sites.length === 0) {
       return res.status(400).json({
-        error: 'No sites returned from /v2/user/sites',
-        hint: 'User likely did not select a site during OAuth install.',
+        error: 'No sites returned from /rest/sites',
+        hint: 'Ensure the user selected a site and the app has permissions.',
       });
     }
 
-    // For now, return first site + full list for optional future site picker
-    const siteId = sites.sites[0].id;
-    const siteList = sites.sites.map(site => ({
-      id: site.id,
-      name: site.displayName || site.name,
+    const siteId = sitesData.sites[0]._id;
+    const siteList = sitesData.sites.map(site => ({
+      id: site._id,
+      name: site.displayName || site.name || 'Untitled',
     }));
 
     return res.status(200).json({
       access_token: tokenData.access_token,
       site_id: siteId,
-      sites: siteList, // optional: display to user
+      sites: siteList,
     });
 
   } catch (err) {
