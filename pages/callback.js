@@ -34,34 +34,35 @@ export default function Callback() {
         const siteName = sites.find((s) => s.id === site_id)?.name || site_id;
         console.log(`🔐 Authorized site: ${siteName}`);
 
-        // Step 1: Fetch pages
-        const pagesRes = await fetch(`https://api.webflow.com/v1/sites/${site_id}/pages`, {
+        // Step 1: Fetch pages from REST API
+        const pagesRes = await fetch(`https://api.webflow.com/rest/sites/${site_id}/pages`, {
           headers: {
             Authorization: `Bearer ${access_token}`,
             'accept-version': '1.0.0',
           },
         });
 
-        const pages = await pagesRes.json();
-        if (!Array.isArray(pages) || pages.length === 0) {
-          throw new Error('No pages found for this site.');
+        const pagesData = await pagesRes.json();
+        const pageArray = pagesData?.pages || pagesData;
+
+        if (!Array.isArray(pageArray) || pageArray.length === 0) {
+          throw new Error('No pages returned from /rest/sites/:id/pages');
         }
 
-        const firstPage = pages[0];
+        const firstPage = pageArray[0];
         console.log(`📄 Injecting script into: ${firstPage.name || firstPage._id}`);
 
-        // Step 2: Inject script into page body
+        // Step 2: Inject script via REST API
         const injectRes = await fetch(
-          `https://api.webflow.com/v1/sites/${site_id}/pages/${firstPage._id}/custom-code`,
+          `https://api.webflow.com/rest/sites/${site_id}/pages/${firstPage._id}/custom-code`,
           {
-            method: 'PUT',
+            method: 'PATCH',
             headers: {
               Authorization: `Bearer ${access_token}`,
               'Content-Type': 'application/json',
               'accept-version': '1.0.0',
             },
             body: JSON.stringify({
-              head: '',
               body: `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`,
               enabled: true,
             }),
@@ -74,7 +75,7 @@ export default function Callback() {
           throw new Error('Failed to inject theme switcher script.');
         }
 
-        console.log('✅ Script installed. Redirecting...');
+        console.log('✅ Script successfully installed.');
         router.push('/success');
 
       } catch (err) {

@@ -22,14 +22,13 @@ export default function Home() {
     const url = process.env.NEXT_PUBLIC_BASE_URL || '';
 
     if (!id || !url) {
-      console.warn('⚠️ Missing required .env variables:', { id, url });
-      setError('Missing Webflow OAuth environment variables. Check your configuration.');
+      console.warn('⚠️ Missing required .env variables:', { idMissing: !id, urlMissing: !url });
+      setError('Missing environment variables. Check your Webflow OAuth config.');
     } else {
       setClientId(id);
       setBaseUrl(url);
       setReady(true);
 
-      // Helpful for debugging OAuth redirects
       const debugUrl = `https://webflow.com/oauth/authorize?client_id=${id}&response_type=code&redirect_uri=${encodeURIComponent(`${url}/callback`)}&scope=${encodeURIComponent(scopes)}`;
       console.log('🔗 OAuth URL (debug):', debugUrl);
     }
@@ -64,7 +63,7 @@ export default function Home() {
           href={ready ? oauthUrl : '#'}
           target="_blank"
           rel="noopener noreferrer"
-          title={ready ? '' : 'OAuth setup incomplete. Please check your environment config.'}
+          title={ready ? '' : 'OAuth not ready — check environment variables.'}
         >
           <button
             disabled={!ready}

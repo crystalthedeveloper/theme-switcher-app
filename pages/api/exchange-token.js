@@ -1,6 +1,8 @@
 // pages/api/exchange-token.js
 
 export default async function handler(req, res) {
+  res.setHeader('Cache-Control', 'no-store');
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -21,7 +23,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Step 1: Exchange code for token
+    // Step 1: Exchange code for access token
     const tokenRes = await fetch('https://api.webflow.com/oauth/access_token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -43,6 +45,7 @@ export default async function handler(req, res) {
     }
 
     if (!tokenRes.ok || tokenData.error || !tokenData.access_token) {
+      console.error('❌ Webflow token response error:', raw);
       return res.status(400).json({
         error: tokenData.error_description || 'Token exchange failed',
         hint: 'Check Webflow App settings or redirect_uri.',
@@ -50,30 +53,44 @@ export default async function handler(req, res) {
       });
     }
 
-    // Step 2: Fetch sites from REST API (Marketplace-approved)
+    const accessToken = tokenData.access_token;
+
+    // ✅ Optional: Check that required scopes were granted
+    if (!tokenData.scope?.includes('sites:read')) {
+      return res.status(400).json({
+        error: 'Missing required scopes',
+        hint: 'Ensure your app requests sites:read and other required scopes.',
+        granted_scopes: tokenData.scope,
+      });
+    }
+
+    // Step 2: Fetch user sites from REST API (Marketplace-approved)
     const sitesRes = await fetch('https://api.webflow.com/rest/sites', {
       headers: {
-        Authorization: `Bearer ${tokenData.access_token}`,
+        Authorization: `Bearer ${accessToken}`,
         'accept-version': '1.0.0',
       },
     });
 
     const sitesData = await sitesRes.json();
-    if (!Array.isArray(sitesData?.sites) || sitesData.sites.length === 0) {
+    const siteArray = sitesData?.sites || sitesData;
+
+    if (!Array.isArray(siteArray) || siteArray.length === 0) {
       return res.status(400).json({
         error: 'No sites returned from /rest/sites',
-        hint: 'Ensure the user selected a site and the app has permissions.',
+        hint: 'Ensure the user selected a site and your app has the correct scopes.',
       });
     }
 
-    const siteId = sitesData.sites[0]._id;
-    const siteList = sitesData.sites.map(site => ({
+    const siteId = siteArray[0]._id;
+    const siteList = siteArray.map(site => ({
       id: site._id,
       name: site.displayName || site.name || 'Untitled',
     }));
 
     return res.status(200).json({
-      access_token: tokenData.access_token,
+      access_token: accessToken,
+      token_type: tokenData.token_type || 'Bearer',
       site_id: siteId,
       sites: siteList,
     });
