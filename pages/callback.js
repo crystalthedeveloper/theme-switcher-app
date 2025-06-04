@@ -11,12 +11,11 @@ export default function Callback() {
     if (!router.isReady) return;
 
     const { code } = router.query;
-    console.log('🔍 Code from URL:', code);
     if (!code) return;
 
     const exchangeToken = async () => {
       try {
-        console.log('🔄 Starting token exchange...');
+        console.log('🔄 Exchanging code for token:', code);
 
         const tokenRes = await fetch('/api/exchange-token', {
           method: 'POST',
@@ -30,21 +29,16 @@ export default function Callback() {
         }
 
         const tokenData = await tokenRes.json();
-        console.log('🔁 Token Response:', tokenData);
+        console.log('🔁 Token data:', tokenData);
 
-        if (!tokenData.access_token) {
-          throw new Error('Missing access token. Check /api/exchange-token logs.');
+        const accessToken = tokenData.access_token;
+        const siteId = tokenData.site_id;
+
+        if (!accessToken || !siteId) {
+          throw new Error('Missing access token or site ID.');
         }
 
-        if (!tokenData.site_id) {
-          throw new Error('Missing site ID. Ensure a site was selected during OAuth install.');
-        }
-
-        const { access_token: accessToken, site_id: siteId } = tokenData;
-        console.log('✅ Received access token and site ID:', { accessToken, siteId });
-
-        // Step 1: Get site pages
-        console.log(`📡 Fetching pages for site: ${siteId}`);
+        // Step 1: Fetch pages
         const pagesRes = await fetch(`https://api.webflow.com/v1/sites/${siteId}/pages`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -53,18 +47,14 @@ export default function Callback() {
         });
 
         const pages = await pagesRes.json();
-        console.log('📄 Pages received:', pages);
-
         if (!Array.isArray(pages) || pages.length === 0) {
-          throw new Error('No pages found for the site. Cannot inject script.');
+          throw new Error('No pages found for this site.');
         }
 
         const firstPage = pages[0];
-        console.log('🎯 Targeting first page ID:', firstPage._id);
 
-        // Step 2: Inject custom script into body
-        console.log('💉 Injecting theme-switcher script...');
-        const customCodeRes = await fetch(
+        // Step 2: Inject script
+        const injectRes = await fetch(
           `https://api.webflow.com/v1/sites/${siteId}/pages/${firstPage._id}/custom-code`,
           {
             method: 'PUT',
@@ -81,17 +71,18 @@ export default function Callback() {
           }
         );
 
-        if (!customCodeRes.ok) {
-          const errorText = await customCodeRes.text();
-          console.error('❌ Failed to inject script:', errorText);
-          throw new Error('Failed to inject script. Webflow API PUT /custom-code failed.');
+        if (!injectRes.ok) {
+          const error = await injectRes.text();
+          console.error('❌ Injection failed:', error);
+          throw new Error('Failed to inject theme switcher script.');
         }
 
-        console.log('✅ Script installed successfully.');
+        console.log('✅ Script successfully installed.');
         router.push('/success');
+
       } catch (err) {
-        console.error('❌ OAuth flow failed:', err.message || err);
-        alert(err.message || 'Authorization failed. Please try again.');
+        console.error('❌ Callback error:', err.message || err);
+        alert(err.message || 'Something went wrong during installation.');
         router.push('/');
       } finally {
         setLoading(false);

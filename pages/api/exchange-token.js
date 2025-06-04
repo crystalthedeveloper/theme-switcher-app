@@ -14,18 +14,17 @@ export default async function handler(req, res) {
   const redirectUri = `${baseUrl}/callback`;
 
   if (!clientId || !clientSecret || !baseUrl) {
-    console.error('❌ Missing environment variables');
-    return res.status(500).json({ error: 'Missing Webflow OAuth credentials.' });
+    console.error('❌ Missing required env variables:', {
+      clientId,
+      clientSecretPresent: !!clientSecret,
+      baseUrl,
+    });
+    return res.status(500).json({ error: 'Server misconfigured: missing environment variables.' });
   }
 
-  console.log('🔐 Exchanging code for token...', {
-    clientId,
-    redirectUri,
-    clientSecretPresent: !!clientSecret,
-  });
+  console.log('🔐 Exchanging code for access token...', { code });
 
   try {
-    // Exchange code for access token
     const tokenRes = await fetch('https://api.webflow.com/oauth/access_token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -44,26 +43,25 @@ export default async function handler(req, res) {
     try {
       tokenData = JSON.parse(raw);
     } catch (err) {
-      console.error('❌ Failed to parse token response JSON:', raw);
-      return res.status(500).json({ error: 'Invalid JSON from Webflow token endpoint.' });
+      console.error('❌ Failed to parse JSON from Webflow:', raw);
+      return res.status(500).json({ error: 'Invalid response from Webflow.' });
     }
 
-    console.log('🔁 Token data:', tokenData);
+    console.log('🔁 Token response:', tokenData);
 
     if (!tokenRes.ok || tokenData.error || !tokenData.access_token) {
       return res.status(400).json({
         error: tokenData.error_description || 'Token exchange failed',
-        hint: 'Check Webflow App settings',
+        hint: 'Check your Webflow App settings.',
         details: tokenData,
       });
     }
 
-    // Try direct site_ids from token
     let siteId = tokenData.site_ids?.[0];
 
-    // Fallback: GET /v2/user/sites
     if (!siteId) {
-      console.warn('⚠️ No site_ids returned. Fetching /v2/user/sites...');
+      console.warn('⚠️ No site_ids found in token. Using fallback: /v2/user/sites');
+
       const sitesRes = await fetch('https://api.webflow.com/v2/user/sites', {
         headers: {
           Authorization: `Bearer ${tokenData.access_token}`,
@@ -72,7 +70,7 @@ export default async function handler(req, res) {
       });
 
       const sitesData = await sitesRes.json();
-      console.log('🌍 Sites from /user/sites:', sitesData);
+      console.log('🌐 Sites from /v2/user/sites:', sitesData);
 
       if (!Array.isArray(sitesData.sites) || sitesData.sites.length === 0) {
         return res.status(400).json({
@@ -83,6 +81,8 @@ export default async function handler(req, res) {
 
       siteId = sitesData.sites[0].id;
     }
+
+    console.log('✅ Final site ID resolved:', siteId);
 
     return res.status(200).json({
       access_token: tokenData.access_token,
