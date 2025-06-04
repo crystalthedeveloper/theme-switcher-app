@@ -23,12 +23,13 @@ export default function Home() {
 
     if (!id || !url) {
       console.warn('⚠️ Missing required .env variables:', { id, url });
-      setError('Missing Webflow OAuth environment variables. Check .env config.');
+      setError('Missing Webflow OAuth environment variables. Check your configuration.');
     } else {
       setClientId(id);
       setBaseUrl(url);
       setReady(true);
 
+      // Helpful for debugging OAuth redirects
       const debugUrl = `https://webflow.com/oauth/authorize?client_id=${id}&response_type=code&redirect_uri=${encodeURIComponent(`${url}/callback`)}&scope=${encodeURIComponent(scopes)}`;
       console.log('🔗 OAuth URL (debug):', debugUrl);
     }
@@ -36,15 +37,15 @@ export default function Home() {
 
   const oauthUrl = useMemo(() => {
     if (!clientId || !baseUrl) return '';
-    const redirectUri = encodeURIComponent(`${baseUrl}/callback`);
-    return `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&scope=${encodeURIComponent(scopes)}`;
+    const redirectUri = `${baseUrl}/callback`;
+    return `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
   }, [clientId, baseUrl]);
 
   return (
     <>
       <Head>
         <title>Theme Switcher for Webflow</title>
-        <meta name="description" content="Easily add light/dark theme toggling to your Webflow site. No code required." />
+        <meta name="description" content="Add light/dark theme toggling to your Webflow site with one click. No code required." />
       </Head>
 
       <main style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }}>
@@ -61,9 +62,9 @@ export default function Home() {
 
         <a
           href={ready ? oauthUrl : '#'}
-          target={ready ? '_blank' : undefined}
-          rel={ready ? 'noopener noreferrer' : undefined}
-          title={ready ? '' : 'OAuth setup incomplete. Please contact support or check .env variables.'}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={ready ? '' : 'OAuth setup incomplete. Please check your environment config.'}
         >
           <button
             disabled={!ready}

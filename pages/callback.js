@@ -23,25 +23,19 @@ export default function Callback() {
           body: JSON.stringify({ code }),
         });
 
-        if (!tokenRes.ok) {
-          const errorText = await tokenRes.text();
-          throw new Error(`Token exchange failed: ${errorText}`);
-        }
-
         const tokenData = await tokenRes.json();
-        console.log('🔁 Token data:', tokenData);
-
-        const accessToken = tokenData.access_token;
-        const siteId = tokenData.site_id;
-
-        if (!accessToken || !siteId) {
-          throw new Error('Missing access token or site ID.');
+        if (!tokenRes.ok || !tokenData.access_token || !tokenData.site_id) {
+          throw new Error(tokenData.error || 'Token exchange failed. Missing access token or site ID.');
         }
+
+        const { access_token, site_id, sites = [] } = tokenData;
+        const siteName = sites.find(s => s.id === site_id)?.name || site_id;
+        console.log(`🔐 Using site: ${siteName}`);
 
         // Step 1: Fetch pages
-        const pagesRes = await fetch(`https://api.webflow.com/v1/sites/${siteId}/pages`, {
+        const pagesRes = await fetch(`https://api.webflow.com/v1/sites/${site_id}/pages`, {
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${access_token}`,
             'accept-version': '1.0.0',
           },
         });
@@ -52,14 +46,15 @@ export default function Callback() {
         }
 
         const firstPage = pages[0];
+        console.log(`📄 Injecting script into page: ${firstPage.name || firstPage._id}`);
 
-        // Step 2: Inject script
+        // Step 2: Inject script into page body
         const injectRes = await fetch(
-          `https://api.webflow.com/v1/sites/${siteId}/pages/${firstPage._id}/custom-code`,
+          `https://api.webflow.com/v1/sites/${site_id}/pages/${firstPage._id}/custom-code`,
           {
             method: 'PUT',
             headers: {
-              Authorization: `Bearer ${accessToken}`,
+              Authorization: `Bearer ${access_token}`,
               'Content-Type': 'application/json',
               'accept-version': '1.0.0',
             },
@@ -72,16 +67,16 @@ export default function Callback() {
         );
 
         if (!injectRes.ok) {
-          const error = await injectRes.text();
-          console.error('❌ Injection failed:', error);
-          throw new Error('Failed to inject theme switcher script.');
+          const errorText = await injectRes.text();
+          console.error('❌ Script injection failed:', errorText);
+          throw new Error('Failed to inject the theme switcher script.');
         }
 
         console.log('✅ Script successfully installed.');
         router.push('/success');
 
       } catch (err) {
-        console.error('❌ Callback error:', err.message || err);
+        console.error('❌ Callback error:', err);
         alert(err.message || 'Something went wrong during installation.');
         router.push('/');
       } finally {
