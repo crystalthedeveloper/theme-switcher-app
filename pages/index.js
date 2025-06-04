@@ -1,7 +1,5 @@
 // pages/index.js
 
-// pages/index.js
-
 import { useEffect, useState, useMemo } from 'react';
 import Head from 'next/head';
 
@@ -31,17 +29,15 @@ export default function Home() {
       setBaseUrl(url);
       setReady(true);
 
-      // ✅ Clean OAuth debug URL without invalid `&workspace=` param
-      const debugUrl = `https://webflow.com/oauth/authorize?client_id=${id}&response_type=code&redirect_uri=${encodeURIComponent(`${url}/callback`)}&scope=${encodeURIComponent(scopes)}&include_site_ids=true`;
+      const debugUrl = `https://webflow.com/oauth/authorize?client_id=${id}&response_type=code&redirect_uri=${encodeURIComponent(`${url}/callback`)}&scope=${encodeURIComponent(scopes)}`;
       console.log('🔗 OAuth URL (debug):', debugUrl);
-      console.log('📌 Reminder: You MUST select a site when authorizing or site_id will be missing.');
     }
   }, []);
 
   const oauthUrl = useMemo(() => {
     if (!clientId || !baseUrl) return '';
     const redirectUri = encodeURIComponent(`${baseUrl}/callback`);
-    return `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&scope=${encodeURIComponent(scopes)}&include_site_ids=true`;
+    return `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&scope=${encodeURIComponent(scopes)}`;
   }, [clientId, baseUrl]);
 
   return (
