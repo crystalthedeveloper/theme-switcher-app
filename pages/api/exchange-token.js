@@ -13,20 +13,19 @@ export default async function handler(req, res) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
   const redirectUri = `${baseUrl}/callback`;
 
-  // ✅ Log incoming config
-  console.log('🔐 Starting token exchange with:', {
-    code,
+  if (!clientId || !clientSecret || !baseUrl) {
+    console.error('❌ Missing environment variables');
+    return res.status(500).json({ error: 'Missing Webflow OAuth credentials.' });
+  }
+
+  console.log('🔐 Exchanging code for token...', {
     clientId,
     redirectUri,
     clientSecretPresent: !!clientSecret,
   });
 
-  if (!clientId || !clientSecret || !baseUrl) {
-    console.error('❌ Missing environment variables');
-    return res.status(500).json({ error: 'Missing Webflow API credentials.' });
-  }
-
   try {
+    // Exchange code for access token
     const tokenRes = await fetch('https://api.webflow.com/oauth/access_token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -39,33 +38,32 @@ export default async function handler(req, res) {
       }),
     });
 
-    const rawText = await tokenRes.text();
-    console.log('🔴 RAW TOKEN RESPONSE:', rawText); // ✅ Full debug output
-
+    const raw = await tokenRes.text();
     let tokenData;
+
     try {
-      tokenData = JSON.parse(rawText);
+      tokenData = JSON.parse(raw);
     } catch (err) {
-      console.error('❌ Failed to parse token response JSON:', rawText);
-      return res.status(500).json({ error: 'Invalid token response from Webflow.' });
+      console.error('❌ Failed to parse token response JSON:', raw);
+      return res.status(500).json({ error: 'Invalid JSON from Webflow token endpoint.' });
     }
 
-    console.log('🔁 Token response received:', tokenData);
+    console.log('🔁 Token data:', tokenData);
 
     if (!tokenRes.ok || tokenData.error || !tokenData.access_token) {
       return res.status(400).json({
-        error: tokenData.error_description || 'Token exchange failed.',
-        hint: 'Check your Webflow client ID, secret, and redirect URI.',
+        error: tokenData.error_description || 'Token exchange failed',
+        hint: 'Check Webflow App settings',
         details: tokenData,
       });
     }
 
+    // Try direct site_ids from token
     let siteId = tokenData.site_ids?.[0];
-    console.log('📎 tokenData.site_ids:', tokenData.site_ids);
 
-    // 🔁 Fallback if site_ids is missing
+    // Fallback: GET /v2/user/sites
     if (!siteId) {
-      console.warn('⚠️ site_ids missing. Trying /v2/user/sites as fallback...');
+      console.warn('⚠️ No site_ids returned. Fetching /v2/user/sites...');
       const sitesRes = await fetch('https://api.webflow.com/v2/user/sites', {
         headers: {
           Authorization: `Bearer ${tokenData.access_token}`,
@@ -73,22 +71,18 @@ export default async function handler(req, res) {
         },
       });
 
-      const data = await sitesRes.json();
-      console.log('🌐 /user/sites response:', data);
+      const sitesData = await sitesRes.json();
+      console.log('🌍 Sites from /user/sites:', sitesData);
 
-      if (!Array.isArray(data.sites) || data.sites.length === 0) {
+      if (!Array.isArray(sitesData.sites) || sitesData.sites.length === 0) {
         return res.status(400).json({
-          error: 'No sites returned from /user/sites.',
-          tokenData,
-          hint: 'Ensure you selected a site during OAuth install.',
+          error: 'No sites returned from /user/sites',
+          hint: 'User likely did not select a site during OAuth install.',
         });
       }
 
-      console.log('📋 Available sites:', data.sites.map(s => `${s.name} (${s.id})`).join(', '));
-      siteId = data.sites[0].id;
+      siteId = sitesData.sites[0].id;
     }
-
-    console.log('✅ Final resolved site ID:', siteId);
 
     return res.status(200).json({
       access_token: tokenData.access_token,
@@ -96,7 +90,7 @@ export default async function handler(req, res) {
     });
 
   } catch (err) {
-    console.error('❌ Unexpected error during token exchange:', err);
-    return res.status(500).json({ error: 'Unexpected server error during token exchange.' });
+    console.error('❌ Unexpected server error:', err);
+    return res.status(500).json({ error: 'Unexpected error during token exchange.' });
   }
 }

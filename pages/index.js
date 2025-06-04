@@ -7,8 +7,8 @@ export default function Home() {
   const [clientId, setClientId] = useState('');
   const [baseUrl, setBaseUrl] = useState('');
   const [error, setError] = useState('');
+  const [ready, setReady] = useState(false);
 
-  // Webflow scopes required for this app
   const scopes = [
     'sites:read',
     'pages:read',
@@ -26,6 +26,7 @@ export default function Home() {
     } else {
       setClientId(id);
       setBaseUrl(url);
+      setReady(true);
 
       const debugUrl = `https://webflow.com/oauth/authorize?client_id=${id}&response_type=code&redirect_uri=${encodeURIComponent(`${url}/callback`)}&scope=${encodeURIComponent(scopes)}&include_site_ids=true`;
       console.log('🔗 OAuth URL (debug):', debugUrl);
@@ -39,30 +40,11 @@ export default function Home() {
     return `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&scope=${encodeURIComponent(scopes)}&include_site_ids=true`;
   }, [clientId, baseUrl]);
 
-  if (error) {
-    return (
-      <main style={{ textAlign: 'center', marginTop: '5rem' }}>
-        <p style={{ color: 'red' }}>{error}</p>
-      </main>
-    );
-  }
-
-  if (!oauthUrl) {
-    return (
-      <main style={{ textAlign: 'center', marginTop: '5rem' }}>
-        <p>Preparing authorization flow...</p>
-      </main>
-    );
-  }
-
   return (
     <>
       <Head>
         <title>Theme Switcher for Webflow</title>
-        <meta
-          name="description"
-          content="Easily add light/dark theme toggling to your Webflow site. No code required."
-        />
+        <meta name="description" content="Easily add light/dark theme toggling to your Webflow site. No code required." />
       </Head>
 
       <main style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }}>
@@ -77,18 +59,31 @@ export default function Home() {
           Let your visitors toggle between light and dark mode — effortlessly.
         </p>
 
-        <a href={oauthUrl} target="_blank" rel="noopener noreferrer">
+        <a
+          href={ready ? oauthUrl : '#'}
+          target={ready ? '_blank' : undefined}
+          rel={ready ? 'noopener noreferrer' : undefined}
+          title={ready ? '' : 'OAuth setup incomplete. Please contact support or check .env variables.'}
+        >
           <button
+            disabled={!ready}
             style={{
               padding: '12px 24px',
               marginTop: '2rem',
               fontSize: '1rem',
-              cursor: 'pointer',
+              cursor: ready ? 'pointer' : 'not-allowed',
+              opacity: ready ? 1 : 0.5,
             }}
           >
             Connect to Webflow
           </button>
         </a>
+
+        {error && (
+          <p style={{ marginTop: '1rem', color: 'red', fontSize: '0.9rem' }}>
+            {error}
+          </p>
+        )}
       </main>
     </>
   );

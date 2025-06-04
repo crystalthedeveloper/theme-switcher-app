@@ -24,6 +24,11 @@ export default function Callback() {
           body: JSON.stringify({ code }),
         });
 
+        if (!tokenRes.ok) {
+          const errorText = await tokenRes.text();
+          throw new Error(`Token exchange failed: ${errorText}`);
+        }
+
         const tokenData = await tokenRes.json();
         console.log('🔁 Token Response:', tokenData);
 
