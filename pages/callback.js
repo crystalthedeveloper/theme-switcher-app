@@ -25,12 +25,23 @@ export default function Callback() {
 
         const tokenData = await tokenRes.json();
 
-        if (!tokenRes.ok || !tokenData.access_token || !tokenData.site_id) {
+        // Handle general token errors
+        if (!tokenRes.ok || !tokenData.access_token) {
           console.error('⚠️ Token error:', tokenData);
-          throw new Error(tokenData.error || 'Token exchange failed. Missing access token or site ID.');
+          throw new Error(tokenData.error || 'Token exchange failed.');
         }
 
-        const { access_token, site_id, sites = [] } = tokenData;
+        const { access_token, site_id, sites = [], warning } = tokenData;
+
+        if (warning) {
+          console.warn('⚠️ Warning:', warning);
+        }
+
+        if (!site_id) {
+          alert("No site ID found. Please make sure you're using a hosted Webflow site.");
+          throw new Error('No valid site returned.');
+        }
+
         const siteName = sites.find((s) => s.id === site_id)?.name || site_id;
         console.log(`🔐 Authorized site: ${siteName}`);
 
@@ -52,7 +63,7 @@ export default function Callback() {
         const firstPage = pageArray[0];
         console.log(`📄 Injecting script into: ${firstPage.name || firstPage._id}`);
 
-        // Step 2: Inject script via REST API
+        // Step 2: Inject script
         const injectRes = await fetch(
           `https://api.webflow.com/rest/sites/${site_id}/pages/${firstPage._id}/custom-code`,
           {

@@ -22,8 +22,8 @@ export default function Home() {
     const url = process.env.NEXT_PUBLIC_BASE_URL || '';
 
     if (!id || !url) {
-      console.warn('⚠️ Missing required .env variables:', { idMissing: !id, urlMissing: !url });
-      setError('Missing environment variables. Check your Webflow OAuth config.');
+      console.warn('⚠️ Missing .env vars:', { idMissing: !id, urlMissing: !url });
+      setError('Missing environment variables. Please check your .env config.');
     } else {
       setClientId(id);
       setBaseUrl(url);
@@ -60,10 +60,10 @@ export default function Home() {
         </p>
 
         <a
-          href={ready ? oauthUrl : '#'}
+          href={ready && oauthUrl ? oauthUrl : '#'}
           target="_blank"
           rel="noopener noreferrer"
-          title={ready ? '' : 'OAuth not ready — check environment variables.'}
+          title={ready ? '' : 'Waiting for environment config...'}
         >
           <button
             disabled={!ready}
@@ -82,6 +82,18 @@ export default function Home() {
         {error && (
           <p style={{ marginTop: '1rem', color: 'red', fontSize: '0.9rem' }}>
             {error}
+          </p>
+        )}
+
+        {!error && ready && !oauthUrl && (
+          <p style={{ marginTop: '1rem', color: '#666', fontSize: '0.9rem' }}>
+            Waiting for OAuth URL to generate...
+          </p>
+        )}
+
+        {ready && (
+          <p style={{ marginTop: '2rem', color: '#999', fontSize: '0.9rem' }}>
+            ⚠️ Note: Your Webflow site must be on a paid hosting plan (Basic, CMS, etc.) for this app to work properly.
           </p>
         )}
       </main>
