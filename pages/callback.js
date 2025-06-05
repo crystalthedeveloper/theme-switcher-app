@@ -10,7 +10,16 @@ export default function Callback() {
   useEffect(() => {
     if (!router.isReady) return;
 
-    const { code } = router.query;
+    const { code, error, error_description } = router.query;
+
+    // Handle user canceling authorization
+    if (error) {
+      console.error('❌ OAuth Error:', error_description || error);
+      alert('Authorization was cancelled or denied. You can try again anytime.');
+      router.push('/');
+      return;
+    }
+
     if (!code) return;
 
     const exchangeToken = async () => {
@@ -37,13 +46,11 @@ export default function Callback() {
         }
 
         if (!sites.length) {
-          alert("No hosted Webflow sites found. Please make sure your site is on a paid plan.");
+          alert('No hosted Webflow sites found. Please make sure your site is on a paid plan.');
           throw new Error('No valid site returned.');
         }
 
         console.log('🔓 Access token received. Redirecting to site selection...');
-
-        // Redirect to site picker
         router.push(`/select-site?token=${access_token}`);
 
       } catch (err) {
@@ -56,7 +63,7 @@ export default function Callback() {
     };
 
     exchangeToken();
-  }, [router.isReady, router.query.code]);
+  }, [router.isReady, router.query]);
 
   return (
     <main style={{ textAlign: 'center', marginTop: '5rem' }}>
