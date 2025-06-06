@@ -78,8 +78,6 @@ export default async function handler(req, res) {
         }
 
         const siteArray = Array.isArray(data?.sites) ? data.sites : data;
-
-        // Filter out Developer Workspace sites if needed
         const hostedSites = siteArray.filter(site => site?.plan !== 'developer');
 
         if (!Array.isArray(hostedSites) || hostedSites.length === 0) {
@@ -105,20 +103,15 @@ export default async function handler(req, res) {
 
     const finalSites = primary.success ? primary.sites : fallback?.sites || [];
 
-    // 🚨 Marketplace reviewers: this fallback is needed because Developer Workspace sites are restricted
-    if (finalSites.length === 0) {
-      return res.status(200).json({
-        access_token: accessToken,
-        sites: [],
-        warning: 'No hosted sites found. Developer Workspace sites are not available to unapproved apps.',
-      });
-    }
-
+    // ✅ Final Response - allow fallback for testing purposes
     return res.status(200).json({
       access_token: accessToken,
       token_type: tokenData.token_type || 'Bearer',
-      site_id: finalSites[0].id,
+      site_id: finalSites[0]?.id || null,
       sites: finalSites,
+      warning: finalSites.length === 0
+        ? 'No hosted sites found. Proceeding with fallback for testing.'
+        : undefined,
     });
 
   } catch (err) {

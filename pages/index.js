@@ -114,12 +114,6 @@ export default function Home() {
             Waiting for OAuth URL to generate...
           </p>
         )}
-
-        {ready && (
-          <p style={{ marginTop: '2rem', color: '#999', fontSize: '0.9rem' }}>
-            ⚠️ Note: Your Webflow site must be on a paid hosting plan (Basic, CMS, etc.) for this app to work properly.
-          </p>
-        )}
       </main>
     </>
   );
