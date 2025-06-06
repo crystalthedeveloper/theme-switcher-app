@@ -15,7 +15,6 @@ export default function Callback() {
     // Handle user canceling authorization
     if (error) {
       console.error('❌ OAuth Error:', error_description || error);
-      alert('Authorization was cancelled or denied. You can try again anytime.');
       router.push('/');
       return;
     }
@@ -46,8 +45,9 @@ export default function Callback() {
         }
 
         if (!sites.length) {
-          alert('No hosted Webflow sites found. Please make sure your site is on a paid plan.');
-          throw new Error('No valid site returned.');
+          console.warn('⚠️ No hosted Webflow sites found. Skipping to manual install.');
+          router.push('/success?manual=true');
+          return;
         }
 
         console.log('🔓 Access token received. Redirecting to site selection...');
@@ -55,7 +55,6 @@ export default function Callback() {
 
       } catch (err) {
         console.error('❌ Callback Error:', err);
-        alert(err.message || 'Something went wrong during installation.');
         router.push('/');
       } finally {
         setLoading(false);
