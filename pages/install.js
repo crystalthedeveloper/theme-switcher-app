@@ -1,10 +1,14 @@
 // pages/install.js
 
+import { useEffect } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 
 export default function Install() {
   const clientId = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID;
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+  const router = useRouter();
+  const testMode = router.query.test === 'true';
 
   const scopes = [
     'sites:read',
@@ -15,9 +19,23 @@ export default function Install() {
   ].join(' ');
 
   const redirectUri = `${baseUrl}/callback`;
-  const oauthUrl = clientId && baseUrl
-    ? `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`
-    : null;
+  const oauthUrl =
+    clientId && baseUrl
+      ? `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(
+          redirectUri
+        )}&scope=${encodeURIComponent(scopes)}${testMode ? '&state=test' : ''}`
+      : null;
+
+  // ✅ Auto-redirect if already authorized
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const cached = sessionStorage.getItem('webflow_token');
+      if (cached) {
+        if (testMode) console.log('🧪 Test Mode: redirecting to /select-site');
+        router.replace(`/select-site${testMode ? '?test=true' : ''}`);
+      }
+    }
+  }, [router, testMode]);
 
   return (
     <>
@@ -30,14 +48,14 @@ export default function Install() {
       </Head>
 
       <main style={{ textAlign: 'center', padding: '4rem 1.5rem' }}>
-        <h1>🎨 Install Theme Switcher for Webflow</h1>
+        <h1 style={{ fontSize: '2rem' }}>🎨 Install Theme Switcher for Webflow</h1>
 
         <p style={{ maxWidth: '480px', margin: '1rem auto', fontSize: '1.1rem' }}>
-          Add a theme toggle to your Webflow site in one click. Let your users switch between light and dark mode — effortlessly.
+          Add a dark/light mode toggle to your Webflow site in one click.
         </p>
 
         <p style={{ maxWidth: '480px', margin: '1rem auto', color: '#666' }}>
-          This app needs access to your Webflow pages and custom code to install the script. Your site must be on a paid hosting plan.
+          This app needs access to your pages and custom code settings. Your site must be on a paid Webflow hosting plan.
         </p>
 
         {oauthUrl ? (
@@ -74,9 +92,15 @@ export default function Install() {
         )}
 
         <div style={{ marginTop: '3rem', fontSize: '0.9rem', color: '#999' }}>
-          <p>If script injection fails, you'll see a fallback screen with manual install instructions.</p>
-          <p>You can remove the script anytime in your Webflow Project Settings &gt; Custom Code.</p>
+          <p>If injection fails, you’ll see manual install instructions.</p>
+          <p>You can remove the script later in Webflow → Project Settings → Custom Code.</p>
         </div>
+
+        {testMode && (
+          <p style={{ marginTop: '2rem', fontSize: '0.9rem', color: '#999' }}>
+            🧪 Test mode enabled — debug logs are visible in console.
+          </p>
+        )}
       </main>
     </>
   );

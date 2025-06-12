@@ -6,61 +6,62 @@ import { useRouter } from 'next/router';
 export default function Callback() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [testMode, setTestMode] = useState(false);
 
   useEffect(() => {
     if (!router.isReady) return;
 
-    const { code, error, error_description } = router.query;
+    const { code, error, error_description, test } = router.query;
+    const isTest = test === 'true';
+    setTestMode(isTest);
 
-    // Handle user canceling authorization
     if (error) {
-      console.error('❌ OAuth Error:', error_description || error);
+      if (isTest) console.error('❌ OAuth Error:', error_description || error);
       router.replace('/');
       return;
     }
 
-    // Wait until `code` is present in the query
     if (!code) return;
 
     const exchangeToken = async () => {
       try {
-        console.log('🔄 Exchanging code for token:', code);
+        if (isTest) console.log('🔄 Exchanging code for token:', code);
 
-        const tokenRes = await fetch('/api/exchange-token', {
+        const res = await fetch('/api/exchange-token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code }),
         });
 
-        const tokenData = await tokenRes.json();
+        const data = await res.json();
 
-        if (!tokenRes.ok || !tokenData.access_token) {
-          console.error('⚠️ Token error:', tokenData);
-          throw new Error(tokenData.error || 'Token exchange failed.');
+        if (!res.ok || !data.access_token) {
+          if (isTest) console.error('⚠️ Token exchange failed:', data);
+          throw new Error(data.error || 'Token exchange failed.');
         }
 
-        const { access_token, sites = [], warning } = tokenData;
+        const { access_token, sites = [], warning } = data;
 
-        // Save token in sessionStorage for re-use
         if (typeof window !== 'undefined') {
           sessionStorage.setItem('webflow_token', access_token);
         }
 
-        if (warning) {
-          console.warn('⚠️ Warning:', warning);
+        if (isTest) {
+          console.log('✅ Access token:', access_token);
+          if (warning) console.warn('⚠️ Warning:', warning);
         }
 
         if (!sites.length) {
-          console.warn('⚠️ No hosted Webflow sites found. Skipping to manual install.');
+          if (isTest) console.warn('⚠️ No hosted sites found. Redirecting to manual install.');
           router.replace('/success?manual=true');
           return;
         }
 
-        console.log('✅ Token received. Redirecting to site selection...');
-        router.replace(`/select-site?token=${access_token}`);
-        console.log('🎉 Redirect to /select-site complete.');
+        const redirectUrl = `/select-site?token=${access_token}${isTest ? '&test=true' : ''}`;
+        if (isTest) console.log('➡️ Redirecting to:', redirectUrl);
+        router.replace(redirectUrl);
       } catch (err) {
-        console.error('❌ Callback Error:', err);
+        if (isTest) console.error('❌ Unexpected error:', err);
         router.replace('/');
       } finally {
         setLoading(false);
@@ -71,11 +72,17 @@ export default function Callback() {
   }, [router.isReady, router.query]);
 
   return (
-    <main style={{ textAlign: 'center', marginTop: '5rem' }}>
-      {loading ? (
-        <p>Exchanging code and preparing your sites...</p>
-      ) : (
-        <p style={{ color: 'red' }}>Something went wrong. Redirecting...</p>
+    <main style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }}>
+      <h1>🔄 Connecting to Webflow...</h1>
+      <p>
+        {loading
+          ? 'Exchanging code and preparing your site list...'
+          : 'Something went wrong. Redirecting...'}
+      </p>
+      {testMode && (
+        <p style={{ marginTop: '1rem', fontSize: '0.9rem', color: '#999' }}>
+          🧪 Test mode active – extra logs visible in browser console
+        </p>
       )}
     </main>
   );

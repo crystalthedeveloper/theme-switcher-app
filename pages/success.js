@@ -20,16 +20,22 @@ export default function Success() {
       <h1 style={{ fontSize: '2rem' }}>✅ Theme Switcher Installed</h1>
 
       <p style={{ fontSize: '1.1rem', maxWidth: '480px', margin: '1rem auto' }}>
-        Your theme switcher script has been successfully added to your Webflow site.
+        The theme toggle script has been successfully added to your Webflow site.
       </p>
 
       {showManualInstall && (
-        <div style={{ maxWidth: '600px', margin: '2rem auto', textAlign: 'left' }}>
-          <h2 style={{ fontSize: '1.2rem', color: '#333' }}>Manual Install Instructions</h2>
+        <section style={{ maxWidth: '600px', margin: '2rem auto', textAlign: 'left' }}>
+          <h2 style={{ fontSize: '1.25rem', color: '#222', marginBottom: '0.5rem' }}>
+            Manual Installation Instructions
+          </h2>
           <p style={{ fontSize: '0.95rem', color: '#555' }}>
-            If the Custom Code API wasn’t available, you can still enable the toggle by adding this script
-            to your Webflow Project Settings (in the <strong>Footer Code</strong> section):
+            If Webflow's Custom Code API was unavailable, you can still enable the toggle manually:
           </p>
+          <ol style={{ fontSize: '0.9rem', color: '#444', marginTop: '1rem', paddingLeft: '1.2rem' }}>
+            <li>Go to your Webflow Project Settings.</li>
+            <li>Open the <strong>Custom Code</strong> tab.</li>
+            <li>Paste the script below into the <strong>Footer Code</strong> section:</li>
+          </ol>
           <pre
             style={{
               background: '#f4f4f4',
@@ -40,12 +46,12 @@ export default function Success() {
               overflowX: 'auto',
             }}
           >
-            &lt;script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer&gt;&lt;/script&gt;
+&lt;script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer&gt;&lt;/script&gt;
           </pre>
-        </div>
+        </section>
       )}
 
-      <p role="alert" style={{ marginTop: '1.5rem', color: '#999', fontStyle: 'italic' }}>
+      <p role="status" aria-live="polite" style={{ marginTop: '1.5rem', color: '#777', fontStyle: 'italic' }}>
         Redirecting to home in 10 seconds...
       </p>
 

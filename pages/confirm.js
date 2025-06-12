@@ -5,75 +5,111 @@ import { useRouter } from 'next/router';
 
 export default function Confirm() {
   const router = useRouter();
-  const { site_id, token } = router.query;
-  const [status, setStatus] = useState('Injecting script into your Webflow site...');
+  const { site_id, token, test } = router.query;
 
-  useEffect(() => {
+  const [status, setStatus] = useState('Injecting script into your Webflow site...');
+  const [injectionFailed, setInjectionFailed] = useState(false);
+  const [retrying, setRetrying] = useState(false);
+  const testMode = test === 'true';
+
+  const injectScript = async () => {
     if (!site_id || !token) return;
 
-    const injectScript = async () => {
-      try {
-        // Step 1: Get the site's pages
-        const pagesRes = await fetch(`https://api.webflow.com/rest/sites/${site_id}/pages`, {
+    setInjectionFailed(false);
+    setRetrying(true);
+    setStatus('Attempting to inject theme switcher script...');
+
+    try {
+      if (testMode) console.log('📡 Fetching pages for site:', site_id);
+
+      const pagesRes = await fetch(`https://api.webflow.com/rest/sites/${site_id}/pages`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'accept-version': '1.0.0',
+        },
+      });
+
+      const pagesData = await pagesRes.json();
+      const pages = Array.isArray(pagesData?.pages) ? pagesData.pages : [];
+
+      if (!pages.length) throw new Error('No pages found on this site.');
+      const targetPage = pages[0];
+
+      if (testMode) console.log('📝 Targeting page:', targetPage.name || targetPage._id);
+
+      const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
+
+      const injectRes = await fetch(
+        `https://api.webflow.com/rest/sites/${site_id}/pages/${targetPage._id}/custom-code`,
+        {
+          method: 'PATCH',
           headers: {
             Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
             'accept-version': '1.0.0',
           },
-        });
-
-        const pagesData = await pagesRes.json();
-        const pages = Array.isArray(pagesData?.pages) ? pagesData.pages : [];
-
-        if (!pages.length) {
-          throw new Error('No pages found on this site.');
+          body: JSON.stringify({
+            body: scriptTag,
+            enabled: true,
+          }),
         }
+      );
 
-        const targetPage = pages[0];
-        setStatus(`Injecting theme switcher into page: ${targetPage.name || targetPage._id}...`);
+      if (!injectRes.ok) throw new Error('Custom code injection failed.');
 
-        // Step 2: Inject the script into the custom code area
-        const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
+      if (testMode) console.log('✅ Script successfully injected.');
+      router.replace(`/success${testMode ? '?test=true' : ''}`);
+    } catch (err) {
+      console.error('❌ Injection Error:', err.message);
+      setInjectionFailed(true);
+      setStatus('Automatic injection failed. You can retry or install manually.');
+    } finally {
+      setRetrying(false);
+    }
+  };
 
-        const injectRes = await fetch(
-          `https://api.webflow.com/rest/sites/${site_id}/pages/${targetPage._id}/custom-code`,
-          {
-            method: 'PATCH',
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-              'accept-version': '1.0.0',
-            },
-            body: JSON.stringify({
-              body: scriptTag,
-              enabled: true,
-            }),
-          }
-        );
-
-        if (!injectRes.ok) {
-          console.warn('⚠️ Script injection failed, redirecting to manual fallback.');
-          router.push('/success?manual=true');
-          return;
-        }
-
-        console.log('✅ Script successfully injected.');
-        router.push('/success');
-      } catch (err) {
-        console.error('❌ Injection Error:', err.message);
-        setStatus('Could not inject script automatically. Redirecting to manual install...');
-        setTimeout(() => {
-          router.push('/success?manual=true');
-        }, 1500);
-      }
-    };
-
-    injectScript();
-  }, [site_id, token, router]);
+  useEffect(() => {
+    if (site_id && token) injectScript();
+  }, [site_id, token]);
 
   return (
     <main style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }}>
       <h1>🔧 Installing Theme Switcher...</h1>
-      <p>{status}</p>
+      <p style={{ maxWidth: '500px', margin: '1rem auto' }}>{status}</p>
+
+      {injectionFailed && (
+        <div style={{ marginTop: '2rem' }}>
+          <button
+            onClick={injectScript}
+            disabled={retrying}
+            style={{
+              padding: '10px 20px',
+              marginRight: '1rem',
+              fontSize: '1rem',
+              cursor: retrying ? 'not-allowed' : 'pointer',
+              opacity: retrying ? 0.6 : 1,
+            }}
+          >
+            {retrying ? 'Retrying...' : 'Try Again'}
+          </button>
+          <button
+            onClick={() => router.push(`/success?manual=true${testMode ? '&test=true' : ''}`)}
+            style={{
+              padding: '10px 20px',
+              fontSize: '1rem',
+              cursor: 'pointer',
+            }}
+          >
+            Manual Install
+          </button>
+        </div>
+      )}
+
+      {testMode && (
+        <p style={{ marginTop: '2rem', fontSize: '0.9rem', color: '#999' }}>
+          🧪 Test mode enabled — debug logs are shown in the browser console.
+        </p>
+      )}
     </main>
   );
 }

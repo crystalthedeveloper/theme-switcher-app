@@ -9,18 +9,19 @@ export default function SelectSite() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState('');
+  const [testMode, setTestMode] = useState(false);
 
   useEffect(() => {
     const queryToken = router.query.token;
+    const isTest = router.query.test === 'true';
+    setTestMode(isTest);
 
-    // Prefer query token, fallback to sessionStorage
-    const storedToken =
-      typeof window !== 'undefined' ? sessionStorage.getItem('webflow_token') : null;
-
+    const storedToken = typeof window !== 'undefined' ? sessionStorage.getItem('webflow_token') : null;
     const finalToken = queryToken || storedToken;
     setToken(finalToken);
 
     if (!finalToken) {
+      if (isTest) console.warn('⚠️ Missing token.');
       setError('Missing access token.');
       setLoading(false);
       return;
@@ -28,6 +29,8 @@ export default function SelectSite() {
 
     const fetchSites = async () => {
       try {
+        if (isTest) console.log('📡 Fetching sites with token:', finalToken);
+
         const res = await fetch('https://api.webflow.com/rest/sites', {
           headers: {
             Authorization: `Bearer ${finalToken}`,
@@ -38,15 +41,20 @@ export default function SelectSite() {
         const data = await res.json();
         const filteredSites = (data.sites || []).filter(site => site.plan !== 'developer');
 
+        if (isTest) {
+          console.log('🌐 Sites returned:', data.sites?.length || 0);
+          console.log('✅ Hosted sites found:', filteredSites.length);
+        }
+
         if (filteredSites.length === 0) {
-          console.warn('⚠️ No hosted sites found. Redirecting to manual success page.');
+          if (isTest) console.warn('⚠️ No hosted Webflow sites found. Redirecting to manual success page.');
           router.replace('/success?manual=true');
           return;
         }
 
         setSites(filteredSites);
       } catch (err) {
-        console.error('❌ Failed to load sites:', err);
+        if (isTest) console.error('❌ Error fetching sites:', err);
         setError('Failed to load sites. Please try again.');
       } finally {
         setLoading(false);
@@ -58,7 +66,9 @@ export default function SelectSite() {
 
   const handleSelect = (siteId) => {
     if (!token) return;
-    router.push(`/confirm?site_id=${siteId}&token=${token}`);
+    const url = `/confirm?site_id=${siteId}&token=${token}${testMode ? '&test=true' : ''}`;
+    if (testMode) console.log('➡️ Navigating to:', url);
+    router.push(url);
   };
 
   return (
@@ -81,6 +91,12 @@ export default function SelectSite() {
             </li>
           ))}
         </ul>
+      )}
+
+      {testMode && (
+        <p style={{ marginTop: '2rem', fontSize: '0.9rem', color: '#999' }}>
+          🧪 Test mode enabled – logs shown in browser console
+        </p>
       )}
     </main>
   );

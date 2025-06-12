@@ -2,8 +2,12 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 
 export default function Home() {
+  const router = useRouter();
+  const testMode = router.query.test === 'true';
+
   const [clientId, setClientId] = useState('');
   const [baseUrl, setBaseUrl] = useState('');
   const [error, setError] = useState('');
@@ -23,7 +27,7 @@ export default function Home() {
 
     if (!id || !url) {
       console.warn('⚠️ Missing .env vars:', { idMissing: !id, urlMissing: !url });
-      setError('Missing required environment variables. Please check your .env config.');
+      setError('Missing environment config. Please check .env setup.');
       return;
     }
 
@@ -31,31 +35,39 @@ export default function Home() {
     setBaseUrl(url);
     setReady(true);
 
-    const debugUrl = `https://webflow.com/oauth/authorize?client_id=${id}&response_type=code&redirect_uri=${encodeURIComponent(`${url}/callback`)}&scope=${encodeURIComponent(scopes)}`;
-    console.log('🔗 OAuth URL (debug):', debugUrl);
-  }, []);
+    const debugUrl = `https://webflow.com/oauth/authorize?client_id=${id}&response_type=code&redirect_uri=${encodeURIComponent(
+      `${url}/callback`
+    )}&scope=${encodeURIComponent(scopes)}${testMode ? '&state=test' : ''}`;
+    if (testMode) console.log('🧪 Test Mode: OAuth URL →', debugUrl);
+  }, [testMode]);
 
   const oauthUrl = useMemo(() => {
     if (!clientId || !baseUrl) return '';
     const redirectUri = `${baseUrl}/callback`;
-    return `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
-  }, [clientId, baseUrl]);
+    return `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(
+      redirectUri
+    )}&scope=${encodeURIComponent(scopes)}${testMode ? '&state=test' : ''}`;
+  }, [clientId, baseUrl, testMode]);
 
   return (
     <>
       <Head>
         <title>Theme Switcher for Webflow</title>
-        <meta name="description" content="Add light/dark theme toggling to your Webflow site with one click. No code required." />
+        <meta
+          name="description"
+          content="Add light/dark theme toggling to your Webflow site with one click. No code required."
+        />
       </Head>
 
-      <main style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }}>
+      <main style={{ textAlign: 'center', marginTop: '4rem', padding: '0 1.5rem' }}>
         <img
           src="/logo.png"
           alt="Crystal The Developer Logo"
-          style={{ width: '100px', marginBottom: '1rem' }}
+          style={{ width: '80px', marginBottom: '1rem' }}
         />
 
-        <h1>🎨 Theme Switcher for Webflow</h1>
+        <h1 style={{ fontSize: '2rem' }}>🎨 Theme Switcher for Webflow</h1>
+
         <p style={{ fontSize: '1.1rem', maxWidth: '480px', margin: '0 auto' }}>
           Let your visitors toggle between light and dark mode — effortlessly.
         </p>
@@ -64,7 +76,7 @@ export default function Home() {
           href={ready && oauthUrl ? oauthUrl : '#'}
           target="_blank"
           rel="noopener noreferrer"
-          title={ready ? 'Begin OAuth flow' : 'Waiting for environment config...'}
+          title={ready ? 'Start install flow' : 'Waiting on config...'}
         >
           <button
             disabled={!ready}
@@ -89,6 +101,12 @@ export default function Home() {
         {!error && ready && !oauthUrl && (
           <p style={{ marginTop: '1rem', color: '#666', fontSize: '0.9rem' }}>
             Generating OAuth URL...
+          </p>
+        )}
+
+        {testMode && (
+          <p style={{ marginTop: '2rem', fontSize: '0.85rem', color: '#999' }}>
+            🧪 Test mode enabled — logs visible in console
           </p>
         )}
       </main>
