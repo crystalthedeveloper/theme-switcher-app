@@ -14,7 +14,7 @@ export default function Home() {
     'sites:write',
     'pages:read',
     'pages:write',
-    'custom_code:write', // 👈 required for injecting the theme switcher script
+    'custom_code:write',
   ].join(' ');
 
   useEffect(() => {
@@ -23,15 +23,16 @@ export default function Home() {
 
     if (!id || !url) {
       console.warn('⚠️ Missing .env vars:', { idMissing: !id, urlMissing: !url });
-      setError('Missing environment variables. Please check your .env config.');
-    } else {
-      setClientId(id);
-      setBaseUrl(url);
-      setReady(true);
-
-      const debugUrl = `https://webflow.com/oauth/authorize?client_id=${id}&response_type=code&redirect_uri=${encodeURIComponent(`${url}/callback`)}&scope=${encodeURIComponent(scopes)}`;
-      console.log('🔗 OAuth URL (debug):', debugUrl);
+      setError('Missing required environment variables. Please check your .env config.');
+      return;
     }
+
+    setClientId(id);
+    setBaseUrl(url);
+    setReady(true);
+
+    const debugUrl = `https://webflow.com/oauth/authorize?client_id=${id}&response_type=code&redirect_uri=${encodeURIComponent(`${url}/callback`)}&scope=${encodeURIComponent(scopes)}`;
+    console.log('🔗 OAuth URL (debug):', debugUrl);
   }, []);
 
   const oauthUrl = useMemo(() => {
@@ -39,30 +40,6 @@ export default function Home() {
     const redirectUri = `${baseUrl}/callback`;
     return `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
   }, [clientId, baseUrl]);
-
-  // 🧪 Planned use of Webflow Custom Code API
-  async function injectThemeScript(accessToken, siteId) {
-    try {
-      // Only enabled once app is approved and granted access to custom_code:write
-      const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
-
-      await fetch(`https://api.webflow.com/v1/sites/${siteId}/custom_code`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-          'accept-version': '1.0.0',
-        },
-        body: JSON.stringify({
-          footer: scriptTag,
-        }),
-      });
-
-      console.log('✅ Theme switcher script injected via API.');
-    } catch (err) {
-      console.warn('⚠️ Custom Code API not yet available or access denied. Fallback to manual script installation.');
-    }
-  }
 
   return (
     <>
@@ -87,7 +64,7 @@ export default function Home() {
           href={ready && oauthUrl ? oauthUrl : '#'}
           target="_blank"
           rel="noopener noreferrer"
-          title={ready ? '' : 'Waiting for environment config...'}
+          title={ready ? 'Begin OAuth flow' : 'Waiting for environment config...'}
         >
           <button
             disabled={!ready}
@@ -99,7 +76,7 @@ export default function Home() {
               opacity: ready ? 1 : 0.5,
             }}
           >
-            Connect to Webflow
+            Install Theme Switcher
           </button>
         </a>
 
@@ -111,7 +88,7 @@ export default function Home() {
 
         {!error && ready && !oauthUrl && (
           <p style={{ marginTop: '1rem', color: '#666', fontSize: '0.9rem' }}>
-            Waiting for OAuth URL to generate...
+            Generating OAuth URL...
           </p>
         )}
       </main>

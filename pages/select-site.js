@@ -8,17 +8,29 @@ export default function SelectSite() {
   const [sites, setSites] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-
-  const accessToken = router.query.token; // passed from /callback
+  const [token, setToken] = useState('');
 
   useEffect(() => {
-    if (!accessToken) return;
+    const queryToken = router.query.token;
+
+    // Prefer query token, fallback to sessionStorage
+    const storedToken =
+      typeof window !== 'undefined' ? sessionStorage.getItem('webflow_token') : null;
+
+    const finalToken = queryToken || storedToken;
+    setToken(finalToken);
+
+    if (!finalToken) {
+      setError('Missing access token.');
+      setLoading(false);
+      return;
+    }
 
     const fetchSites = async () => {
       try {
         const res = await fetch('https://api.webflow.com/rest/sites', {
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${finalToken}`,
             'accept-version': '1.0.0',
           },
         });
@@ -27,23 +39,26 @@ export default function SelectSite() {
         const filteredSites = (data.sites || []).filter(site => site.plan !== 'developer');
 
         if (filteredSites.length === 0) {
-          setError('No hosted sites found.');
-        } else {
-          setSites(filteredSites);
+          console.warn('⚠️ No hosted sites found. Redirecting to manual success page.');
+          router.replace('/success?manual=true');
+          return;
         }
+
+        setSites(filteredSites);
       } catch (err) {
-        setError('Failed to load sites.');
+        console.error('❌ Failed to load sites:', err);
+        setError('Failed to load sites. Please try again.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchSites();
-  }, [accessToken]);
+  }, [router.query.token]);
 
   const handleSelect = (siteId) => {
-    // Send the user to script injection step
-    router.push(`/confirm?site_id=${siteId}&token=${accessToken}`);
+    if (!token) return;
+    router.push(`/confirm?site_id=${siteId}&token=${token}`);
   };
 
   return (

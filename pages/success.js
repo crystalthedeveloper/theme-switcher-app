@@ -20,20 +20,32 @@ export default function Success() {
       <h1 style={{ fontSize: '2rem' }}>✅ Theme Switcher Installed</h1>
 
       <p style={{ fontSize: '1.1rem', maxWidth: '480px', margin: '1rem auto' }}>
-        Your dark/light toggle script has been added to your Webflow site.
+        Your theme switcher script has been successfully added to your Webflow site.
       </p>
 
       {showManualInstall && (
-        <p style={{ fontSize: '0.95rem', color: '#666', maxWidth: '480px', margin: '0 auto' }}>
-          If the Custom Code API isn’t available yet, please paste this script manually into your Webflow Project Settings:
-          <br />
-          <code style={{ display: 'inline-block', marginTop: '0.5rem', background: '#f1f1f1', padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem' }}>
+        <div style={{ maxWidth: '600px', margin: '2rem auto', textAlign: 'left' }}>
+          <h2 style={{ fontSize: '1.2rem', color: '#333' }}>Manual Install Instructions</h2>
+          <p style={{ fontSize: '0.95rem', color: '#555' }}>
+            If the Custom Code API wasn’t available, you can still enable the toggle by adding this script
+            to your Webflow Project Settings (in the <strong>Footer Code</strong> section):
+          </p>
+          <pre
+            style={{
+              background: '#f4f4f4',
+              padding: '10px',
+              borderRadius: '6px',
+              marginTop: '1rem',
+              fontSize: '0.85rem',
+              overflowX: 'auto',
+            }}
+          >
             &lt;script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer&gt;&lt;/script&gt;
-          </code>
-        </p>
+          </pre>
+        </div>
       )}
 
-      <p style={{ marginTop: '1.5rem', color: '#999', fontStyle: 'italic' }}>
+      <p role="alert" style={{ marginTop: '1.5rem', color: '#999', fontStyle: 'italic' }}>
         Redirecting to home in 10 seconds...
       </p>
 

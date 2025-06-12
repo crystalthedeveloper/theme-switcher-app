@@ -15,10 +15,11 @@ export default function Callback() {
     // Handle user canceling authorization
     if (error) {
       console.error('❌ OAuth Error:', error_description || error);
-      router.push('/');
+      router.replace('/');
       return;
     }
 
+    // Wait until `code` is present in the query
     if (!code) return;
 
     const exchangeToken = async () => {
@@ -40,22 +41,27 @@ export default function Callback() {
 
         const { access_token, sites = [], warning } = tokenData;
 
+        // Save token in sessionStorage for re-use
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('webflow_token', access_token);
+        }
+
         if (warning) {
           console.warn('⚠️ Warning:', warning);
         }
 
         if (!sites.length) {
           console.warn('⚠️ No hosted Webflow sites found. Skipping to manual install.');
-          router.push('/success?manual=true');
+          router.replace('/success?manual=true');
           return;
         }
 
-        console.log('🔓 Access token received. Redirecting to site selection...');
-        router.push(`/select-site?token=${access_token}`);
-
+        console.log('✅ Token received. Redirecting to site selection...');
+        router.replace(`/select-site?token=${access_token}`);
+        console.log('🎉 Redirect to /select-site complete.');
       } catch (err) {
         console.error('❌ Callback Error:', err);
-        router.push('/');
+        router.replace('/');
       } finally {
         setLoading(false);
       }

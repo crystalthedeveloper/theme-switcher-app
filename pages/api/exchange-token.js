@@ -15,14 +15,16 @@ export default async function handler(req, res) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
   const redirectUri = `${baseUrl}/callback`;
 
-  if (!clientId || !clientSecret || !baseUrl) {
+  const missingEnv = {
+    clientId: !clientId,
+    clientSecret: !clientSecret,
+    baseUrl: !baseUrl,
+  };
+
+  if (Object.values(missingEnv).includes(true)) {
     return res.status(500).json({
       error: 'Missing required environment variables.',
-      details: {
-        clientId: !!clientId,
-        clientSecret: !!clientSecret,
-        baseUrl: !!baseUrl,
-      },
+      details: missingEnv,
     });
   }
 
@@ -50,6 +52,8 @@ export default async function handler(req, res) {
 
     if (!tokenRes.ok || tokenData.error || !tokenData.access_token) {
       console.error('❌ Token exchange failed:', raw);
+      console.warn('Hint: Double-check your Webflow App settings → Callback URL must match exactly.');
+
       return res.status(400).json({
         error: tokenData.error_description || 'Token exchange failed',
         hint: 'Check client_id, client_secret, and redirect_uri.',
@@ -95,13 +99,17 @@ export default async function handler(req, res) {
       }
     };
 
-    // 🧪 Step 3: Try modern first, fallback to legacy API
+    // 🧪 Step 3: Try modern endpoint first, then fallback
     const primary = await trySitesEndpoint('https://api.webflow.com/rest/sites');
     const fallback = !primary.success
       ? await trySitesEndpoint('https://api.webflow.com/sites')
       : null;
 
-    const finalSites = primary.success ? primary.sites : fallback?.sites || [];
+    const finalSites = primary.success
+      ? primary.sites
+      : fallback && fallback.success
+        ? fallback.sites
+        : [];
 
     // ✅ Final Response - allow fallback for testing purposes
     return res.status(200).json({

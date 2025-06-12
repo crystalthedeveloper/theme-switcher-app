@@ -6,14 +6,14 @@ import { useRouter } from 'next/router';
 export default function Confirm() {
   const router = useRouter();
   const { site_id, token } = router.query;
-  const [status, setStatus] = useState('Injecting script...');
+  const [status, setStatus] = useState('Injecting script into your Webflow site...');
 
   useEffect(() => {
     if (!site_id || !token) return;
 
     const injectScript = async () => {
       try {
-        // Step 1: Get pages for the selected site
+        // Step 1: Get the site's pages
         const pagesRes = await fetch(`https://api.webflow.com/rest/sites/${site_id}/pages`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -22,16 +22,16 @@ export default function Confirm() {
         });
 
         const pagesData = await pagesRes.json();
-        const pages = pagesData?.pages || [];
+        const pages = Array.isArray(pagesData?.pages) ? pagesData.pages : [];
 
-        if (!Array.isArray(pages) || pages.length === 0) {
-          throw new Error('No pages found for this site.');
+        if (!pages.length) {
+          throw new Error('No pages found on this site.');
         }
 
         const targetPage = pages[0];
-        setStatus(`Injecting into: ${targetPage.name || targetPage._id}`);
+        setStatus(`Injecting theme switcher into page: ${targetPage.name || targetPage._id}...`);
 
-        // Step 2: Inject script via custom-code API
+        // Step 2: Inject the script into the custom code area
         const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
 
         const injectRes = await fetch(
@@ -51,15 +51,19 @@ export default function Confirm() {
         );
 
         if (!injectRes.ok) {
-          console.warn('⚠️ Script injection failed.');
+          console.warn('⚠️ Script injection failed, redirecting to manual fallback.');
           router.push('/success?manual=true');
-        } else {
-          console.log('✅ Script successfully injected.');
-          router.push('/success');
+          return;
         }
+
+        console.log('✅ Script successfully injected.');
+        router.push('/success');
       } catch (err) {
         console.error('❌ Injection Error:', err.message);
-        router.push('/success?manual=true');
+        setStatus('Could not inject script automatically. Redirecting to manual install...');
+        setTimeout(() => {
+          router.push('/success?manual=true');
+        }, 1500);
       }
     };
 
