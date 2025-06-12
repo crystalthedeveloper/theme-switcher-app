@@ -13,6 +13,9 @@ This Webflow OAuth app allows users to securely connect their Webflow account an
 - 🗂️ Site selection after OAuth
 - ✅ Success screen with install confirmation or manual script
 - 🧠 Built with Next.js and deploys to Vercel
+- 🧪 Test mode support with console logs
+- 📱 Responsive design for mobile users
+- 🧼 Clean, accessible UI and code
 
 ---
 
@@ -63,15 +66,7 @@ WEBFLOW_CLIENT_SECRET=your_webflow_client_secret
 - Works only on hosted (paid) Webflow sites
 - Developer Workspace sites will return no IDs until the app is approved
 - If injection fails, users will be redirected to `/success?manual=true`
-
----
-
-## 📦 Tech Stack
-
-- [Next.js](https://nextjs.org)
-- [React](https://react.dev)
-- [Webflow REST API](https://developers.webflow.com)
-- [Vercel](https://vercel.com)
+- Add `?test=true` to URLs to see verbose logs in browser console
 
 ---
 
@@ -81,6 +76,17 @@ This app:
 - Uses the `/rest/sites/:id/pages/:page_id/custom-code` endpoint for injection
 - Falls back to manual script copy if injection fails
 - Provides a clear user flow from OAuth to installation
+- Includes a “Try Again” button for retrying script injection
+
+---
+
+## 🧼 Uninstall Instructions
+
+To remove the theme toggle script:
+1. Go to your Webflow site’s **Project Settings**
+2. Click the **Custom Code** tab
+3. Delete the injected script from the **Footer Code** section
+4. Go to **Apps & Integrations** and click **Uninstall App**
 
 ---
 

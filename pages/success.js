@@ -48,6 +48,12 @@ export default function Success() {
           >
 &lt;script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer&gt;&lt;/script&gt;
           </pre>
+
+          <p style={{ fontSize: '0.85rem', color: '#999', marginTop: '2rem' }}>
+            To remove the theme script, go to your Webflow Project Settings → <strong>Custom Code</strong> and delete the injected line.
+            <br /><br />
+            To uninstall the app entirely, go to <strong>Project Settings → Apps & Integrations</strong> and click <em>Uninstall App</em>.
+          </p>
         </section>
       )}
 
