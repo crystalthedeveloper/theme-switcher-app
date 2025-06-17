@@ -18,18 +18,19 @@ export default function SelectSite() {
 
     const storedToken = typeof window !== 'undefined' ? sessionStorage.getItem('webflow_token') : null;
     const finalToken = queryToken || storedToken;
-    setToken(finalToken);
 
     if (!finalToken) {
-      if (isTest) console.warn('⚠️ Missing token.');
-      setError('Missing access token.');
+      if (isTest) console.warn('⚠️ Missing Webflow token.');
+      setError('Missing access token. Please start the install process again.');
       setLoading(false);
       return;
     }
 
+    setToken(finalToken);
+
     const fetchSites = async () => {
       try {
-        if (isTest) console.log('📡 Fetching sites with token:', finalToken);
+        if (isTest) console.log('📡 Fetching sites using token:', finalToken);
 
         const res = await fetch('https://api.webflow.com/rest/sites', {
           headers: {
@@ -38,24 +39,25 @@ export default function SelectSite() {
           },
         });
 
-        const data = await res.json();
-        const filteredSites = (data.sites || []).filter(site => site.plan !== 'developer');
+        const raw = await res.text();
+        const data = JSON.parse(raw);
 
-        if (isTest) {
-          console.log('🌐 Sites returned:', data.sites?.length || 0);
-          console.log('✅ Hosted sites found:', filteredSites.length);
-        }
+        const hostedSites = (data.sites || []).filter(site => site.plan !== 'developer');
 
-        if (filteredSites.length === 0) {
-          if (isTest) console.warn('⚠️ No hosted Webflow sites found. Redirecting to manual success page.');
-          router.replace('/success?manual=true');
+        if (hostedSites.length === 0) {
+          if (isTest) console.warn('⚠️ No hosted sites. Redirecting to manual success.');
+          router.replace('/success?manual=true' + (isTest ? '&test=true' : ''));
           return;
         }
 
-        setSites(filteredSites);
+        if (isTest) {
+          console.log(`✅ Found ${hostedSites.length} hosted sites`);
+        }
+
+        setSites(hostedSites);
       } catch (err) {
-        if (isTest) console.error('❌ Error fetching sites:', err);
-        setError('Failed to load sites. Please try again.');
+        if (isTest) console.error('❌ Error loading sites:', err);
+        setError('Failed to load your sites. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -66,9 +68,10 @@ export default function SelectSite() {
 
   const handleSelect = (siteId) => {
     if (!token) return;
-    const url = `/confirm?site_id=${siteId}&token=${token}${testMode ? '&test=true' : ''}`;
-    if (testMode) console.log('➡️ Navigating to:', url);
-    router.push(url);
+
+    const redirect = `/confirm?site_id=${siteId}&token=${token}${testMode ? '&test=true' : ''}`;
+    if (testMode) console.log('➡️ Redirecting to:', redirect);
+    router.push(redirect);
   };
 
   return (
@@ -76,15 +79,19 @@ export default function SelectSite() {
       <h1>Select Your Webflow Site</h1>
 
       {loading && <p>Loading sites...</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <p style={{ color: 'red', marginTop: '1rem' }}>{error}</p>}
 
       {!loading && !error && sites.length > 0 && (
         <ul style={{ listStyle: 'none', padding: 0 }}>
-          {sites.map(site => (
+          {sites.map((site) => (
             <li key={site._id} style={{ margin: '1rem 0' }}>
               <button
                 onClick={() => handleSelect(site._id)}
-                style={{ padding: '10px 20px', fontSize: '1rem', cursor: 'pointer' }}
+                style={{
+                  padding: '10px 20px',
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                }}
               >
                 {site.displayName || site.name || 'Untitled Site'}
               </button>
@@ -95,7 +102,7 @@ export default function SelectSite() {
 
       {testMode && (
         <p style={{ marginTop: '2rem', fontSize: '0.9rem', color: '#999' }}>
-          🧪 Test mode enabled – logs shown in browser console
+          🧪 Test mode enabled – logs visible in browser console
         </p>
       )}
     </main>

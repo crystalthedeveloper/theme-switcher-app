@@ -40,28 +40,23 @@ export default function Callback() {
           throw new Error(data.error || 'Token exchange failed.');
         }
 
-        const { access_token, sites = [], warning } = data;
+        const { access_token, warning } = data;
 
         if (typeof window !== 'undefined') {
           sessionStorage.setItem('webflow_token', access_token);
         }
 
-        if (isTest) {
+        if (testMode) {
           console.log('✅ Access token:', access_token);
           if (warning) console.warn('⚠️ Warning:', warning);
         }
 
-        if (!sites.length) {
-          if (isTest) console.warn('⚠️ No hosted sites found. Redirecting to manual install.');
-          router.replace('/success?manual=true');
-          return;
-        }
-
-        const redirectUrl = `/select-site?token=${access_token}${isTest ? '&test=true' : ''}`;
-        if (isTest) console.log('➡️ Redirecting to:', redirectUrl);
+        // ✅ Redirect to site selection regardless of site count
+        const redirectUrl = `/select-site?token=${access_token}${testMode ? '&test=true' : ''}`;
+        if (testMode) console.log('➡️ Redirecting to:', redirectUrl);
         router.replace(redirectUrl);
       } catch (err) {
-        if (isTest) console.error('❌ Unexpected error:', err);
+        if (testMode) console.error('❌ Unexpected error:', err);
         router.replace('/');
       } finally {
         setLoading(false);

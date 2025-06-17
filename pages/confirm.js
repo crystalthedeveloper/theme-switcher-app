@@ -13,14 +13,18 @@ export default function Confirm() {
   const testMode = test === 'true';
 
   const injectScript = async () => {
-    if (!site_id || !token) return;
+    if (!site_id || !token) {
+      if (testMode) console.warn('⚠️ Missing site_id or token');
+      router.replace(`/install${testMode ? '?test=true' : ''}`);
+      return;
+    }
 
     setInjectionFailed(false);
     setRetrying(true);
     setStatus('Attempting to inject theme switcher script...');
 
     try {
-      if (testMode) console.log('📡 Fetching pages for site:', site_id);
+      if (testMode) console.log('📡 Fetching pages from site:', site_id);
 
       const pagesRes = await fetch(`https://api.webflow.com/rest/sites/${site_id}/pages`, {
         headers: {
@@ -30,16 +34,16 @@ export default function Confirm() {
       });
 
       const pagesData = await pagesRes.json();
-      const pages = Array.isArray(pagesData?.pages) ? pagesData.pages : [];
 
-      if (!pages.length) throw new Error('No pages found on this site.');
-      const targetPage = pages[0];
+      if (!Array.isArray(pagesData.pages) || pagesData.pages.length === 0) {
+        throw new Error('No pages found on this site.');
+      }
 
-      if (testMode) console.log('📝 Targeting page:', targetPage.name || targetPage._id);
+      const targetPage = pagesData.pages[0];
 
       const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
 
-      const injectRes = await fetch(
+      const patchRes = await fetch(
         `https://api.webflow.com/rest/sites/${site_id}/pages/${targetPage._id}/custom-code`,
         {
           method: 'PATCH',
@@ -55,9 +59,13 @@ export default function Confirm() {
         }
       );
 
-      if (!injectRes.ok) throw new Error('Custom code injection failed.');
+      const resultText = await patchRes.text();
 
-      if (testMode) console.log('✅ Script successfully injected.');
+      if (!patchRes.ok) {
+        throw new Error(`Custom code API failed: ${resultText}`);
+      }
+
+      if (testMode) console.log('✅ Script injected successfully');
       router.replace(`/success${testMode ? '?test=true' : ''}`);
     } catch (err) {
       console.error('❌ Injection Error:', err.message);
@@ -69,8 +77,15 @@ export default function Confirm() {
   };
 
   useEffect(() => {
-    if (site_id && token) injectScript();
+    injectScript();
   }, [site_id, token]);
+
+  const handleRetry = () => {
+    if (testMode) console.log('🔁 Retrying injection...');
+    setInjectionFailed(false);
+    setRetrying(true);
+    setTimeout(() => location.reload(), 300); // Reload to trigger useEffect
+  };
 
   return (
     <main style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }}>
@@ -80,7 +95,7 @@ export default function Confirm() {
       {injectionFailed && (
         <div style={{ marginTop: '2rem' }}>
           <button
-            onClick={injectScript}
+            onClick={handleRetry}
             disabled={retrying}
             style={{
               padding: '10px 20px',
@@ -107,7 +122,7 @@ export default function Confirm() {
 
       {testMode && (
         <p style={{ marginTop: '2rem', fontSize: '0.9rem', color: '#999' }}>
-          🧪 Test mode enabled — debug logs are shown in the browser console.
+          🧪 Test mode enabled — debug logs visible in browser console.
         </p>
       )}
     </main>

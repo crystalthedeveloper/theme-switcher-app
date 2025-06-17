@@ -1,6 +1,6 @@
 // pages/install.js
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 
@@ -9,6 +9,8 @@ export default function Install() {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
   const router = useRouter();
   const testMode = router.query.test === 'true';
+
+  const [hasToken, setHasToken] = useState(false);
 
   const scopes = [
     'sites:read',
@@ -26,12 +28,12 @@ export default function Install() {
         )}&scope=${encodeURIComponent(scopes)}${testMode ? '&state=test' : ''}`
       : null;
 
-  // ✅ Auto-redirect if already authorized
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const cached = sessionStorage.getItem('webflow_token');
-      if (cached) {
-        if (testMode) console.log('🧪 Test Mode: redirecting to /select-site');
+      const token = sessionStorage.getItem('webflow_token');
+      if (token) {
+        setHasToken(true);
+        if (testMode) console.log('🧪 Token found, redirecting to /select-site');
         router.replace(`/select-site${testMode ? '?test=true' : ''}`);
       }
     }
@@ -55,14 +57,14 @@ export default function Install() {
         </p>
 
         <p style={{ maxWidth: '480px', margin: '1rem auto', color: '#666' }}>
-          This app needs access to your pages and custom code settings. Your site must be on a paid Webflow hosting plan.
+          This app needs access to your Webflow pages and Custom Code settings. Your site must be on a paid Webflow plan.
         </p>
 
-        {oauthUrl ? (
+        {!hasToken && oauthUrl && (
           <a
             href={oauthUrl}
             rel="noopener noreferrer"
-            aria-label="Begin Webflow OAuth authorization"
+            aria-label="Connect to Webflow via OAuth"
           >
             <button
               style={{
@@ -75,7 +77,9 @@ export default function Install() {
               Connect to Webflow
             </button>
           </a>
-        ) : (
+        )}
+
+        {!hasToken && !oauthUrl && (
           <button
             disabled
             style={{
@@ -93,12 +97,12 @@ export default function Install() {
 
         <div style={{ marginTop: '3rem', fontSize: '0.9rem', color: '#999' }}>
           <p>If injection fails, you’ll see manual install instructions.</p>
-          <p>You can remove the script later in Webflow → Project Settings → Custom Code.</p>
+          <p>You can remove the script in Webflow → Project Settings → Custom Code.</p>
         </div>
 
         {testMode && (
           <p style={{ marginTop: '2rem', fontSize: '0.9rem', color: '#999' }}>
-            🧪 Test mode enabled — debug logs are visible in console.
+            🧪 Test mode enabled — logs visible in console.
           </p>
         )}
       </main>
