@@ -55,6 +55,9 @@ export default function Callback() {
 
         const { access_token, warning } = data;
 
+        const finalToken = access_token || (typeof window !== 'undefined' && sessionStorage.getItem('webflow_token'));
+        const finalSiteId = data?.site_id || (typeof window !== 'undefined' && sessionStorage.getItem('webflow_site_id'));
+
         if (typeof window !== 'undefined') {
           if (access_token) sessionStorage.setItem('webflow_token', access_token);
           if (data?.site_id) sessionStorage.setItem('webflow_site_id', data.site_id);
@@ -65,15 +68,12 @@ export default function Callback() {
           if (warning) console.warn('⚠️ Warning:', warning);
         }
 
-        const finalToken = access_token || sessionStorage.getItem('webflow_token');
-        const finalSiteId = data?.site_id || sessionStorage.getItem('webflow_site_id');
-
         if (finalToken && finalSiteId) {
           const redirectUrl = `/confirm?site_id=${finalSiteId}&token=${finalToken}${testMode ? '&test=true' : ''}`;
           if (testMode) console.log('➡️ Redirecting to:', redirectUrl);
           router.replace(redirectUrl);
         } else {
-          throw new Error('Missing access token or site ID from Webflow.');
+          throw new Error('Missing access token or site ID from Webflow. Please reauthorize.');
         }
       } catch (err) {
         console.error('❌ Token exchange error:', err);
