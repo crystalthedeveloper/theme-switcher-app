@@ -39,7 +39,7 @@ export default async function handler(req, res) {
 
       if (!response.ok) {
         const isExpired = response.status === 401 || response.status === 403;
-        console.warn(`⚠️ Webflow error [${response.status}]:`, parsed?.message || raw);
+        console.warn(`⚠️ Webflow API error [${response.status}]:`, parsed?.message || raw);
         return {
           ok: false,
           code: response.status,
@@ -50,7 +50,7 @@ export default async function handler(req, res) {
 
       const sites = Array.isArray(parsed?.sites) ? parsed.sites : parsed;
       const hostedSites = Array.isArray(sites)
-        ? sites.filter(site => site.plan !== "developer")
+        ? sites.filter((site) => site.plan !== "developer")
         : [];
 
       return { ok: true, sites: hostedSites };
@@ -60,17 +60,20 @@ export default async function handler(req, res) {
     }
   };
 
+  // Try both REST API endpoints (fallback if needed)
   const primary = await fetchSitesFrom("https://api.webflow.com/rest/sites");
   const fallback = !primary.ok ? await fetchSitesFrom("https://api.webflow.com/sites") : null;
 
   const result = primary.ok ? primary : fallback?.ok ? fallback : null;
 
   if (!result) {
+    console.error("❌ Both primary and fallback site fetches failed.");
     return res.status(fallback?.code || primary.code || 500).json({
       error: fallback?.error || primary.error || "Unknown error",
       expiredToken: fallback?.isExpired || primary.isExpired || false,
     });
   }
 
+  console.log(`✅ Found ${result.sites.length} hosted site(s)`);
   return res.status(200).json({ sites: result.sites });
 }
