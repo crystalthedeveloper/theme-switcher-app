@@ -1,23 +1,33 @@
 // pages/api/sites.js
 
 export default async function handler(req, res) {
-  console.log('📥 Received request:', req.method);
+  console.log('📥 Received request method:', req.method);
 
+  // Set CORS and no-cache headers
   res.setHeader("Cache-Control", "no-store");
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
+  // Handle preflight
   if (req.method === "OPTIONS") return res.status(204).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
 
+  // Only allow POST
+  if (req.method !== "POST") {
+    console.warn('🚫 Method not allowed:', req.method);
+    return res.status(405).json({ error: "Method Not Allowed" });
+  }
+
+  // Get and validate token
   const { token } = req.body || {};
+  console.log('🔐 Token received:', token);
 
   if (!token || typeof token !== 'string' || token.length < 20) {
     console.warn('⚠️ Invalid or missing token:', token);
     return res.status(400).json({ error: "Missing or invalid token" });
   }
 
+  // Helper function to fetch sites from Webflow
   const fetchSitesFrom = async (url) => {
     try {
       const response = await fetch(url, {
@@ -60,12 +70,12 @@ export default async function handler(req, res) {
     }
   };
 
-  // Try both REST API endpoints (fallback if needed)
+  // Try REST API, fallback to legacy
   const primary = await fetchSitesFrom("https://api.webflow.com/rest/sites");
   const fallback = !primary.ok ? await fetchSitesFrom("https://api.webflow.com/sites") : null;
-
   const result = primary.ok ? primary : fallback?.ok ? fallback : null;
 
+  // Final result check
   if (!result) {
     console.error("❌ Both primary and fallback site fetches failed.");
     return res.status(fallback?.code || primary.code || 500).json({

@@ -17,11 +17,14 @@ export default function Callback() {
 
     if (error) {
       if (isTest) console.error('❌ OAuth Error:', error_description || error);
-      router.replace('/');
+      router.replace(`/install${isTest ? '?test=true' : ''}`);
       return;
     }
 
-    if (!code) return;
+    if (!code || typeof code !== 'string') {
+      if (isTest) console.warn('⚠️ Missing or invalid code.');
+      return;
+    }
 
     const exchangeToken = async () => {
       try {
@@ -47,7 +50,7 @@ export default function Callback() {
         }
 
         if (testMode) {
-          console.log('✅ Access token:', access_token);
+          console.log('✅ Received access token:', access_token);
           if (warning) console.warn('⚠️ Warning:', warning);
         }
 
@@ -55,7 +58,7 @@ export default function Callback() {
         if (testMode) console.log('➡️ Redirecting to:', redirectUrl);
         router.replace(redirectUrl);
       } catch (err) {
-        if (testMode) console.error('❌ Unexpected error:', err);
+        console.error('❌ Token exchange error:', err.message);
         setLoading(false);
       }
     };
@@ -97,7 +100,7 @@ export default function Callback() {
 
       {testMode && (
         <p style={{ marginTop: '2rem', fontSize: '0.9rem', color: '#999' }}>
-          🧪 Test mode active – extra logs visible in browser console
+          🧪 Test mode enabled – debug logs are visible in your console
         </p>
       )}
     </main>
