@@ -107,11 +107,13 @@ export default function Confirm() {
     if (typeof window !== 'undefined') {
       const storedSiteId = site_id || sessionStorage.getItem('webflow_site_id');
       const storedToken = token || sessionStorage.getItem('webflow_token');
-      if (storedSiteId && storedToken) {
-        injectScript(storedSiteId, storedToken);
-      } else {
-        setStatus("Missing site ID or token. Please return to the app and reauthorize.");
+
+      if (!storedSiteId || !storedToken) {
+        setStatus("⚠️ Missing site ID or token. Please reauthorize via the main page.");
+        return;
       }
+
+      injectScript(storedSiteId, storedToken);
     }
   }, [site_id, token]);
 
