@@ -1,5 +1,3 @@
-//pages/confirm.js
-
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 
@@ -110,26 +108,15 @@ export default function Confirm() {
   };
 
   useEffect(() => {
-    if (!router.isReady || typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || !router.isReady) return;
 
-    const storedSiteId = sessionStorage.getItem('webflow_site_id');
-    const storedToken = sessionStorage.getItem('webflow_token');
+    let finalSiteId = sessionStorage.getItem('webflow_site_id') || site_id;
+    let finalToken = sessionStorage.getItem('webflow_token') || token;
 
-    const resolvedSiteId = site_id || storedSiteId;
-    const resolvedToken = token || storedToken;
-
-    if (resolvedSiteId && resolvedToken) {
-      const existingSiteId = sessionStorage.getItem('webflow_site_id');
-      const existingToken = sessionStorage.getItem('webflow_token');
-
-      if (resolvedSiteId !== existingSiteId) {
-        sessionStorage.setItem('webflow_site_id', resolvedSiteId);
-      }
-      if (resolvedToken !== existingToken) {
-        sessionStorage.setItem('webflow_token', resolvedToken);
-      }
-
-      injectScript(resolvedSiteId, resolvedToken);
+    if (finalSiteId && finalToken) {
+      sessionStorage.setItem('webflow_site_id', finalSiteId);
+      sessionStorage.setItem('webflow_token', finalToken);
+      injectScript(finalSiteId, finalToken);
     } else {
       setStatus("⚠️ Missing site ID or token. Please reauthorize via the main page.");
     }

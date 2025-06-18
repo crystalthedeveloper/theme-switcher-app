@@ -55,10 +55,13 @@ export default function Callback() {
 
         const { access_token, warning, site_id } = data;
 
-        const finalToken = access_token || (typeof window !== 'undefined' && sessionStorage.getItem('webflow_token'));
-        const finalSiteId = site_id || (typeof window !== 'undefined' && sessionStorage.getItem('webflow_site_id'));
+        let finalToken = access_token;
+        let finalSiteId = site_id;
 
         if (typeof window !== 'undefined') {
+          if (!finalToken) finalToken = sessionStorage.getItem('webflow_token');
+          if (!finalSiteId) finalSiteId = sessionStorage.getItem('webflow_site_id');
+
           if (finalToken) sessionStorage.setItem('webflow_token', finalToken);
           if (finalSiteId) sessionStorage.setItem('webflow_site_id', finalSiteId);
         }
