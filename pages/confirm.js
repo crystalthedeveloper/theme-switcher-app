@@ -14,20 +14,23 @@ export default function Confirm() {
   const testMode = test === 'true';
 
   // 🛠 Begin script injection
-  const injectScript = async () => {
+  const injectScript = async (siteIdOverride, tokenOverride) => {
     setInjectionFailed(false);
     setRetrying(true);
     setStatus('Injecting Theme Switcher into Webflow Custom Code...');
 
+    const siteId = siteIdOverride || site_id;
+    const accessToken = tokenOverride || token;
+
     try {
-      if (testMode) console.log('📡 Fetching pages for site:', site_id);
+      if (testMode) console.log('📡 Fetching pages for site:', siteId);
 
       const pagesRes = await fetch('/api/pages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ siteId: site_id, token }),
+        body: JSON.stringify({ siteId, token: accessToken }),
       });
 
       const raw = await pagesRes.text();
@@ -64,11 +67,11 @@ export default function Confirm() {
       if (testMode) console.log('✏️ Injecting script into page:', targetPage._id);
 
       const patchRes = await fetch(
-        `https://api.webflow.com/sites/${site_id}/pages/${targetPage._id}/custom-code`,
+        `https://api.webflow.com/sites/${siteId}/pages/${targetPage._id}/custom-code`,
         {
           method: 'PATCH',
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
             'accept-version': '1.0.0',
           },
@@ -87,6 +90,8 @@ export default function Confirm() {
 
       // ✅ Script injected successfully
       if (testMode) console.log('✅ Script injected successfully');
+      sessionStorage.setItem('webflow_site_id', siteId);
+      sessionStorage.setItem('webflow_token', accessToken);
       router.replace(`/success${testMode ? '?test=true' : ''}`);
     } catch (err) {
       console.error('❌ Injection Error:', err.message);
@@ -99,10 +104,14 @@ export default function Confirm() {
   };
 
   useEffect(() => {
-    if (site_id && token) {
-      injectScript();
-    } else {
-      setStatus("Missing site ID or token. Please return to the app and reauthorize.");
+    if (typeof window !== 'undefined') {
+      const storedSiteId = site_id || sessionStorage.getItem('webflow_site_id');
+      const storedToken = token || sessionStorage.getItem('webflow_token');
+      if (storedSiteId && storedToken) {
+        injectScript(storedSiteId, storedToken);
+      } else {
+        setStatus("Missing site ID or token. Please return to the app and reauthorize.");
+      }
     }
   }, [site_id, token]);
 
