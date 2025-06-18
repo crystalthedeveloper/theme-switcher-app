@@ -49,7 +49,10 @@ export default function Confirm() {
           router.replace(`/${testMode ? '?test=true' : ''}`);
           return;
         }
-        throw new Error(pagesData?.message || '⚠️ Failed to fetch pages. Please ensure your token is valid and includes the required scopes: `sites:read`, `pages:read`, and `custom_code:write`.');
+        throw new Error(
+          pagesData?.message ||
+          '⚠️ Failed to fetch pages. Please ensure your token is valid and includes the required OAuth scopes: `sites:read`, `pages:read`, and `custom_code:write`. You can reauthorize from the homepage.'
+        );
       }
 
       const targetPage = pagesData.pages[0];
