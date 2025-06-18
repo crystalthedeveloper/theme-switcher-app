@@ -55,9 +55,9 @@ export default function Callback() {
 
         const { access_token, warning } = data;
 
-        if (typeof window !== 'undefined') {
-          if (access_token) sessionStorage.setItem('webflow_token', access_token);
-          if (data?.site_id) sessionStorage.setItem('webflow_site_id', data.site_id);
+        if (typeof window !== 'undefined' && access_token && data?.site_id) {
+          sessionStorage.setItem('webflow_token', access_token);
+          sessionStorage.setItem('webflow_site_id', data.site_id);
         }
 
         if (testMode) {
@@ -65,13 +65,18 @@ export default function Callback() {
           if (warning) console.warn('⚠️ Warning:', warning);
         }
 
-        const redirectUrl = `/confirm?site_id=${data.site_id}&token=${access_token}${testMode ? '&test=true' : ''}`;
-        if (testMode) console.log('➡️ Redirecting to:', redirectUrl);
-        router.replace(redirectUrl);
+        if (access_token && data?.site_id) {
+          const redirectUrl = `/confirm?site_id=${data.site_id}&token=${access_token}${testMode ? '&test=true' : ''}`;
+          if (testMode) console.log('➡️ Redirecting to:', redirectUrl);
+          router.replace(redirectUrl);
+        } else {
+          throw new Error('Missing access token or site ID from Webflow.');
+        }
       } catch (err) {
         console.error('❌ Token exchange error:', err);
         setLoading(false);
-        setError(data?.error_description || 'Token exchange failed. Please try again.');
+        const message = err?.message || 'Token exchange failed. Please try again.';
+        setError(message);
       }
     };
 
