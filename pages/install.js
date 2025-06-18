@@ -95,6 +95,31 @@ export default function Install() {
           </button>
         )}
 
+        {hasToken && (
+          <div style={{ marginTop: '2rem' }}>
+            <button
+              onClick={() => {
+                sessionStorage.removeItem('webflow_token');
+                router.replace('/install');
+              }}
+              style={{
+                padding: '10px 20px',
+                fontSize: '1rem',
+                cursor: 'pointer',
+                backgroundColor: '#f5f5f5',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+              }}
+            >
+              🔁 Switch Workspace
+            </button>
+            <p style={{ fontSize: '0.85rem', marginTop: '0.5rem', color: '#666' }}>
+              Only sites in the workspace you selected during authorization will appear.
+              To install on another workspace, click above and switch workspaces first.
+            </p>
+          </div>
+        )}
+
         <div style={{ marginTop: '3rem', fontSize: '0.9rem', color: '#999' }}>
           <p>If injection fails, you’ll see manual install instructions.</p>
           <p>You can remove the script in Webflow → Project Settings → Custom Code.</p>
