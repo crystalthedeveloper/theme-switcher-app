@@ -30,39 +30,39 @@ export default function SelectSite() {
 
     const fetchSites = async () => {
       try {
-        if (isTest) console.log('📡 Fetching sites using token:', finalToken);
+        if (isTest) console.log('📡 Fetching sites using token (via /api/sites)');
 
-        const res = await fetch('https://api.webflow.com/rest/sites', {
+        const res = await fetch('/api/sites', {
           headers: {
             Authorization: `Bearer ${finalToken}`,
-            'accept-version': '1.0.0',
           },
         });
 
-        const raw = await res.text();
-        const data = JSON.parse(raw);
+        const data = await res.json();
 
-        const hostedSites = (data.sites || []).filter(site => site.plan !== 'developer');
+        if (!Array.isArray(data.sites)) {
+          throw new Error('Invalid response from API');
+        }
+
+        const hostedSites = data.sites.filter(site => site.plan !== 'developer');
 
         if (hostedSites.length === 0) {
-          if (isTest) console.warn('⚠️ No hosted sites. Redirecting to manual success.');
+          if (isTest) console.warn('⚠️ No hosted sites. Redirecting...');
+          setError('No hosted Webflow sites found. Redirecting to manual install...');
 
-          // Optional UX improvement: show a message briefly before redirecting
           setTimeout(() => {
             router.replace('/success?manual=true' + (isTest ? '&test=true' : ''));
-          }, 2000); // 2 seconds
-
-          setError('No hosted Webflow sites found. Redirecting to manual install instructions...');
+          }, 2000);
           return;
         }
 
         if (isTest) {
-          console.log(`✅ Found ${hostedSites.length} hosted sites`);
+          console.log(`✅ Found ${hostedSites.length} hosted site(s).`);
         }
 
         setSites(hostedSites);
       } catch (err) {
-        if (isTest) console.error('❌ Error loading sites:', err);
+        if (isTest) console.error('❌ Site fetch error:', err);
         setError('Failed to load your sites. Please try again.');
       } finally {
         setLoading(false);
