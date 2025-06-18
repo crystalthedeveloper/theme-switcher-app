@@ -9,9 +9,10 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
 
   const { siteId, token } = req.body || {};
-
-  if (!siteId || !token) {
-    return res.status(400).json({ error: "Missing siteId or token" });
+  console.log("🔍 Incoming POST to /api/pages with:", { siteId, hasToken: !!token });
+  if (!siteId || !token || typeof siteId !== 'string' || typeof token !== 'string') {
+    console.warn("⚠️ Invalid or missing siteId/token:", { siteId, token });
+    return res.status(400).json({ error: "Missing or invalid siteId or token" });
   }
 
   try {

@@ -1,20 +1,11 @@
 //pages/success.js
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 
 export default function Success() {
   const router = useRouter();
   const showManualInstall = router.query.manual === 'true';
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      router.push('/');
-    }, 10000); // Redirect after 10 seconds
-
-    return () => clearTimeout(timeout);
-  }, [router]);
 
   return (
     <>
@@ -65,10 +56,6 @@ export default function Success() {
             </p>
           </section>
         )}
-
-        <p role="status" aria-live="polite" style={{ marginTop: '1.5rem', color: '#777', fontStyle: 'italic' }}>
-          You’ll be redirected to the homepage in 10 seconds...
-        </p>
 
         <div style={{ marginTop: '2.5rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
           <a href="/" aria-label="Return to homepage">
