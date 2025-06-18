@@ -51,14 +51,11 @@ export default function Callback() {
           if (warning) console.warn('⚠️ Warning:', warning);
         }
 
-        // ✅ Redirect to site selection regardless of site count
         const redirectUrl = `/select-site?token=${access_token}${testMode ? '&test=true' : ''}`;
         if (testMode) console.log('➡️ Redirecting to:', redirectUrl);
         router.replace(redirectUrl);
       } catch (err) {
         if (testMode) console.error('❌ Unexpected error:', err);
-        router.replace('/');
-      } finally {
         setLoading(false);
       }
     };
@@ -69,13 +66,37 @@ export default function Callback() {
   return (
     <main style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }}>
       <h1>🔄 Connecting to Webflow...</h1>
+
       <p>
         {loading
           ? 'Exchanging code and preparing your site list...'
-          : 'Something went wrong. Redirecting...'}
+          : 'Something went wrong. Please try again from the Install page.'}
       </p>
+
+      {loading && (
+        <div style={{ fontSize: '2rem', marginTop: '1.5rem' }}>
+          ⏳
+        </div>
+      )}
+
+      {!loading && (
+        <div style={{ marginTop: '2rem' }}>
+          <a href="/install" aria-label="Try OAuth install again">
+            <button
+              style={{
+                padding: '10px 20px',
+                fontSize: '1rem',
+                cursor: 'pointer',
+              }}
+            >
+              ← Try Again
+            </button>
+          </a>
+        </div>
+      )}
+
       {testMode && (
-        <p style={{ marginTop: '1rem', fontSize: '0.9rem', color: '#999' }}>
+        <p style={{ marginTop: '2rem', fontSize: '0.9rem', color: '#999' }}>
           🧪 Test mode active – extra logs visible in browser console
         </p>
       )}

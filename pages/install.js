@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 
 export default function Install() {
   const clientId = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID;
@@ -61,22 +62,23 @@ export default function Install() {
         </p>
 
         {!hasToken && oauthUrl && (
-          <a
-            href={oauthUrl}
-            rel="noopener noreferrer"
-            aria-label="Connect to Webflow via OAuth"
-          >
-            <button
-              style={{
-                padding: '12px 24px',
-                marginTop: '2rem',
-                fontSize: '1rem',
-                cursor: 'pointer',
-              }}
+          <Link href={oauthUrl} legacyBehavior>
+            <a
+              rel="noopener noreferrer"
+              aria-label="Authorize with Webflow and connect this app"
             >
-              Connect to Webflow
-            </button>
-          </a>
+              <button
+                style={{
+                  padding: '12px 24px',
+                  marginTop: '2rem',
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                }}
+              >
+                Connect to Webflow
+              </button>
+            </a>
+          </Link>
         )}
 
         {!hasToken && !oauthUrl && (
@@ -89,6 +91,7 @@ export default function Install() {
               opacity: 0.5,
               cursor: 'not-allowed',
             }}
+            aria-label="OAuth connection disabled due to missing configuration"
             title="Missing environment variables"
           >
             Unable to Connect — Missing Config
@@ -102,6 +105,7 @@ export default function Install() {
                 sessionStorage.removeItem('webflow_token');
                 router.replace('/install');
               }}
+              aria-label="Reset Webflow authentication and switch workspace"
               style={{
                 padding: '10px 20px',
                 fontSize: '1rem',

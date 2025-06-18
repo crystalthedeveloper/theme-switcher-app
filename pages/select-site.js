@@ -46,7 +46,13 @@ export default function SelectSite() {
 
         if (hostedSites.length === 0) {
           if (isTest) console.warn('⚠️ No hosted sites. Redirecting to manual success.');
-          router.replace('/success?manual=true' + (isTest ? '&test=true' : ''));
+
+          // Optional UX improvement: show a message briefly before redirecting
+          setTimeout(() => {
+            router.replace('/success?manual=true' + (isTest ? '&test=true' : ''));
+          }, 2000); // 2 seconds
+
+          setError('No hosted Webflow sites found. Redirecting to manual install instructions...');
           return;
         }
 

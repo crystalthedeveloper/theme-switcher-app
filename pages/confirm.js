@@ -10,6 +10,7 @@ export default function Confirm() {
   const [status, setStatus] = useState('Injecting script into your Webflow site...');
   const [injectionFailed, setInjectionFailed] = useState(false);
   const [retrying, setRetrying] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const testMode = test === 'true';
 
   const injectScript = async () => {
@@ -41,7 +42,9 @@ export default function Confirm() {
 
       const targetPage = pagesData.pages[0];
 
-      const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
+      const scriptTag = `
+<!-- Theme Switcher injected by Webflow App -->
+<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
 
       const patchRes = await fetch(
         `https://api.webflow.com/rest/sites/${site_id}/pages/${targetPage._id}/custom-code`,
@@ -71,6 +74,7 @@ export default function Confirm() {
       console.error('❌ Injection Error:', err.message);
       setInjectionFailed(true);
       setStatus('Automatic injection failed. You can retry or install manually.');
+      setErrorMsg(err.message);
     } finally {
       setRetrying(false);
     }
@@ -84,7 +88,7 @@ export default function Confirm() {
     if (testMode) console.log('🔁 Retrying injection...');
     setInjectionFailed(false);
     setRetrying(true);
-    setTimeout(() => location.reload(), 300); // Reload to trigger useEffect
+    setTimeout(() => location.reload(), 300);
   };
 
   return (
@@ -117,6 +121,11 @@ export default function Confirm() {
           >
             Manual Install
           </button>
+          {errorMsg && (
+            <p style={{ color: 'red', marginTop: '1rem', fontSize: '0.9rem' }}>
+              ⚠️ {errorMsg}
+            </p>
+          )}
         </div>
       )}
 
