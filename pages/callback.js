@@ -57,6 +57,9 @@ export default function Callback() {
 
         if (typeof window !== 'undefined' && access_token) {
           sessionStorage.setItem('webflow_token', access_token);
+          if (data?.site_id) {
+            sessionStorage.setItem('webflow_site_id', data.site_id);
+          }
         }
 
         if (testMode) {
@@ -66,7 +69,9 @@ export default function Callback() {
 
         // const redirectUrl = `/select-site?token=${access_token}${testMode ? '&test=true' : ''}`;
         // ⬆️ Now replaced with direct redirect to /confirm to skip select-site
-        const redirectUrl = `/confirm?token=${access_token}${testMode ? '&test=true' : ''}`;
+        const redirectUrl = `/confirm?token=${access_token}${
+          data?.site_id ? `&site_id=${data.site_id}` : ''
+        }${testMode ? '&test=true' : ''}`;
         if (testMode) console.log('➡️ Redirecting to:', redirectUrl);
         router.replace(redirectUrl);
       } catch (err) {

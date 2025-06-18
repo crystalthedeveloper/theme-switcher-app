@@ -104,17 +104,25 @@ export default function Confirm() {
   };
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedSiteId = site_id || sessionStorage.getItem('webflow_site_id');
-      const storedToken = token || sessionStorage.getItem('webflow_token');
+    if (typeof window === 'undefined') return;
 
-      if (!storedSiteId || !storedToken) {
-        setStatus("⚠️ Missing site ID or token. Please reauthorize via the main page.");
-        return;
-      }
+    const querySiteId = site_id;
+    const queryToken = token;
 
-      injectScript(storedSiteId, storedToken);
+    if (querySiteId && queryToken) {
+      sessionStorage.setItem('webflow_site_id', querySiteId);
+      sessionStorage.setItem('webflow_token', queryToken);
     }
+
+    const storedSiteId = sessionStorage.getItem('webflow_site_id');
+    const storedToken = sessionStorage.getItem('webflow_token');
+
+    if (!storedSiteId || !storedToken) {
+      setStatus("⚠️ Missing site ID or token. Please reauthorize via the main page.");
+      return;
+    }
+
+    injectScript(storedSiteId, storedToken);
   }, [site_id, token]);
 
   const handleRetry = () => {
