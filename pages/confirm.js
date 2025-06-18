@@ -23,7 +23,7 @@ export default function Confirm() {
     const accessToken = tokenOverride || token;
 
     try {
-      if (testMode) console.log('📡 Fetching pages for site:', siteId);
+      if (testMode) console.log('📦 Sending request to /api/pages with:', { siteId, token: accessToken?.slice(0, 6) + '...' });
 
       const pagesRes = await fetch('/api/pages', {
         method: 'POST',
@@ -43,14 +43,13 @@ export default function Confirm() {
       }
 
       if (!pagesRes.ok || !Array.isArray(pagesData.pages)) {
+        console.warn('❌ Failed Webflow API response:', raw);
         if (pagesRes.status === 401 || pagesRes.status === 403) {
           if (testMode) console.warn('🔁 Token expired or unauthorized. Redirecting...');
           router.replace(`/${testMode ? '?test=true' : ''}`);
           return;
         }
-        throw new Error(
-          pagesData.message || 'Failed to fetch pages. Ensure your Webflow token has the correct scopes and site ID is valid.'
-        );
+        throw new Error(pagesData?.message || '⚠️ Failed to fetch pages. Please ensure your token is valid and includes the required scopes: `sites:read`, `pages:read`, and `custom_code:write`.');
       }
 
       const targetPage = pagesData.pages[0];
