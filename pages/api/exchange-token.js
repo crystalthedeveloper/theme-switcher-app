@@ -2,6 +2,8 @@
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
+  // Optional CORS header (enable if exposing this API publicly)
+  // res.setHeader('Access-Control-Allow-Origin', '*');
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -53,7 +55,6 @@ export default async function handler(req, res) {
     if (!tokenRes.ok || tokenData.error || !tokenData.access_token) {
       console.error('❌ Token exchange failed:', raw);
       console.warn('Hint: Double-check your Webflow App settings → Callback URL must match exactly.');
-
       return res.status(400).json({
         error: tokenData.error_description || 'Token exchange failed',
         hint: 'Check client_id, client_secret, and redirect_uri.',
@@ -63,7 +64,9 @@ export default async function handler(req, res) {
 
     const accessToken = tokenData.access_token;
 
-    // 🔍 Step 2: Try fetching connected sites using modern REST API
+    // TODO: Store accessToken securely if implementing persistent login
+
+    // 🔍 Step 2: Try fetching connected sites
     const trySitesEndpoint = async (url) => {
       try {
         const response = await fetch(url, {
@@ -99,11 +102,15 @@ export default async function handler(req, res) {
       }
     };
 
-    // 🧪 Step 3: Try modern endpoint first, then fallback
+    // 🧪 Step 3: Try modern endpoint first, fallback to legacy if needed
     const primary = await trySitesEndpoint('https://api.webflow.com/rest/sites');
     const fallback = !primary.success
       ? await trySitesEndpoint('https://api.webflow.com/sites')
       : null;
+
+    if (!primary.success && fallback?.success) {
+      console.warn('🪂 Fallback succeeded after /rest/sites failed.');
+    }
 
     const finalSites = primary.success
       ? primary.sites
@@ -111,7 +118,7 @@ export default async function handler(req, res) {
         ? fallback.sites
         : [];
 
-    // ✅ Final Response - allow fallback for testing purposes
+    // ✅ Final Response
     return res.status(200).json({
       access_token: accessToken,
       token_type: tokenData.token_type || 'Bearer',
