@@ -50,7 +50,13 @@ export default function SelectSite() {
 
         const data = await res.json();
 
+        if (isTest) console.log('📬 Response from /api/sites:', data);
+
         if (!res.ok) {
+          if (isTest) {
+            console.error(`🚨 POST /api/sites failed: ${res.status}`, data?.error || data);
+          }
+
           if (data?.expiredToken) {
             if (isTest) console.warn('🔁 Token expired. Redirecting...');
             router.replace(`/install${isTest ? '?test=true' : ''}`);
@@ -58,7 +64,7 @@ export default function SelectSite() {
           }
 
           if (isTest) console.error('⚠️ Webflow API error:', data);
-          throw new Error(`Webflow error: ${data?.error || 'Unknown issue'}`);
+          throw new Error(`Webflow error: ${data?.error || 'Unknown issue'} (status: ${res.status})`);
         }
 
         if (!Array.isArray(data.sites)) {
