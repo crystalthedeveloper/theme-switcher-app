@@ -18,7 +18,8 @@ export default function SelectSite() {
     const isTest = router.query.test === 'true';
     setTestMode(isTest);
 
-    const storedToken = typeof window !== 'undefined' ? sessionStorage.getItem('webflow_token') : null;
+    const storedToken =
+      typeof window !== 'undefined' ? sessionStorage.getItem('webflow_token') : null;
     const finalToken = queryToken || storedToken;
 
     if (!finalToken) {
@@ -28,6 +29,7 @@ export default function SelectSite() {
       return;
     }
 
+    if (isTest) console.log('🔐 Using token:', finalToken);
     setToken(finalToken);
 
     const fetchSites = async () => {
@@ -36,7 +38,9 @@ export default function SelectSite() {
 
         const res = await fetch('/api/sites', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify({ token: finalToken }),
         });
 
@@ -48,21 +52,28 @@ export default function SelectSite() {
             router.replace(`/install${isTest ? '?test=true' : ''}`);
             return;
           }
-          throw new Error(data.error || 'API error');
+
+          if (isTest) console.error('⚠️ Webflow API error:', data);
+          throw new Error(`Webflow error: ${data?.error || 'Unknown issue'}`);
         }
 
-        if (!Array.isArray(data.sites)) throw new Error('Invalid response format');
+        if (!Array.isArray(data.sites)) {
+          throw new Error('Invalid response format from Webflow API');
+        }
 
         if (data.sites.length === 0) {
-          setError('No hosted Webflow sites found. Redirecting...');
-          setTimeout(() => router.replace('/success?manual=true' + (isTest ? '&test=true' : '')), 2000);
+          if (isTest) console.warn('⚠️ No hosted sites found. Redirecting...');
+          setError('No hosted Webflow sites found. Redirecting to manual install...');
+          setTimeout(() => {
+            router.replace('/success?manual=true' + (isTest ? '&test=true' : ''));
+          }, 2000);
           return;
         }
 
         setSites(data.sites);
         if (isTest) console.log(`✅ Loaded ${data.sites.length} site(s)`);
       } catch (err) {
-        console.error('❌ Site fetch error:', err);
+        console.error('❌ Site fetch error:', err.message);
         setError('Failed to load your sites. Please try again.');
       } finally {
         setLoading(false);
@@ -74,7 +85,9 @@ export default function SelectSite() {
 
   const handleSelect = (siteId) => {
     if (!token) return;
+
     const redirect = `/confirm?site_id=${siteId}&token=${token}${testMode ? '&test=true' : ''}`;
+    if (testMode) console.log('➡️ Redirecting to:', redirect);
     router.push(redirect);
   };
 
@@ -82,12 +95,15 @@ export default function SelectSite() {
     <main style={{ textAlign: 'center', padding: '2rem' }}>
       <h1>Select Your Webflow Site</h1>
       {loading && <p>Loading sites...</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <p style={{ color: 'red', marginTop: '1rem' }}>{error}</p>}
       {!loading && !error && sites.length > 0 && (
         <ul style={{ listStyle: 'none', padding: 0 }}>
-          {sites.map(site => (
+          {sites.map((site) => (
             <li key={site.id || site._id} style={{ margin: '1rem 0' }}>
-              <button onClick={() => handleSelect(site.id || site._id)} style={{ padding: '10px 20px' }}>
+              <button
+                onClick={() => handleSelect(site.id || site._id)}
+                style={{ padding: '10px 20px', fontSize: '1rem' }}
+              >
                 {site.displayName || site.name || 'Untitled Site'}
               </button>
             </li>
