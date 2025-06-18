@@ -36,9 +36,7 @@ export default function SelectSite() {
 
         const res = await fetch('/api/sites', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token: finalToken }),
         });
 
@@ -46,32 +44,25 @@ export default function SelectSite() {
 
         if (!res.ok) {
           if (data?.expiredToken) {
-            if (isTest) console.warn('🔁 Token expired. Redirecting to /install...');
+            if (isTest) console.warn('🔁 Token expired. Redirecting...');
             router.replace(`/install${isTest ? '?test=true' : ''}`);
             return;
           }
           throw new Error(data.error || 'API error');
         }
 
-        if (!Array.isArray(data.sites)) {
-          throw new Error('Invalid response format from API');
-        }
-
-        if (isTest) console.log(`✅ Found ${data.sites.length} site(s)`);
+        if (!Array.isArray(data.sites)) throw new Error('Invalid response format');
 
         if (data.sites.length === 0) {
-          if (isTest) console.warn('⚠️ No hosted sites found. Redirecting...');
-          setError('No hosted Webflow sites found. Redirecting to manual install...');
-
-          setTimeout(() => {
-            router.replace('/success?manual=true' + (isTest ? '&test=true' : ''));
-          }, 2000);
+          setError('No hosted Webflow sites found. Redirecting...');
+          setTimeout(() => router.replace('/success?manual=true' + (isTest ? '&test=true' : '')), 2000);
           return;
         }
 
         setSites(data.sites);
+        if (isTest) console.log(`✅ Loaded ${data.sites.length} site(s)`);
       } catch (err) {
-        if (isTest) console.error('❌ Site fetch error:', err);
+        console.error('❌ Site fetch error:', err);
         setError('Failed to load your sites. Please try again.');
       } finally {
         setLoading(false);
@@ -83,38 +74,26 @@ export default function SelectSite() {
 
   const handleSelect = (siteId) => {
     if (!token) return;
-
     const redirect = `/confirm?site_id=${siteId}&token=${token}${testMode ? '&test=true' : ''}`;
-    if (testMode) console.log('➡️ Redirecting to:', redirect);
     router.push(redirect);
   };
 
   return (
     <main style={{ textAlign: 'center', padding: '2rem' }}>
       <h1>Select Your Webflow Site</h1>
-
       {loading && <p>Loading sites...</p>}
-      {error && <p style={{ color: 'red', marginTop: '1rem' }}>{error}</p>}
-
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       {!loading && !error && sites.length > 0 && (
         <ul style={{ listStyle: 'none', padding: 0 }}>
-          {sites.map((site) => (
+          {sites.map(site => (
             <li key={site.id || site._id} style={{ margin: '1rem 0' }}>
-              <button
-                onClick={() => handleSelect(site.id || site._id)}
-                style={{
-                  padding: '10px 20px',
-                  fontSize: '1rem',
-                  cursor: 'pointer',
-                }}
-              >
+              <button onClick={() => handleSelect(site.id || site._id)} style={{ padding: '10px 20px' }}>
                 {site.displayName || site.name || 'Untitled Site'}
               </button>
             </li>
           ))}
         </ul>
       )}
-
       {testMode && (
         <p style={{ marginTop: '2rem', fontSize: '0.9rem', color: '#999' }}>
           🧪 Test mode enabled – logs visible in browser console
