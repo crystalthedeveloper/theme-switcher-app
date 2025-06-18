@@ -48,17 +48,21 @@ export default function Confirm() {
           router.replace(`/${testMode ? '?test=true' : ''}`);
           return;
         }
-        throw new Error(pagesData.message || 'Failed to fetch pages.');
+        throw new Error(
+          pagesData.message || 'Failed to fetch pages. Ensure your Webflow token has the correct scopes and site ID is valid.'
+        );
       }
 
       const targetPage = pagesData.pages[0];
+      if (!targetPage || !targetPage._id) {
+        throw new Error('No valid pages found for this site.');
+      }
       // Check if script is already present
       const existingBody = targetPage?.customCode?.body || '';
       if (existingBody.includes('theme-switcher.js')) {
         router.replace(`/success${testMode ? '?test=true' : ''}`);
         return;
       }
-      if (!targetPage) throw new Error('No pages found on this site.');
 
       const scriptTag = `
 <!-- Installed by Theme Switcher Webflow App -->
@@ -104,7 +108,7 @@ export default function Confirm() {
   };
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (!router.isReady || typeof window === 'undefined') return;
 
     const storedSiteId = sessionStorage.getItem('webflow_site_id');
     const storedToken = sessionStorage.getItem('webflow_token');
@@ -113,13 +117,21 @@ export default function Confirm() {
     const resolvedToken = token || storedToken;
 
     if (resolvedSiteId && resolvedToken) {
-      sessionStorage.setItem('webflow_site_id', resolvedSiteId);
-      sessionStorage.setItem('webflow_token', resolvedToken);
+      const existingSiteId = sessionStorage.getItem('webflow_site_id');
+      const existingToken = sessionStorage.getItem('webflow_token');
+
+      if (resolvedSiteId !== existingSiteId) {
+        sessionStorage.setItem('webflow_site_id', resolvedSiteId);
+      }
+      if (resolvedToken !== existingToken) {
+        sessionStorage.setItem('webflow_token', resolvedToken);
+      }
+
       injectScript(resolvedSiteId, resolvedToken);
     } else {
       setStatus("⚠️ Missing site ID or token. Please reauthorize via the main page.");
     }
-  }, []);
+  }, [router.isReady]);
 
   const handleRetry = () => {
     if (testMode) console.log('🔁 Retrying injection...');
