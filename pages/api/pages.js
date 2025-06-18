@@ -11,11 +11,18 @@ export default async function handler(req, res) {
   const { siteId, token } = req.body || {};
   console.log("🔍 Incoming POST to /api/pages with:", { siteId, hasToken: !!token });
   if (!siteId || !token || typeof siteId !== 'string' || typeof token !== 'string') {
-    console.warn("⚠️ Invalid or missing siteId/token:", { siteId, token });
-    return res.status(400).json({ error: "Missing or invalid siteId or token" });
+    const reason = [
+      !siteId ? "siteId is missing" : "",
+      !token ? "token is missing" : "",
+      typeof siteId !== 'string' ? "siteId is not a string" : "",
+      typeof token !== 'string' ? "token is not a string" : ""
+    ].filter(Boolean).join("; ");
+    console.warn("⚠️ Invalid or missing siteId/token:", { siteId, token, reason });
+    return res.status(400).json({ error: `Missing or invalid siteId/token: ${reason}` });
   }
 
   try {
+    console.log(`🌐 Fetching pages from Webflow API for site: ${siteId}`);
     const response = await fetch(`https://api.webflow.com/v2/sites/${siteId}/pages`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -29,6 +36,10 @@ export default async function handler(req, res) {
       data = JSON.parse(raw);
     } catch {
       return res.status(500).json({ error: "Invalid JSON from Webflow" });
+    }
+
+    if (!data.pages) {
+      console.warn("⚠️ No pages array found in Webflow API response:", data);
     }
 
     if (!response.ok) {

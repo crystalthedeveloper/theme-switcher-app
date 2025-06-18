@@ -4,7 +4,7 @@ import Head from 'next/head';
 
 export default function Home() {
   return (
-    <div lang="en">
+    <div>
       <Head>
         <title>Theme Switcher for Webflow</title>
         <meta
@@ -17,6 +17,8 @@ export default function Home() {
         <img
           src="/logo.png"
           alt="Crystal The Developer Logo"
+          role="img"
+          aria-label="Logo of Crystal The Developer"
           style={{ width: '80px', marginBottom: '1rem' }}
         />
 
