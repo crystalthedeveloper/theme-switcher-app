@@ -63,7 +63,7 @@ export default function Install() {
         />
       </Head>
 
-      <main style={{ textAlign: 'center', padding: '4rem 1.5rem' }}>
+      <main style={{ textAlign: 'center', padding: '4rem 1.5rem' }} aria-busy={!hasToken}>
         <h1 style={{ fontSize: '2rem' }}>🎨 Install Theme Switcher for Webflow</h1>
 
         <p style={{ maxWidth: '480px', margin: '1rem auto', fontSize: '1.1rem' }}>
@@ -75,28 +75,23 @@ export default function Install() {
           Your site must be on a paid Webflow plan.
         </p>
 
-        <p style={{ maxWidth: '500px', margin: '1rem auto', fontSize: '0.9rem', color: '#999' }}>
-          If you're not seeing the correct workspace or sites, try logging out of Webflow first.
-          Then return here and reconnect using the correct workspace.
+        <p style={{ maxWidth: '500px', margin: '1rem auto', fontSize: '0.9rem', color: '#666' }}>
+          Can't see your Webflow sites? Log out and reconnect using the correct workspace to fix authorization issues.
         </p>
 
         {!hasToken && oauthUrl && (
-          <Link href={oauthUrl} legacyBehavior>
-            <a
-              rel="noopener noreferrer"
+          <Link href={oauthUrl} legacyBehavior passHref>
+            <button
               aria-label="Authorize with Webflow and connect this app"
+              style={{
+                padding: '12px 24px',
+                marginTop: '2rem',
+                fontSize: '1rem',
+                cursor: 'pointer',
+              }}
             >
-              <button
-                style={{
-                  padding: '12px 24px',
-                  marginTop: '2rem',
-                  fontSize: '1rem',
-                  cursor: 'pointer',
-                }}
-              >
-                Connect to Webflow
-              </button>
-            </a>
+              Connect to Webflow
+            </button>
           </Link>
         )}
 
@@ -119,6 +114,7 @@ export default function Install() {
         {hasToken && (
           <div style={{ marginTop: '2rem' }}>
             <button
+              aria-label="Soft reset Webflow workspace"
               onClick={() => {
                 sessionStorage.removeItem('webflow_token');
                 router.replace('/install');
@@ -136,6 +132,7 @@ export default function Install() {
             </button>
 
             <button
+              aria-label="Full logout and workspace reset"
               onClick={fullLogoutAndReset}
               style={{
                 marginTop: '1rem',

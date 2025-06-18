@@ -31,7 +31,7 @@ export default function SelectSite() {
       return;
     }
 
-    if (isTest) console.log('🔐 Using token:', finalToken);
+    if (isTest) console.log('🔐 Using token:', finalToken.slice(0, 8) + '...');
     setToken(finalToken);
 
     const fetchSites = async () => {
@@ -85,9 +85,10 @@ export default function SelectSite() {
     fetchSites();
   }, [router.isReady, router.query.token]);
 
-  const handleSelect = (siteId) => {
+  const handleSelect = (siteId, e) => {
     if (!token) return;
 
+    e.target.disabled = true;
     const redirect = `/confirm?site_id=${siteId}&token=${token}${testMode ? '&test=true' : ''}`;
     if (testMode) console.log('➡️ Redirecting to:', redirect);
     router.push(redirect);
@@ -105,7 +106,8 @@ export default function SelectSite() {
           {sites.map((site) => (
             <li key={site.id || site._id} style={{ margin: '1rem 0' }}>
               <button
-                onClick={() => handleSelect(site.id || site._id)}
+                type="button"
+                onClick={(e) => handleSelect(site.id || site._id, e)}
                 style={{
                   padding: '10px 20px',
                   fontSize: '1rem',

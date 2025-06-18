@@ -7,12 +7,13 @@ export default function Confirm() {
   const router = useRouter();
   const { site_id, token, test } = router.query;
 
-  const [status, setStatus] = useState('Injecting script into your Webflow site...');
+  const [status, setStatus] = useState('Preparing to install Theme Switcher into your Webflow project...');
   const [injectionFailed, setInjectionFailed] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const testMode = test === 'true';
 
+  // 🛠 Begin script injection
   const injectScript = async () => {
     if (!site_id || !token) {
       if (testMode) console.warn('⚠️ Missing site_id or token');
@@ -22,7 +23,7 @@ export default function Confirm() {
 
     setInjectionFailed(false);
     setRetrying(true);
-    setStatus('Attempting to inject theme switcher script...');
+    setStatus('Injecting Theme Switcher into Webflow Custom Code...');
 
     try {
       if (testMode) console.log('📡 Fetching pages for site:', site_id);
@@ -56,7 +57,7 @@ export default function Confirm() {
       if (!targetPage) throw new Error('No pages found on this site.');
 
       const scriptTag = `
-<!-- Theme Switcher injected by Webflow App -->
+<!-- Installed by Theme Switcher Webflow App -->
 <script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
 
       if (testMode) console.log('✏️ Injecting script into page:', targetPage._id);
@@ -83,12 +84,13 @@ export default function Confirm() {
         throw new Error(`Custom Code API failed: ${patchText}`);
       }
 
+      // ✅ Script injected successfully
       if (testMode) console.log('✅ Script injected successfully');
       router.replace(`/success${testMode ? '?test=true' : ''}`);
     } catch (err) {
       console.error('❌ Injection Error:', err.message);
       setInjectionFailed(true);
-      setStatus('Automatic injection failed. You can retry or install manually.');
+      setStatus('Automatic installation failed. You can try again or follow manual install steps.');
       setErrorMsg(err.message);
     } finally {
       setRetrying(false);
@@ -134,7 +136,7 @@ export default function Confirm() {
               cursor: 'pointer',
             }}
           >
-            Manual Install
+            Manual Instructions
           </button>
           {errorMsg && (
             <p style={{ color: 'red', marginTop: '1rem', fontSize: '0.9rem' }}>

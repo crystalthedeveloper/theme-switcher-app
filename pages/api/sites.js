@@ -20,7 +20,7 @@ export default async function handler(req, res) {
 
   // Get and validate token
   const { token } = req.body || {};
-  console.log('🔐 Token received:', token);
+  console.log('🔐 Token received:', token?.slice(0, 6) + '... (truncated)');
 
   if (!token || typeof token !== 'string' || token.length < 20) {
     console.warn('⚠️ Invalid or missing token:', token);
@@ -49,7 +49,7 @@ export default async function handler(req, res) {
 
       if (!response.ok) {
         const isExpired = response.status === 401 || response.status === 403;
-        console.warn(`⚠️ Webflow API error [${response.status}]:`, parsed?.message || raw);
+        console.warn(`⚠️ Webflow API error from ${url} [${response.status}]:`, parsed?.message || raw);
         return {
           ok: false,
           code: response.status,
@@ -73,6 +73,9 @@ export default async function handler(req, res) {
   // Try REST API, fallback to legacy
   const primary = await fetchSitesFrom("https://api.webflow.com/rest/sites");
   const fallback = !primary.ok ? await fetchSitesFrom("https://api.webflow.com/sites") : null;
+  if (!primary.ok && fallback?.ok) {
+    console.log('🔁 Fallback API succeeded after REST failed.');
+  }
   const result = primary.ok ? primary : fallback?.ok ? fallback : null;
 
   // Final result check
@@ -84,6 +87,9 @@ export default async function handler(req, res) {
     });
   }
 
+  if (result.sites.length === 0) {
+    console.warn('⚠️ Valid token, but no hosted sites returned.');
+  }
   console.log(`✅ Found ${result.sites.length} hosted site(s)`);
   return res.status(200).json({ sites: result.sites });
 }

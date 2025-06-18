@@ -38,6 +38,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    console.log('🔁 Received auth code for exchange');
     // 🔁 Step 1: Exchange code for access token
     const tokenRes = await fetch('https://api.webflow.com/oauth/access_token', {
       method: 'POST',
@@ -59,7 +60,10 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Invalid JSON from Webflow' });
     }
 
-    if (!tokenRes.ok || tokenData.error || !tokenData.access_token) {
+    const accessToken = tokenData.access_token;
+    if (!accessToken) throw new Error("Missing access token in response");
+
+    if (!tokenRes.ok || tokenData.error) {
       console.error('❌ Token exchange failed:', raw);
       return res.status(400).json({
         error: tokenData.error_description || 'Token exchange failed',
@@ -67,8 +71,6 @@ export default async function handler(req, res) {
         details: tokenData,
       });
     }
-
-    const accessToken = tokenData.access_token;
 
     // 🔍 Step 2: Try fetching connected sites
     const trySitesEndpoint = async (url) => {

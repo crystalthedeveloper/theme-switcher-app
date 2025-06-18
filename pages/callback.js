@@ -7,6 +7,7 @@ export default function Callback() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [testMode, setTestMode] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -50,7 +51,7 @@ export default function Callback() {
         }
 
         if (testMode) {
-          console.log('✅ Received access token:', access_token);
+          console.log('✅ Received access token:', access_token.slice(0, 8) + '...');
           if (warning) console.warn('⚠️ Warning:', warning);
         }
 
@@ -60,6 +61,7 @@ export default function Callback() {
       } catch (err) {
         console.error('❌ Token exchange error:', err.message);
         setLoading(false);
+        setError('Token exchange failed. Please try again.');
       }
     };
 
@@ -67,7 +69,7 @@ export default function Callback() {
   }, [router.isReady, router.query]);
 
   return (
-    <main style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }}>
+    <main style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }} aria-busy={loading}>
       <h1>🔄 Connecting to Webflow...</h1>
 
       <p>
@@ -75,6 +77,8 @@ export default function Callback() {
           ? 'Exchanging code and preparing your site list...'
           : 'Something went wrong. Please try again from the Install page.'}
       </p>
+
+      {error && <p style={{ color: 'red', marginTop: '1rem' }}>{error}</p>}
 
       {loading && (
         <div style={{ fontSize: '2rem', marginTop: '1.5rem' }}>
@@ -86,6 +90,7 @@ export default function Callback() {
         <div style={{ marginTop: '2rem' }}>
           <a href="/install" aria-label="Try OAuth install again">
             <button
+              type="button"
               style={{
                 padding: '10px 20px',
                 fontSize: '1rem',
