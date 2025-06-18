@@ -19,6 +19,12 @@ export default async function handler(req, res) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
   const redirectUri = `${baseUrl}/callback`;
 
+  if (!/^https?:\/\//.test(baseUrl)) {
+    return res.status(400).json({ error: 'Invalid base URL format.' });
+  }
+
+  const state = req.query.test ? 'test' : 'prod';
+
   const missingEnv = {
     clientId: !clientId,
     baseUrl: !baseUrl,
@@ -36,7 +42,12 @@ export default async function handler(req, res) {
   webflowAuthUrl.searchParams.set('response_type', 'code');
   webflowAuthUrl.searchParams.set('client_id', clientId);
   webflowAuthUrl.searchParams.set('redirect_uri', redirectUri);
-  webflowAuthUrl.searchParams.set('scope', 'sites:read pages:read pages:write custom_code:write');
+  webflowAuthUrl.searchParams.set('scope', 'sites:read pages:read custom_code:write');
+  webflowAuthUrl.searchParams.set('state', state);
+
+  if (!webflowAuthUrl.toString().startsWith('https://webflow.com/oauth/authorize')) {
+    console.warn('⚠️ Unexpected redirect URI:', webflowAuthUrl.toString());
+  }
 
   return res.redirect(webflowAuthUrl.toString());
 }

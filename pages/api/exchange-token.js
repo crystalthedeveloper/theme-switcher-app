@@ -63,12 +63,17 @@ export default async function handler(req, res) {
     const accessToken = tokenData.access_token;
     if (!accessToken) throw new Error("Missing access token in response");
 
+    const issuedAt = Date.now();
+
     if (!tokenRes.ok || tokenData.error) {
       console.error('❌ Token exchange failed:', raw);
       return res.status(400).json({
         error: tokenData.error_description || 'Token exchange failed',
         hint: 'Check client_id, client_secret, and redirect_uri.',
-        details: tokenData,
+        details: {
+          error: tokenData.error,
+          error_description: tokenData.error_description,
+        },
       });
     }
 
@@ -118,6 +123,8 @@ export default async function handler(req, res) {
       token_type: tokenData.token_type || 'Bearer',
       site_id: finalSites[0]?.id || null,
       sites: finalSites,
+      issued_at: issuedAt,
+      expires_in: 3600, // optional: assumed 1 hour for reference
       warning: finalSites.length === 0
         ? 'No hosted sites found. Proceeding with fallback for testing.'
         : undefined,

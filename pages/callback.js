@@ -53,14 +53,14 @@ export default function Callback() {
           throw new Error(data.error || 'Token exchange failed.');
         }
 
-        const { access_token, warning } = data;
+        const { access_token, warning, site_id } = data;
 
         const finalToken = access_token || (typeof window !== 'undefined' && sessionStorage.getItem('webflow_token'));
-        const finalSiteId = data?.site_id || (typeof window !== 'undefined' && sessionStorage.getItem('webflow_site_id'));
+        const finalSiteId = site_id || (typeof window !== 'undefined' && sessionStorage.getItem('webflow_site_id'));
 
         if (typeof window !== 'undefined') {
-          if (access_token) sessionStorage.setItem('webflow_token', access_token);
-          if (data?.site_id) sessionStorage.setItem('webflow_site_id', data.site_id);
+          if (finalToken) sessionStorage.setItem('webflow_token', finalToken);
+          if (finalSiteId) sessionStorage.setItem('webflow_site_id', finalSiteId);
         }
 
         if (testMode) {
