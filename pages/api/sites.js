@@ -16,7 +16,7 @@ export default async function handler(req, res) {
 
   const fetchSitesFrom = async (url) => {
     try {
-      const wfRes = await fetch(url, {
+      const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${token}`,
           "accept-version": "1.0.0",
@@ -24,29 +24,35 @@ export default async function handler(req, res) {
         },
       });
 
-      const raw = await wfRes.text();
-      let json;
+      const raw = await response.text();
+      let parsed;
+
       try {
-        json = JSON.parse(raw);
+        parsed = JSON.parse(raw);
       } catch {
+        console.error("❌ Invalid JSON from Webflow:", raw);
         return { ok: false, code: 502, error: "Invalid JSON", raw };
       }
 
-      if (!wfRes.ok) {
-        const isExpired = wfRes.status === 401 || wfRes.status === 403;
+      if (!response.ok) {
+        const isExpired = response.status === 401 || response.status === 403;
+        console.warn(`⚠️ Webflow error [${response.status}]:`, parsed?.message || raw);
         return {
           ok: false,
-          code: wfRes.status,
-          error: json?.message || "Webflow error",
+          code: response.status,
+          error: parsed?.message || "Webflow error",
           isExpired,
         };
       }
 
-      const sites = Array.isArray(json?.sites) ? json.sites : json;
-      const hostedSites = sites.filter(site => site.plan !== "developer");
+      const sites = Array.isArray(parsed?.sites) ? parsed.sites : parsed;
+      const hostedSites = Array.isArray(sites)
+        ? sites.filter(site => site.plan !== "developer")
+        : [];
 
       return { ok: true, sites: hostedSites };
     } catch (err) {
+      console.error("❌ Unexpected fetch error:", err.message);
       return { ok: false, code: 500, error: "Unexpected error", details: err.message };
     }
   };
@@ -54,14 +60,14 @@ export default async function handler(req, res) {
   const primary = await fetchSitesFrom("https://api.webflow.com/rest/sites");
   const fallback = !primary.ok ? await fetchSitesFrom("https://api.webflow.com/sites") : null;
 
-  const final = primary.ok ? primary : fallback?.ok ? fallback : null;
+  const result = primary.ok ? primary : fallback?.ok ? fallback : null;
 
-  if (!final) {
+  if (!result) {
     return res.status(fallback?.code || primary.code || 500).json({
       error: fallback?.error || primary.error || "Unknown error",
       expiredToken: fallback?.isExpired || primary.isExpired || false,
     });
   }
 
-  return res.status(200).json({ sites: final.sites });
+  return res.status(200).json({ sites: result.sites });
 }
