@@ -97,11 +97,14 @@ export default async function handler(req, res) {
       });
     }
 
-    const siteId = siteResult.sites[0]?._id;
+    console.log("✅ Access Token:", accessToken);
+    console.log("✅ Sites:", siteResult?.sites);
+
+    const siteId = siteResult?.sites?.[0]?._id || siteResult?.sites?.[0]?.id;
 
     if (!accessToken || !siteId) {
       return res.status(400).json({
-        error: 'Missing access token or site ID from Webflow.',
+        error: 'Missing access token or site ID from Webflow. Please reauthorize.',
       });
     }
 
