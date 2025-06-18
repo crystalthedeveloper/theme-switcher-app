@@ -25,7 +25,7 @@ export default function Confirm() {
     setStatus('Attempting to inject theme switcher script...');
 
     try {
-      if (testMode) console.log('📡 Fetching pages from site:', site_id);
+      if (testMode) console.log('📡 Fetching pages for site:', site_id);
 
       const pagesRes = await fetch(`https://api.webflow.com/rest/sites/${site_id}/pages`, {
         headers: {
@@ -34,17 +34,32 @@ export default function Confirm() {
         },
       });
 
-      const pagesData = await pagesRes.json();
+      const raw = await pagesRes.text();
+      let pagesData;
 
-      if (!Array.isArray(pagesData.pages) || pagesData.pages.length === 0) {
-        throw new Error('No pages found on this site.');
+      try {
+        pagesData = JSON.parse(raw);
+      } catch {
+        throw new Error('Invalid JSON from Webflow API.');
+      }
+
+      if (!pagesRes.ok || !Array.isArray(pagesData.pages)) {
+        if (pagesRes.status === 401 || pagesRes.status === 403) {
+          if (testMode) console.warn('🔁 Token expired or unauthorized. Redirecting...');
+          router.replace(`/install${testMode ? '?test=true' : ''}`);
+          return;
+        }
+        throw new Error(pagesData.message || 'Failed to fetch pages.');
       }
 
       const targetPage = pagesData.pages[0];
+      if (!targetPage) throw new Error('No pages found on this site.');
 
       const scriptTag = `
 <!-- Theme Switcher injected by Webflow App -->
 <script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
+
+      if (testMode) console.log('✏️ Injecting script into page:', targetPage._id);
 
       const patchRes = await fetch(
         `https://api.webflow.com/rest/sites/${site_id}/pages/${targetPage._id}/custom-code`,
@@ -62,10 +77,10 @@ export default function Confirm() {
         }
       );
 
-      const resultText = await patchRes.text();
+      const patchText = await patchRes.text();
 
       if (!patchRes.ok) {
-        throw new Error(`Custom code API failed: ${resultText}`);
+        throw new Error(`Custom Code API failed: ${patchText}`);
       }
 
       if (testMode) console.log('✅ Script injected successfully');

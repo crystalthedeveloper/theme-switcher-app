@@ -16,27 +16,28 @@ export default function Success() {
   }, [router]);
 
   return (
-    <main style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }}>
-      <h1 style={{ fontSize: '2rem' }}>✅ Theme Switcher Installed</h1>
+    <main role="main" style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }}>
+      <h1 style={{ fontSize: '2rem' }} aria-live="polite">✅ Theme Switcher Installed</h1>
 
       <p style={{ fontSize: '1.1rem', maxWidth: '480px', margin: '1rem auto' }}>
-        The theme toggle script has been successfully added to your Webflow site.
+        The theme toggle script was successfully added to your Webflow site.
       </p>
 
       {showManualInstall && (
-        <section style={{ maxWidth: '600px', margin: '2rem auto', textAlign: 'left' }}>
+        <section aria-label="Manual Installation Instructions" style={{ maxWidth: '600px', margin: '2rem auto', textAlign: 'left' }}>
           <h2 style={{ fontSize: '1.25rem', color: '#222', marginBottom: '0.5rem' }}>
-            Manual Installation Instructions
+            Manual Installation (Optional)
           </h2>
           <p style={{ fontSize: '0.95rem', color: '#555' }}>
-            If Webflow's Custom Code API was unavailable, you can still enable the toggle manually:
+            If Webflow’s Custom Code API was unavailable, you can still enable the toggle manually:
           </p>
           <ol style={{ fontSize: '0.9rem', color: '#444', marginTop: '1rem', paddingLeft: '1.2rem' }}>
-            <li>Go to your Webflow Project Settings.</li>
-            <li>Open the <strong>Custom Code</strong> tab.</li>
-            <li>Paste the script below into the <strong>Footer Code</strong> section:</li>
+            <li>Open your Webflow <strong>Project Settings</strong>.</li>
+            <li>Go to the <strong>Custom Code</strong> tab.</li>
+            <li>Paste the following code inside the <strong>Footer Code</strong> box:</li>
           </ol>
           <pre
+            aria-label="Theme switcher script to copy"
             style={{
               background: '#f4f4f4',
               padding: '10px',
@@ -44,15 +45,17 @@ export default function Success() {
               marginTop: '1rem',
               fontSize: '0.85rem',
               overflowX: 'auto',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
             }}
           >
 &lt;script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer&gt;&lt;/script&gt;
           </pre>
 
           <p style={{ fontSize: '0.85rem', color: '#999', marginTop: '2rem' }}>
-            To remove the theme script, go to your Webflow Project Settings → <strong>Custom Code</strong> and delete the injected line.
+            To remove it, simply delete the script from your <strong>Custom Code</strong> tab.
             <br /><br />
-            To uninstall the app entirely, go to <strong>Project Settings → Apps & Integrations</strong> and click <em>Uninstall App</em>.
+            To uninstall the app completely, go to your Webflow site’s <strong>Apps &amp; Integrations</strong> settings and select <em>Uninstall App</em>.
           </p>
         </section>
       )}

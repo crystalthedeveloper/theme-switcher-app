@@ -1,9 +1,16 @@
 // pages/api/exchange-token.js
 
 export default async function handler(req, res) {
+  // CORS headers
   res.setHeader('Cache-Control', 'no-store');
-  // Optional CORS header (enable if exposing this API publicly)
-  // res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Preflight support
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -54,7 +61,6 @@ export default async function handler(req, res) {
 
     if (!tokenRes.ok || tokenData.error || !tokenData.access_token) {
       console.error('❌ Token exchange failed:', raw);
-      console.warn('Hint: Double-check your Webflow App settings → Callback URL must match exactly.');
       return res.status(400).json({
         error: tokenData.error_description || 'Token exchange failed',
         hint: 'Check client_id, client_secret, and redirect_uri.',
@@ -63,8 +69,6 @@ export default async function handler(req, res) {
     }
 
     const accessToken = tokenData.access_token;
-
-    // TODO: Store accessToken securely if implementing persistent login
 
     // 🔍 Step 2: Try fetching connected sites
     const trySitesEndpoint = async (url) => {
@@ -87,8 +91,8 @@ export default async function handler(req, res) {
         const siteArray = Array.isArray(data?.sites) ? data.sites : data;
         const hostedSites = siteArray.filter(site => site?.plan !== 'developer');
 
-        if (!Array.isArray(hostedSites) || hostedSites.length === 0) {
-          return { success: false, reason: `No hosted sites found at ${url}` };
+        if (!hostedSites.length) {
+          return { success: false, reason: 'No hosted sites found' };
         }
 
         const formatted = hostedSites.map(site => ({
@@ -102,7 +106,7 @@ export default async function handler(req, res) {
       }
     };
 
-    // 🧪 Step 3: Try modern endpoint first, fallback to legacy if needed
+    // 🧪 Step 3: Use modern endpoint, then fallback
     const primary = await trySitesEndpoint('https://api.webflow.com/rest/sites');
     const fallback = !primary.success
       ? await trySitesEndpoint('https://api.webflow.com/sites')
@@ -114,7 +118,7 @@ export default async function handler(req, res) {
 
     const finalSites = primary.success
       ? primary.sites
-      : fallback && fallback.success
+      : fallback?.success
         ? fallback.sites
         : [];
 

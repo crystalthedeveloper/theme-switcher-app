@@ -12,6 +12,8 @@ export default function SelectSite() {
   const [testMode, setTestMode] = useState(false);
 
   useEffect(() => {
+    if (!router.isReady) return;
+
     const queryToken = router.query.token;
     const isTest = router.query.test === 'true';
     setTestMode(isTest);
@@ -30,7 +32,7 @@ export default function SelectSite() {
 
     const fetchSites = async () => {
       try {
-        if (isTest) console.log('📡 Fetching sites using token (via /api/sites)');
+        if (isTest) console.log('📡 POST /api/sites with token');
 
         const res = await fetch('/api/sites', {
           method: 'POST',
@@ -40,17 +42,25 @@ export default function SelectSite() {
           body: JSON.stringify({ token: finalToken }),
         });
 
-
         const data = await res.json();
 
-        if (!Array.isArray(data.sites)) {
-          throw new Error('Invalid response from API');
+        if (!res.ok) {
+          if (data?.expiredToken) {
+            if (isTest) console.warn('🔁 Token expired. Redirecting to /install...');
+            router.replace(`/install${isTest ? '?test=true' : ''}`);
+            return;
+          }
+          throw new Error(data.error || 'API error');
         }
 
-        const hostedSites = data.sites.filter(site => site.plan !== 'developer');
+        if (!Array.isArray(data.sites)) {
+          throw new Error('Invalid response format from API');
+        }
 
-        if (hostedSites.length === 0) {
-          if (isTest) console.warn('⚠️ No hosted sites. Redirecting...');
+        if (isTest) console.log(`✅ Found ${data.sites.length} site(s)`);
+
+        if (data.sites.length === 0) {
+          if (isTest) console.warn('⚠️ No hosted sites found. Redirecting...');
           setError('No hosted Webflow sites found. Redirecting to manual install...');
 
           setTimeout(() => {
@@ -59,11 +69,7 @@ export default function SelectSite() {
           return;
         }
 
-        if (isTest) {
-          console.log(`✅ Found ${hostedSites.length} hosted site(s).`);
-        }
-
-        setSites(hostedSites);
+        setSites(data.sites);
       } catch (err) {
         if (isTest) console.error('❌ Site fetch error:', err);
         setError('Failed to load your sites. Please try again.');
@@ -73,7 +79,7 @@ export default function SelectSite() {
     };
 
     fetchSites();
-  }, [router.query.token]);
+  }, [router.isReady, router.query.token]);
 
   const handleSelect = (siteId) => {
     if (!token) return;
@@ -93,9 +99,9 @@ export default function SelectSite() {
       {!loading && !error && sites.length > 0 && (
         <ul style={{ listStyle: 'none', padding: 0 }}>
           {sites.map((site) => (
-            <li key={site._id} style={{ margin: '1rem 0' }}>
+            <li key={site.id || site._id} style={{ margin: '1rem 0' }}>
               <button
-                onClick={() => handleSelect(site._id)}
+                onClick={() => handleSelect(site.id || site._id)}
                 style={{
                   padding: '10px 20px',
                   fontSize: '1rem',
