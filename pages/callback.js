@@ -18,7 +18,7 @@ export default function Callback() {
 
     if (error) {
       if (isTest) console.error('❌ OAuth Error:', error_description || error);
-      router.replace(`/install${isTest ? '?test=true' : ''}`);
+      router.replace(`/${isTest ? '?test=true' : ''}`);
       return;
     }
 
@@ -52,12 +52,12 @@ export default function Callback() {
 
         const { access_token, warning } = data;
 
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && access_token) {
           sessionStorage.setItem('webflow_token', access_token);
         }
 
         if (testMode) {
-          console.log('✅ Received access token:', access_token.slice(0, 8) + '...');
+          if (access_token) console.log('✅ Received access token:', access_token.slice(0, 8) + '...');
           if (warning) console.warn('⚠️ Warning:', warning);
         }
 
@@ -94,7 +94,7 @@ export default function Callback() {
 
       {!loading && (
         <div style={{ marginTop: '2rem' }}>
-          <a href="/install" aria-label="Try OAuth install again">
+          <a href="/" aria-label="Try again from the start">
             <button
               type="button"
               style={{
