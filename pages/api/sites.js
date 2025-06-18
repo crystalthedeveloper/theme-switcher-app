@@ -20,9 +20,13 @@ export default async function handler(req, res) {
 
   // Get and validate token
   const { token } = req.body || {};
+  console.log('📨 Incoming token:', typeof token, token?.slice(0, 6) + '... (truncated)');
   console.log('🔐 Token received:', token?.slice(0, 6) + '... (truncated)');
 
   if (!token || typeof token !== 'string' || token.length < 20) {
+    if (typeof token !== 'string') {
+      console.warn('🧪 Token is not a string. Type received:', typeof token);
+    }
     console.warn('⚠️ Invalid or missing token:', token);
     return res.status(400).json({ error: "Missing or invalid token" });
   }
@@ -30,6 +34,7 @@ export default async function handler(req, res) {
   // Helper function to fetch sites from Webflow
   const fetchSitesFrom = async (url) => {
     try {
+      console.log(`🌐 Fetching sites from: ${url}`);
       const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -91,5 +96,6 @@ export default async function handler(req, res) {
     console.warn('⚠️ Valid token, but no hosted sites returned.');
   }
   console.log(`✅ Found ${result.sites.length} hosted site(s)`);
+  console.log('📤 Sending back site list:', result.sites.map(s => s.name || s.displayName || s._id));
   return res.status(200).json({ sites: result.sites });
 }
