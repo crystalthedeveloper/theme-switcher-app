@@ -6,6 +6,7 @@ export default function Home() {
   return (
     <>
       <Head>
+        <html lang="en" />
         <title>Theme Switcher for Webflow</title>
         <meta
           name="description"
@@ -13,7 +14,7 @@ export default function Home() {
         />
       </Head>
 
-      <main style={{ textAlign: 'center', padding: '4rem 1.5rem' }}>
+      <main role="main" style={{ textAlign: 'center', padding: '4rem 1.5rem' }}>
         <img
           src="/logo.png"
           alt="Crystal The Developer Logo"
