@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") {
-    return res.status(204).end(); // Preflight support
+    return res.status(204).end(); // Preflight response
   }
 
   if (req.method !== "POST") {
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
       data = JSON.parse(raw);
     } catch {
       return res.status(502).json({
-        error: "Invalid JSON response from Webflow",
+        error: "Invalid JSON from Webflow",
         raw,
       });
     }
