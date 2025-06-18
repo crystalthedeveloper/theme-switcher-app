@@ -7,7 +7,7 @@ export default function Confirm() {
   const router = useRouter();
   const { site_id, token, test } = router.query;
 
-  const [status, setStatus] = useState('Preparing to install Theme Switcher into your Webflow project...');
+  const [status, setStatus] = useState('Preparing to install the Theme Switcher App in your Webflow site...');
   const [injectionFailed, setInjectionFailed] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -17,7 +17,7 @@ export default function Confirm() {
   const injectScript = async () => {
     if (!site_id || !token) {
       if (testMode) console.warn('⚠️ Missing site_id or token');
-      router.replace(`/install${testMode ? '?test=true' : ''}`);
+      router.replace(`/${testMode ? '?test=true' : ''}`);
       return;
     }
 
@@ -47,7 +47,7 @@ export default function Confirm() {
       if (!pagesRes.ok || !Array.isArray(pagesData.pages)) {
         if (pagesRes.status === 401 || pagesRes.status === 403) {
           if (testMode) console.warn('🔁 Token expired or unauthorized. Redirecting...');
-          router.replace(`/install${testMode ? '?test=true' : ''}`);
+          router.replace(`/${testMode ? '?test=true' : ''}`);
           return;
         }
         throw new Error(pagesData.message || 'Failed to fetch pages.');
@@ -110,7 +110,7 @@ export default function Confirm() {
 
   return (
     <main style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }}>
-      <h1>🔧 Installing Theme Switcher...</h1>
+      <h1>🔧 Setting up Theme Switcher...</h1>
       <p style={{ maxWidth: '500px', margin: '1rem auto' }}>{status}</p>
 
       {injectionFailed && (
@@ -136,7 +136,7 @@ export default function Confirm() {
               cursor: 'pointer',
             }}
           >
-            Manual Instructions
+            Manual Install Guide
           </button>
           {errorMsg && (
             <p style={{ color: 'red', marginTop: '1rem', fontSize: '0.9rem' }}>

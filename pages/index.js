@@ -1,7 +1,6 @@
 // pages/index.js
 
 import Head from 'next/head';
-import Link from 'next/link';
 
 export default function Home() {
   return (
@@ -27,20 +26,22 @@ export default function Home() {
           Let your visitors switch between dark and light mode — no coding required.
         </p>
 
-        <Link href="/install" passHref legacyBehavior>
-          <a aria-label="Start install process">
-            <button
-              style={{
-                padding: '12px 24px',
-                marginTop: '2rem',
-                fontSize: '1rem',
-                cursor: 'pointer',
-              }}
-            >
-              Install Theme Switcher
-            </button>
-          </a>
-        </Link>
+        <a
+          href={`https://webflow.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.NEXT_PUBLIC_BASE_URL + '/callback')}&response_type=code&scope=sites:read pages:read custom_code:write`}
+          aria-label="Authorize with Webflow and connect this app"
+          rel="noopener noreferrer"
+        >
+          <button
+            style={{
+              padding: '12px 24px',
+              marginTop: '2rem',
+              fontSize: '1rem',
+              cursor: 'pointer',
+            }}
+          >
+            Install Theme Switcher
+          </button>
+        </a>
 
         <div style={{ marginTop: '3rem', fontSize: '0.9rem', color: '#999' }}>
           <p>Created by Crystal The Developer Inc. • Powered by the Webflow App SDK</p>
