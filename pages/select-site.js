@@ -18,8 +18,7 @@ export default function SelectSite() {
     const isTest = router.query.test === 'true';
     setTestMode(isTest);
 
-    const storedToken =
-      typeof window !== 'undefined' ? sessionStorage.getItem('webflow_token') : null;
+    const storedToken = typeof window !== 'undefined' ? sessionStorage.getItem('webflow_token') : null;
     const finalToken = queryToken || storedToken;
 
     if (!finalToken) {
@@ -34,7 +33,7 @@ export default function SelectSite() {
 
     const fetchSites = async () => {
       try {
-        if (isTest) console.log('📡 POST /api/sites with token');
+        if (isTest) console.log('📡 Sending POST to /api/sites with token');
 
         const res = await fetch('/api/sites', {
           method: 'POST',
@@ -48,7 +47,7 @@ export default function SelectSite() {
 
         if (!res.ok) {
           if (data?.expiredToken) {
-            if (isTest) console.warn('🔁 Token expired. Redirecting...');
+            if (isTest) console.warn('🔁 Token expired. Redirecting to /install');
             router.replace(`/install${isTest ? '?test=true' : ''}`);
             return;
           }
@@ -85,7 +84,6 @@ export default function SelectSite() {
 
   const handleSelect = (siteId) => {
     if (!token) return;
-
     const redirect = `/confirm?site_id=${siteId}&token=${token}${testMode ? '&test=true' : ''}`;
     if (testMode) console.log('➡️ Redirecting to:', redirect);
     router.push(redirect);
@@ -102,7 +100,7 @@ export default function SelectSite() {
             <li key={site.id || site._id} style={{ margin: '1rem 0' }}>
               <button
                 onClick={() => handleSelect(site.id || site._id)}
-                style={{ padding: '10px 20px', fontSize: '1rem' }}
+                style={{ padding: '10px 20px', fontSize: '1rem', cursor: 'pointer' }}
               >
                 {site.displayName || site.name || 'Untitled Site'}
               </button>
