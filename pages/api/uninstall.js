@@ -20,7 +20,7 @@ export default async function handler(req, res) {
     if (testMode) console.log(`🧪 [Uninstall] Starting cleanup for site: ${site_id}`);
 
     // Step 1: Get all pages on the site
-    const pagesRes = await fetch(`https://api.webflow.com/rest/sites/${site_id}/pages`, {
+    const pagesRes = await fetch(`https://api.webflow.com/v2/sites/${site_id}/pages`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "accept-version": "1.0.0",

@@ -109,7 +109,7 @@ export default async function handler(req, res) {
     };
 
     // 🧪 Step 3: Use modern endpoint
-    const primary = await trySitesEndpoint('https://api.webflow.com/sites');
+    const primary = await trySitesEndpoint('https://api.webflow.com/v2/sites');
     const finalSites = primary.success ? primary.sites : [];
 
     // ✅ Final Response

@@ -55,6 +55,12 @@ export default function Confirm() {
       }
 
       const targetPage = pagesData.pages[0];
+      // Check if script is already present
+      const existingBody = targetPage?.customCode?.body || '';
+      if (existingBody.includes('theme-switcher.js')) {
+        router.replace(`/success${testMode ? '?test=true' : ''}`);
+        return;
+      }
       if (!targetPage) throw new Error('No pages found on this site.');
 
       const scriptTag = `
@@ -92,7 +98,7 @@ export default function Confirm() {
       console.error('❌ Injection Error:', err.message);
       setInjectionFailed(true);
       setStatus('Automatic installation failed. You can try again or follow manual install steps.');
-      setErrorMsg(err.message);
+      setErrorMsg(err.message || 'Unknown error occurred while injecting the script.');
     } finally {
       setRetrying(false);
     }

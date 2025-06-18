@@ -15,17 +15,23 @@ export default async function handler(req, res) {
   }
 
   try {
-    const result = await fetch(`https://api.webflow.com/sites/${siteId}/pages`, {
+    const response = await fetch(`https://api.webflow.com/v2/sites/${siteId}/pages`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "accept-version": "1.0.0",
       },
     });
 
-    const data = await result.json();
+    const raw = await response.text();
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      return res.status(500).json({ error: "Invalid JSON from Webflow" });
+    }
 
-    if (!result.ok) {
-      return res.status(result.status).json({ error: data.message || "Webflow API error" });
+    if (!response.ok) {
+      return res.status(response.status).json({ error: data.message || "Webflow API error" });
     }
 
     res.status(200).json(data);
