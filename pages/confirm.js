@@ -15,12 +15,6 @@ export default function Confirm() {
 
   // 🛠 Begin script injection
   const injectScript = async () => {
-    if (!site_id || !token) {
-      if (testMode) console.warn('⚠️ Missing site_id or token');
-      router.replace(`/${testMode ? '?test=true' : ''}`);
-      return;
-    }
-
     setInjectionFailed(false);
     setRetrying(true);
     setStatus('Injecting Theme Switcher into Webflow Custom Code...');
@@ -105,7 +99,11 @@ export default function Confirm() {
   };
 
   useEffect(() => {
-    injectScript();
+    if (site_id && token) {
+      injectScript();
+    } else {
+      setStatus("Missing site ID or token. Please return to the app and reauthorize.");
+    }
   }, [site_id, token]);
 
   const handleRetry = () => {
@@ -118,6 +116,11 @@ export default function Confirm() {
   return (
     <main style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }}>
       <h1>🔧 Setting up Theme Switcher...</h1>
+      {(!site_id || !token) && (
+        <p style={{ color: 'red', marginTop: '1rem', fontSize: '0.9rem' }}>
+          ⚠️ Missing site ID or token. Please reauthorize via the main page.
+        </p>
+      )}
       <p style={{ maxWidth: '500px', margin: '1rem auto' }}>{status}</p>
 
       {injectionFailed && (
