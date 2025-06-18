@@ -47,7 +47,7 @@ export default async function handler(req, res) {
       pages.map(async (page) => {
         const cleanedBody = removeScriptTag(page.customCode?.body || "");
         const patchRes = await fetch(
-          `https://api.webflow.com/rest/sites/${site_id}/pages/${page._id}/custom-code`,
+          `https://api.webflow.com/sites/${site_id}/pages/${page._id}/custom-code`,
           {
             method: "PATCH",
             headers: {

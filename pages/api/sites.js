@@ -75,20 +75,14 @@ export default async function handler(req, res) {
     }
   };
 
-  // Try REST API, fallback to legacy
-  const primary = await fetchSitesFrom("https://api.webflow.com/rest/sites");
-  const fallback = !primary.ok ? await fetchSitesFrom("https://api.webflow.com/sites") : null;
-  if (!primary.ok && fallback?.ok) {
-    console.log('🔁 Fallback API succeeded after REST failed.');
-  }
-  const result = primary.ok ? primary : fallback?.ok ? fallback : null;
-
-  // Final result check
-  if (!result) {
-    console.error("❌ Both primary and fallback site fetches failed.");
-    return res.status(fallback?.code || primary.code || 500).json({
-      error: fallback?.error || primary.error || "Unknown error",
-      expiredToken: fallback?.isExpired || primary.isExpired || false,
+  // Try only the correct API endpoint
+  const primary = await fetchSitesFrom("https://api.webflow.com/sites");
+  const result = primary;
+  if (!result.ok) {
+    console.error("❌ Site fetch failed:", result.error);
+    return res.status(result.code || 500).json({
+      error: result.error || "Unknown error",
+      expiredToken: result.isExpired || false,
     });
   }
 

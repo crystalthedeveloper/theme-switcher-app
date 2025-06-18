@@ -28,7 +28,7 @@ export default function Confirm() {
     try {
       if (testMode) console.log('📡 Fetching pages for site:', site_id);
 
-      const pagesRes = await fetch(`https://api.webflow.com/rest/sites/${site_id}/pages`, {
+      const pagesRes = await fetch(`https://api.webflow.com/sites/${site_id}/pages`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'accept-version': '1.0.0',
@@ -63,7 +63,7 @@ export default function Confirm() {
       if (testMode) console.log('✏️ Injecting script into page:', targetPage._id);
 
       const patchRes = await fetch(
-        `https://api.webflow.com/rest/sites/${site_id}/pages/${targetPage._id}/custom-code`,
+        `https://api.webflow.com/sites/${site_id}/pages/${targetPage._id}/custom-code`,
         {
           method: 'PATCH',
           headers: {

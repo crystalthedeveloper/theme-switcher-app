@@ -108,21 +108,9 @@ export default async function handler(req, res) {
       }
     };
 
-    // 🧪 Step 3: Use modern endpoint, then fallback
-    const primary = await trySitesEndpoint('https://api.webflow.com/rest/sites');
-    const fallback = !primary.success
-      ? await trySitesEndpoint('https://api.webflow.com/sites')
-      : null;
-
-    if (!primary.success && fallback?.success) {
-      console.warn('🪂 Fallback succeeded after /rest/sites failed.');
-    }
-
-    const finalSites = primary.success
-      ? primary.sites
-      : fallback?.success
-        ? fallback.sites
-        : [];
+    // 🧪 Step 3: Use modern endpoint
+    const primary = await trySitesEndpoint('https://api.webflow.com/sites');
+    const finalSites = primary.success ? primary.sites : [];
 
     // ✅ Final Response
     return res.status(200).json({
