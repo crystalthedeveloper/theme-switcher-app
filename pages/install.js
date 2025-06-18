@@ -40,6 +40,19 @@ export default function Install() {
     }
   }, [router, testMode]);
 
+  const fullLogoutAndReset = () => {
+    sessionStorage.clear();
+    localStorage.clear();
+
+    document.cookie.split(";").forEach((c) => {
+      document.cookie = c
+        .replace(/^ +/, "")
+        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+    });
+
+    window.location.href = 'https://webflow.com/logout';
+  };
+
   return (
     <>
       <Head>
@@ -58,7 +71,13 @@ export default function Install() {
         </p>
 
         <p style={{ maxWidth: '480px', margin: '1rem auto', color: '#666' }}>
-          This app needs access to your Webflow pages and Custom Code settings. Your site must be on a paid Webflow plan.
+          This app needs access to your Webflow pages and Custom Code settings.
+          Your site must be on a paid Webflow plan.
+        </p>
+
+        <p style={{ maxWidth: '500px', margin: '1rem auto', fontSize: '0.9rem', color: '#999' }}>
+          If you're not seeing the correct workspace or sites, try logging out of Webflow first.
+          Then return here and reconnect using the correct workspace.
         </p>
 
         {!hasToken && oauthUrl && (
@@ -91,7 +110,6 @@ export default function Install() {
               opacity: 0.5,
               cursor: 'not-allowed',
             }}
-            aria-label="OAuth connection disabled due to missing configuration"
             title="Missing environment variables"
           >
             Unable to Connect — Missing Config
@@ -105,7 +123,6 @@ export default function Install() {
                 sessionStorage.removeItem('webflow_token');
                 router.replace('/install');
               }}
-              aria-label="Reset Webflow authentication and switch workspace"
               style={{
                 padding: '10px 20px',
                 fontSize: '1rem',
@@ -115,11 +132,26 @@ export default function Install() {
                 borderRadius: '4px',
               }}
             >
-              🔁 Switch Workspace
+              🔁 Switch Workspace (Soft Reset)
             </button>
+
+            <button
+              onClick={fullLogoutAndReset}
+              style={{
+                marginTop: '1rem',
+                padding: '10px 20px',
+                fontSize: '1rem',
+                background: '#eee',
+                border: '1px solid #ccc',
+                cursor: 'pointer',
+              }}
+            >
+              🔒 Full Logout & Workspace Reset
+            </button>
+
             <p style={{ fontSize: '0.85rem', marginTop: '0.5rem', color: '#666' }}>
               Only sites in the workspace you selected during authorization will appear.
-              To install on another workspace, click above and switch workspaces first.
+              To install on another workspace, click one of the buttons above.
             </p>
           </div>
         )}

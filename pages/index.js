@@ -43,7 +43,7 @@ export default function Home() {
         </Link>
 
         <div style={{ marginTop: '3rem', fontSize: '0.9rem', color: '#999' }}>
-          <p>Created by Crystal The Developer • Powered by the Webflow App SDK</p>
+          <p>Created by Crystal The Developer Inc. • Powered by the Webflow App SDK</p>
         </div>
       </main>
     </>
