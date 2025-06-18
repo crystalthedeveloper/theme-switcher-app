@@ -55,9 +55,9 @@ export default function Callback() {
 
         const { access_token, warning } = data;
 
-        if (typeof window !== 'undefined' && access_token && data?.site_id) {
-          sessionStorage.setItem('webflow_token', access_token);
-          sessionStorage.setItem('webflow_site_id', data.site_id);
+        if (typeof window !== 'undefined') {
+          if (access_token) sessionStorage.setItem('webflow_token', access_token);
+          if (data?.site_id) sessionStorage.setItem('webflow_site_id', data.site_id);
         }
 
         if (testMode) {
@@ -65,8 +65,11 @@ export default function Callback() {
           if (warning) console.warn('⚠️ Warning:', warning);
         }
 
-        if (access_token && data?.site_id) {
-          const redirectUrl = `/confirm?site_id=${data.site_id}&token=${access_token}${testMode ? '&test=true' : ''}`;
+        const finalToken = access_token || sessionStorage.getItem('webflow_token');
+        const finalSiteId = data?.site_id || sessionStorage.getItem('webflow_site_id');
+
+        if (finalToken && finalSiteId) {
+          const redirectUrl = `/confirm?site_id=${finalSiteId}&token=${finalToken}${testMode ? '&test=true' : ''}`;
           if (testMode) console.log('➡️ Redirecting to:', redirectUrl);
           router.replace(redirectUrl);
         } else {
