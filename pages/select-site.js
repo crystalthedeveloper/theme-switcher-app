@@ -33,10 +33,13 @@ export default function SelectSite() {
         if (isTest) console.log('📡 Fetching sites using token (via /api/sites)');
 
         const res = await fetch('/api/sites', {
+          method: 'POST',
           headers: {
-            Authorization: `Bearer ${finalToken}`,
+            'Content-Type': 'application/json',
           },
+          body: JSON.stringify({ token: finalToken }),
         });
+
 
         const data = await res.json();
 
