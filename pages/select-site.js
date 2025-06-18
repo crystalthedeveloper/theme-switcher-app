@@ -23,6 +23,7 @@ export default function SelectSite() {
       : null;
 
     const finalToken = queryToken || storedToken;
+    console.log('🛠 Token used in POST to /api/sites:', finalToken);
 
     if (!finalToken || finalToken.length < 20) {
       if (isTest) console.warn('⚠️ Missing or invalid token:', finalToken);
@@ -37,6 +38,7 @@ export default function SelectSite() {
     const fetchSites = async () => {
       try {
         if (isTest) console.log('📡 Sending POST to /api/sites');
+        console.log('📦 Sending request body:', JSON.stringify({ token: finalToken }));
 
         const res = await fetch('/api/sites', {
           method: 'POST',
@@ -75,7 +77,7 @@ export default function SelectSite() {
         setSites(data.sites);
         if (isTest) console.log(`✅ Loaded ${data.sites.length} site(s)`);
       } catch (err) {
-        console.error('❌ Site fetch error:', err.message);
+        console.error('❌ Site fetch error:', err);
         setError('Failed to load your sites. Please try again.');
       } finally {
         setLoading(false);
