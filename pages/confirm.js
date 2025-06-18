@@ -150,6 +150,39 @@ export default function Confirm() {
               ⚠️ {errorMsg}
             </p>
           )}
+
+          <div style={{ marginTop: '3rem', textAlign: 'left' }}>
+            <h2>📄 Manual Installation Instructions</h2>
+            <p style={{ fontSize: '0.95rem', color: '#555' }}>
+              If the Custom Code API was temporarily unavailable, you can still manually enable the toggle.
+            </p>
+            <ol style={{ fontSize: '0.9rem', color: '#444', marginTop: '1rem', paddingLeft: '1.2rem' }}>
+              <li>Open your Webflow <strong>Project Settings</strong>.</li>
+              <li>Go to the <strong>Custom Code</strong> tab.</li>
+              <li>Paste the following code inside the <strong>Footer Code</strong> box:</li>
+            </ol>
+            <pre
+              aria-label="Theme switcher script to copy"
+              style={{
+                background: '#f4f4f4',
+                padding: '10px',
+                borderRadius: '6px',
+                marginTop: '1rem',
+                fontSize: '0.85rem',
+                overflowX: 'auto',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+              }}
+            >
+{`<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`}
+            </pre>
+            <p style={{ fontSize: '0.9rem', color: '#444', marginTop: '1rem' }}>
+              To remove it, simply delete the script from your <strong>Custom Code</strong> tab.
+            </p>
+            <p style={{ fontSize: '0.9rem', color: '#444' }}>
+              To uninstall the app, visit your Webflow site’s <strong>Apps & Integrations</strong> tab and choose <strong>Uninstall</strong> under Theme Switcher.
+            </p>
+          </div>
         </div>
       )}
 
