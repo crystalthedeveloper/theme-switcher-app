@@ -28,11 +28,12 @@ export default function Confirm() {
     try {
       if (testMode) console.log('📡 Fetching pages for site:', site_id);
 
-      const pagesRes = await fetch(`https://api.webflow.com/sites/${site_id}/pages`, {
+      const pagesRes = await fetch('/api/pages', {
+        method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
-          'accept-version': '1.0.0',
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ siteId: site_id, token }),
       });
 
       const raw = await pagesRes.text();
