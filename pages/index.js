@@ -4,9 +4,8 @@ import Head from 'next/head';
 
 export default function Home() {
   return (
-    <>
+    <div lang="en">
       <Head>
-        <html lang="en" />
         <title>Theme Switcher for Webflow</title>
         <meta
           name="description"
@@ -48,6 +47,6 @@ export default function Home() {
           <p>Created by Crystal The Developer Inc. • Powered by the Webflow App SDK</p>
         </div>
       </main>
-    </>
+    </div>
   );
 }
