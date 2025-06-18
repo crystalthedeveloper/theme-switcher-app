@@ -12,7 +12,11 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
 
   const { token } = req.body || {};
-  if (!token) return res.status(400).json({ error: "Missing token" });
+
+  if (!token || typeof token !== 'string' || token.length < 20) {
+    console.warn('⚠️ Invalid or missing token:', token);
+    return res.status(400).json({ error: "Missing or invalid token" });
+  }
 
   const fetchSitesFrom = async (url) => {
     try {
@@ -20,7 +24,6 @@ export default async function handler(req, res) {
         headers: {
           Authorization: `Bearer ${token}`,
           "accept-version": "1.0.0",
-          "Content-Type": "application/json",
         },
       });
 
