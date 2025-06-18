@@ -45,19 +45,14 @@ export default function Callback() {
 
         if (isTest) console.log('📬 Response from /api/exchange-token:', data);
 
-        if (!res.ok || !data.access_token) {
+        if (!res.ok || !data.access_token || !data.site_id) {
           if (isTest) {
-            console.error('⚠️ Token exchange failed:');
-            console.log('🔍 Full response object:', data);
+            console.error('⚠️ Token exchange failed:', data);
           }
-          throw new Error(data.error || 'Token exchange failed.');
+          throw new Error(data.error || 'Missing access token or site ID from Webflow. Please reauthorize.');
         }
 
         const { access_token, warning, site_id } = data;
-
-        if (!access_token || !site_id) {
-          throw new Error('Missing access token or site ID from Webflow. Please reauthorize.');
-        }
 
         if (typeof window !== 'undefined') {
           sessionStorage.setItem('webflow_token', access_token);

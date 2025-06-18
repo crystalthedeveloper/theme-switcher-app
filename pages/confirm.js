@@ -5,7 +5,7 @@ export default function Confirm() {
   const router = useRouter();
   const { site_id, token, test } = router.query;
 
-  const [status, setStatus] = useState('Preparing to install the Theme Switcher App in your Webflow site...');
+  const [status, setStatus] = useState('⚠️ Please ensure you have authorized access with a valid token and site ID. This is required for the Theme Switcher App to function correctly.');
   const [injectionFailed, setInjectionFailed] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -118,7 +118,10 @@ export default function Confirm() {
       sessionStorage.setItem('webflow_token', finalToken);
       injectScript(finalSiteId, finalToken);
     } else {
-      setStatus("⚠️ Missing site ID or token. Please reauthorize via the main page.");
+      console.warn('⚠️ Missing site ID or token in sessionStorage or query.');
+      setStatus("⚠️ Missing access token or site ID from Webflow. Please reauthorize from the homepage.");
+      setInjectionFailed(true);
+      setErrorMsg("Missing access token or site ID from Webflow. Please return to the homepage and reauthorize.");
     }
   }, [router.isReady]);
 
