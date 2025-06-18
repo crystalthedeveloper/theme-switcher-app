@@ -1,20 +1,13 @@
 // pages/api/exchange-token.js
 
 export default async function handler(req, res) {
-  // CORS headers
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  // Preflight support
-  if (req.method === 'OPTIONS') {
-    return res.status(204).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { code } = req.body;
   if (!code) return res.status(400).json({ error: 'Missing authorization code' });
@@ -38,8 +31,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log('🔁 Received auth code for exchange');
-    // 🔁 Step 1: Exchange code for access token
     const tokenRes = await fetch('https://api.webflow.com/oauth/access_token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -54,82 +45,66 @@ export default async function handler(req, res) {
 
     const raw = await tokenRes.text();
     let tokenData;
+
     try {
       tokenData = JSON.parse(raw);
     } catch {
       return res.status(500).json({ error: 'Invalid JSON from Webflow' });
     }
 
-    const accessToken = tokenData.access_token;
-    if (!accessToken) throw new Error("Missing access token in response");
-
-    const issuedAt = Date.now();
-
     if (!tokenRes.ok || tokenData.error) {
-      console.error('❌ Token exchange failed:', raw);
       return res.status(400).json({
         error: tokenData.error_description || 'Token exchange failed',
         hint: 'Check client_id, client_secret, and redirect_uri.',
-        details: {
-          error: tokenData.error,
-          error_description: tokenData.error_description,
-        },
+        details: tokenData,
       });
     }
 
-    // 🔍 Step 2: Try fetching connected sites
-    const trySitesEndpoint = async (url) => {
+    const accessToken = tokenData.access_token;
+    if (!accessToken) {
+      return res.status(400).json({ error: 'Missing access token from Webflow.' });
+    }
+
+    const fetchSites = async () => {
       try {
-        const response = await fetch(url, {
+        const siteRes = await fetch('https://api.webflow.com/v2/sites', {
           headers: {
             Authorization: `Bearer ${accessToken}`,
             'accept-version': '1.0.0',
           },
         });
 
-        const raw = await response.text();
-        let data;
-        try {
-          data = JSON.parse(raw);
-        } catch {
-          return { success: false, reason: `Invalid JSON from ${url}` };
-        }
+        const siteRaw = await siteRes.text();
+        const siteData = JSON.parse(siteRaw);
+        const hostedSites = Array.isArray(siteData?.sites)
+          ? siteData.sites.filter(site => site?.plan !== 'developer')
+          : [];
 
-        const siteArray = Array.isArray(data?.sites) ? data.sites : data;
-        const hostedSites = siteArray.filter(site => site?.plan !== 'developer');
-
-        if (!hostedSites.length) {
-          return { success: false, reason: 'No hosted sites found' };
-        }
-
-        const formatted = hostedSites.map(site => ({
-          id: site._id,
-          name: site.displayName || site.name || 'Untitled',
-        }));
-
-        return { success: true, sites: formatted };
-      } catch (err) {
-        return { success: false, reason: err.message };
+        return hostedSites.length > 0
+          ? { success: true, sites: hostedSites }
+          : { success: false, reason: 'No hosted sites found' };
+      } catch (e) {
+        return { success: false, reason: e.message };
       }
     };
 
-    // 🧪 Step 3: Use modern endpoint
-    const primary = await trySitesEndpoint('https://api.webflow.com/v2/sites');
-    const finalSites = primary.success ? primary.sites : [];
+    const siteResult = await fetchSites();
 
-    // ✅ Final Response
+    if (!siteResult.success) {
+      return res.status(400).json({
+        error: 'Failed to fetch sites from Webflow.',
+        details: siteResult.reason,
+      });
+    }
+
     return res.status(200).json({
       access_token: accessToken,
       token_type: tokenData.token_type || 'Bearer',
-      site_id: finalSites[0]?.id || null,
-      sites: finalSites,
-      issued_at: issuedAt,
-      expires_in: 3600, // optional: assumed 1 hour for reference
-      warning: finalSites.length === 0
-        ? 'No hosted sites found. Proceeding with fallback for testing.'
-        : undefined,
+      site_id: siteResult.sites[0]?._id || null,
+      sites: siteResult.sites,
+      issued_at: Date.now(),
+      expires_in: 3600,
     });
-
   } catch (err) {
     console.error('❌ Unexpected error during token exchange:', err);
     return res.status(500).json({ error: 'Unexpected error during token exchange.' });
