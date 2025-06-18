@@ -36,6 +36,7 @@ export default async function handler(req, res) {
   webflowAuthUrl.searchParams.set('response_type', 'code');
   webflowAuthUrl.searchParams.set('client_id', clientId);
   webflowAuthUrl.searchParams.set('redirect_uri', redirectUri);
+  webflowAuthUrl.searchParams.set('scope', 'sites:read pages:read custom_code:write');
 
   return res.redirect(webflowAuthUrl.toString());
 }

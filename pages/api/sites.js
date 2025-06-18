@@ -63,7 +63,7 @@ export default async function handler(req, res) {
         };
       }
 
-      const sites = Array.isArray(parsed?.sites) ? parsed.sites : parsed;
+      const sites = parsed?.sites;
       const hostedSites = Array.isArray(sites)
         ? sites.filter((site) => site.plan !== "developer")
         : [];
@@ -76,7 +76,7 @@ export default async function handler(req, res) {
   };
 
   // Try only the correct API endpoint
-  const primary = await fetchSitesFrom("https://api.webflow.com/sites");
+  const primary = await fetchSitesFrom("https://api.webflow.com/v2/sites");
   const result = primary;
   if (!result.ok) {
     console.error("❌ Site fetch failed:", result.error);
