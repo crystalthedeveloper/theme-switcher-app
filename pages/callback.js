@@ -12,17 +12,20 @@ export default function Callback() {
   useEffect(() => {
     if (!router.isReady) return;
 
-    const { code, error, error_description, test } = router.query;
+    const { code, error: oauthError, error_description, test } = router.query;
     const isTest = test === 'true';
     setTestMode(isTest);
 
-    if (error) {
-      if (isTest) console.error('❌ OAuth Error:', error_description || error);
-      router.replace(`/${isTest ? '?test=true' : ''}`);
+    if (oauthError) {
+      if (isTest) console.error('❌ OAuth Error:', error_description || oauthError);
+      setError('Authorization failed. Please try again.');
+      setLoading(false);
       return;
     }
 
     if (!code || typeof code !== 'string') {
+      setError('Missing or invalid authorization code.');
+      setLoading(false);
       if (isTest) console.warn('⚠️ Missing or invalid code.');
       return;
     }
@@ -61,13 +64,15 @@ export default function Callback() {
           if (warning) console.warn('⚠️ Warning:', warning);
         }
 
-        const redirectUrl = `/select-site?token=${access_token}${testMode ? '&test=true' : ''}`;
+        // const redirectUrl = `/select-site?token=${access_token}${testMode ? '&test=true' : ''}`;
+        // ⬆️ Now replaced with direct redirect to /confirm to skip select-site
+        const redirectUrl = `/confirm?token=${access_token}${testMode ? '&test=true' : ''}`;
         if (testMode) console.log('➡️ Redirecting to:', redirectUrl);
         router.replace(redirectUrl);
       } catch (err) {
         console.error('❌ Token exchange error:', err);
         setLoading(false);
-        setError('Token exchange failed. Please try again.');
+        setError(data?.error_description || 'Token exchange failed. Please try again.');
       }
     };
 
@@ -81,7 +86,7 @@ export default function Callback() {
       <p>
         {loading
           ? 'Exchanging code and preparing your site list...'
-          : 'Something went wrong. Please try again from the Install page.'}
+          : error || 'Something went wrong. Please try again from the start.'}
       </p>
 
       {error && <p style={{ color: 'red', marginTop: '1rem' }}>{error}</p>}
