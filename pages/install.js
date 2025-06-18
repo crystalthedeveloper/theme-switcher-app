@@ -26,7 +26,7 @@ export default function Install() {
     clientId && baseUrl
       ? `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(
           redirectUri
-        )}&scope=${encodeURIComponent(scopes)}${testMode ? '&state=test' : ''}`
+        )}&scope=${encodeURIComponent(scopes)}&state=${testMode ? 'test' : 'live'}`
       : null;
 
   useEffect(() => {
@@ -81,17 +81,21 @@ export default function Install() {
 
         {!hasToken && oauthUrl && (
           <Link href={oauthUrl} legacyBehavior passHref>
-            <button
+            <a
+              rel="noopener noreferrer"
               aria-label="Authorize with Webflow and connect this app"
-              style={{
-                padding: '12px 24px',
-                marginTop: '2rem',
-                fontSize: '1rem',
-                cursor: 'pointer',
-              }}
             >
-              Connect to Webflow
-            </button>
+              <button
+                style={{
+                  padding: '12px 24px',
+                  marginTop: '2rem',
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                }}
+              >
+                Install Theme Switcher
+              </button>
+            </a>
           </Link>
         )}
 
