@@ -55,15 +55,13 @@ export default function Callback() {
 
         const { access_token, warning, site_id } = data;
 
-        let finalToken = access_token;
-        let finalSiteId = site_id;
+        if (!access_token || !site_id) {
+          throw new Error('Missing access token or site ID from Webflow. Please reauthorize.');
+        }
 
         if (typeof window !== 'undefined') {
-          if (!finalToken) finalToken = sessionStorage.getItem('webflow_token');
-          if (!finalSiteId) finalSiteId = sessionStorage.getItem('webflow_site_id');
-
-          if (finalToken) sessionStorage.setItem('webflow_token', finalToken);
-          if (finalSiteId) sessionStorage.setItem('webflow_site_id', finalSiteId);
+          sessionStorage.setItem('webflow_token', access_token);
+          sessionStorage.setItem('webflow_site_id', site_id);
         }
 
         if (testMode) {
@@ -71,13 +69,9 @@ export default function Callback() {
           if (warning) console.warn('⚠️ Warning:', warning);
         }
 
-        if (finalToken && finalSiteId) {
-          const redirectUrl = `/confirm?site_id=${finalSiteId}&token=${finalToken}${testMode ? '&test=true' : ''}`;
-          if (testMode) console.log('➡️ Redirecting to:', redirectUrl);
-          router.replace(redirectUrl);
-        } else {
-          throw new Error('Missing access token or site ID from Webflow. Please reauthorize.');
-        }
+        const redirectUrl = `/confirm?site_id=${site_id}&token=${access_token}${testMode ? '&test=true' : ''}`;
+        if (testMode) console.log('➡️ Redirecting to:', redirectUrl);
+        router.replace(redirectUrl);
       } catch (err) {
         console.error('❌ Token exchange error:', err);
         setLoading(false);
