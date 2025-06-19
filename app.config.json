@@ -1,0 +1,6 @@
+{
+  "name": "Theme Switcher",
+  "description": "Dark/light mode toggle script for Webflow sites.",
+  "redirect_uri": "https://your-app.com/callback",
+  "permissions": ["custom_code:write", "sites:read", "pages:read"]
+}
