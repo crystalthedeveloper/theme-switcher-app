@@ -55,7 +55,7 @@ export default async function handler(req, res) {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
-          "accept-version": "2.0.0",
+          "accept-version": "1.0.0",
         },
       });
     } catch (fetchErr) {
