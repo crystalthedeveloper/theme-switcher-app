@@ -1,9 +1,27 @@
-// locales/en.js
-
 const en = {
   success: {
     title: '✅ Installation Complete',
     message: 'The Theme Switcher script was successfully injected into your Webflow project.',
+    metaDescription: 'Theme Switcher installation complete.',
+    heading: 'Success! 🎉',
+    description: 'The Theme Switcher script has been installed on your Webflow site.',
+    manualInstallationAriaLabel: 'Manual installation section',
+    manualInstallationTitle: 'Manual Installation Instructions',
+    manualInstallationIntro: 'Follow these steps to manually add the Theme Switcher to your site:',
+    manualSteps: {
+      step1: 'Open your Webflow Project Settings.',
+      step2: 'Go to the Custom Code tab.',
+      step3: 'Paste the following code into the Footer Code box.',
+    },
+    scriptAriaLabel: 'Script code block',
+    footerNoteRemoveScript: 'To remove it, simply delete the script from your Custom Code tab.',
+    footerNoteUninstallApp: 'To uninstall the app, visit your Webflow site’s Apps & Integrations tab and choose Uninstall under Theme Switcher.',
+    homeAriaLabel: 'Go to homepage',
+    homeButtonAriaLabel: 'Go back to homepage',
+    homeButtonText: '← Home',
+    webflowDashboardAriaLabel: 'Open Webflow Dashboard',
+    webflowDashboardButtonAriaLabel: 'Open Webflow Dashboard',
+    webflowDashboardButtonText: 'Webflow Dashboard',
   },
   manual: {
     title: 'Manual Installation Instructions',
@@ -20,6 +38,19 @@ To uninstall the app, visit your Webflow site’s Apps & Integrations tab and ch
     home: '← Home',
     dashboard: 'Webflow Dashboard',
   },
+  footer: 'Created by Crystal The Developer Inc. • Powered by the Webflow App SDK',
+  connecting: 'Connecting to Webflow...',
+  exchanging: 'Exchanging authorization code...',
+  tryAgain: 'Try Again',
+  tryAgainFallback: 'Something went wrong. Please try again.',
+  testModeNotice: '🧪 Test mode is enabled — debug logs will appear in the console.',
+  setupHeading: 'Setting up Theme Switcher...',
+  missingCredentials: '⚠️ Missing site ID or token. Please reauthorize via the main page.',
+  retrying: 'Retrying...',
+  tryAgainButton: 'Try Again',
+  manualInstall: 'Manual Install',
+  unknownError: 'An unknown error occurred. Please try again later.',
+  paragraph: 'Follow the instructions below to ensure Theme Switcher is correctly installed.',
 };
 
 export default en;
