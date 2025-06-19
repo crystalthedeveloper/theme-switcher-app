@@ -37,6 +37,8 @@ This Webflow OAuth app allows users to securely connect their Webflow account an
 
 This will appear in the footer of the chosen Webflow site — or users can paste it manually into Webflow’s **Project Settings → Custom Code** section.
 
+The script is lightweight and runs only after the page has fully loaded, ensuring no impact on site performance.
+
 ---
 
 ## 📁 Pages Overview
@@ -57,6 +59,7 @@ Create a `.env.local` file or add to your Vercel Project Settings:
 NEXT_PUBLIC_BASE_URL=https://theme-switcher-app.vercel.app
 NEXT_PUBLIC_WEBFLOW_CLIENT_ID=your_webflow_client_id
 WEBFLOW_CLIENT_SECRET=your_webflow_client_secret
+WEBFLOW_REDIRECT_URI=https://theme-switcher-app.vercel.app/callback
 ```
 
 ---
@@ -77,6 +80,7 @@ This app:
 - Falls back to manual script copy if injection fails
 - Provides a clear user flow from OAuth to installation
 - Includes a “Try Again” button for retrying script injection
+- Includes a `/settings` page for users to check token status, uninstall, or re-inject scripts manually
 
 ---
 
@@ -87,6 +91,12 @@ To remove the theme toggle script:
 2. Click the **Custom Code** tab
 3. Delete the injected script from the **Footer Code** section
 4. Go to **Apps & Integrations** and click **Uninstall App**
+
+---
+
+## 🌐 Localization Ready
+
+All UI strings are wrapped in a translation layer (`locales/en.js`) for future i18n support.
 
 ---
 
