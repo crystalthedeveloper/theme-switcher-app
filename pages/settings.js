@@ -38,6 +38,21 @@ export default function Settings() {
     setMessage(result.message || result.error || 'Unknown response.');
   };
 
+  const checkStatus = async () => {
+    setMessage('Checking token status...');
+    const res = await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ siteId, token }),
+    });
+    const result = await res.json();
+    if (!res.ok) {
+      setMessage(result.error || 'Failed to check token status.');
+    } else {
+      setMessage(`✅ Site: ${result.siteName} (${result.plan})`);
+    }
+  };
+
   return (
     <main style={{ padding: '2rem', textAlign: 'center' }}>
       <h1>⚙️ Theme Switcher Settings</h1>
@@ -77,6 +92,21 @@ export default function Settings() {
           onBlur={(e) => e.target.style.outlineColor = 'transparent'}
         >
           ❌ Uninstall Script
+        </button>
+        <button
+          onClick={checkStatus}
+          disabled={!token || !siteId}
+          aria-label="Check token and site status"
+          style={{
+            marginTop: '1rem',
+            outline: '2px solid transparent',
+            outlineOffset: '2px',
+            transition: 'outline-color 0.2s ease-in-out',
+          }}
+          onFocus={(e) => e.target.style.outlineColor = '#000'}
+          onBlur={(e) => e.target.style.outlineColor = 'transparent'}
+        >
+          🔍 Check Token Status
         </button>
       </div>
 
