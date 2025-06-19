@@ -97,7 +97,7 @@ export default async function handler(req, res) {
 
     if (!patchRes.ok) {
       const errorMessage = patchData.message || patchData.error || "Webflow API PATCH failed";
-      console.error("❌ PATCH request to Webflow failed", {
+      const logDetails = {
         status: patchRes.status,
         statusText: patchRes.statusText,
         url: `https://api.webflow.com/v2/sites/${siteId}/custom_code`,
@@ -108,11 +108,12 @@ export default async function handler(req, res) {
         },
         responseBody: patchText,
         parsedError: patchData,
-      });
+      };
+      console.error("❌ PATCH request to Webflow failed", logDetails);
 
       return res.status(patchRes.status).json({
         error: errorMessage,
-        details: patchData,
+        details: logDetails,
       });
     }
 
