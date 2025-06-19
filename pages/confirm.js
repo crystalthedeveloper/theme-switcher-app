@@ -36,10 +36,15 @@ export default function Confirm() {
         body: JSON.stringify({ siteId, token: accessToken }),
       });
 
-      const result = await res.json();
+      let result;
+      try {
+        result = await res.json();
+      } catch (e) {
+        throw new Error(`Webflow API error (${res.status}): Unable to parse response.`);
+      }
+
       if (!res.ok) {
-        const errorDetail = await res.text();
-        throw new Error(result?.error || `Webflow API error (${res.status}): ${errorDetail}`);
+        throw new Error(result?.error || `Webflow API error (${res.status})`);
       }
 
       if (testMode) console.log('✅ Global footer injection successful');

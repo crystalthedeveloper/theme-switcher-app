@@ -94,13 +94,15 @@ export default async function handler(req, res) {
       }),
     });
 
-    const patchText = await patchRes.text();
     let patchData;
     try {
-      patchData = JSON.parse(patchText);
-    } catch {
-      console.error("❌ Failed to parse JSON from PATCH response:", patchText);
-      return res.status(500).json({ error: "Invalid JSON response from Webflow", raw: patchText });
+      patchData = await patchRes.json();
+    } catch (err) {
+      console.error("❌ Failed to parse JSON from PATCH response:", {
+        message: err.message,
+        stack: err.stack,
+      });
+      return res.status(500).json({ error: "Invalid JSON response from Webflow", details: err.message });
     }
 
     if (!patchRes.ok) {
@@ -114,8 +116,7 @@ export default async function handler(req, res) {
           footer: currentFooterCode + '\n' + scriptTag,
           enabled: true,
         },
-        responseBody: patchText,
-        parsedError: patchData,
+        responseBody: patchData,
       };
       console.error("❌ PATCH request to Webflow failed", logDetails);
 
