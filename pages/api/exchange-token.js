@@ -25,7 +25,7 @@ async function fetchSites(accessToken) {
 }
 
 export default async function handler(req, res) {
-  await applyRateLimit(req, res)
+  //await applyRateLimit(req, res)
   
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Access-Control-Allow-Origin', '*');
