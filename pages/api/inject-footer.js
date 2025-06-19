@@ -96,7 +96,17 @@ export default async function handler(req, res) {
     }
 
     if (!patchRes.ok) {
-      console.error("❌ Webflow API error:", patchData.message || patchData);
+      console.error("❌ Webflow API PATCH error", {
+        status: patchRes.status,
+        message: patchData.message || patchData,
+        endpoint: `https://api.webflow.com/v2/sites/${siteId}/custom_code`,
+        tokenPrefix: token?.slice(0, 6) + "...",
+        requestBody: {
+          footer: currentFooterCode + '\n' + scriptTag,
+          enabled: true,
+        },
+        response: patchData,
+      });
       return res.status(patchRes.status).json({
         error: patchData.message || "Webflow API error",
         fullResponse: patchData,
