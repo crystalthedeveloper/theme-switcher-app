@@ -96,13 +96,13 @@ export default async function handler(req, res) {
     }
 
     if (!patchRes.ok) {
+      const errorMessage = patchData.message || patchData.error || "Webflow API PATCH failed";
       console.error("❌ PATCH request to Webflow failed", {
         status: patchRes.status,
         statusText: patchRes.statusText,
-        siteId,
-        endpoint: `https://api.webflow.com/v2/sites/${siteId}/custom_code`,
+        url: `https://api.webflow.com/v2/sites/${siteId}/custom_code`,
         tokenPrefix: token?.slice(0, 6) + "...",
-        requestPayload: {
+        requestBody: {
           footer: currentFooterCode + '\n' + scriptTag,
           enabled: true,
         },
@@ -111,7 +111,7 @@ export default async function handler(req, res) {
       });
 
       return res.status(patchRes.status).json({
-        error: patchData.message || "Webflow API PATCH failed",
+        error: errorMessage,
         details: patchData,
       });
     }

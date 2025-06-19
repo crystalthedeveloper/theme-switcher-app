@@ -25,7 +25,7 @@ async function fetchSites(accessToken) {
 }
 
 export default async function handler(req, res) {
-  //await applyRateLimit(req, res)
+  //await applyRateLimit(req, res);
   
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -103,7 +103,7 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log("✅ Access Token:", accessToken.slice(0, 6) + "... (masked)");
+    console.log("✅ Access Token: **** (masked)");
     console.log("✅ Hosted Sites:", siteResult?.sites.map(site => site.name).join(", "));
 
     const normalizeSiteId = (site) => site._id || site.id;
@@ -128,11 +128,11 @@ export default async function handler(req, res) {
       expires_in: 3600,
     });
   } catch (err) {
-    console.error('❌ Unexpected error during token exchange:', err);
+    console.error('❌ Token exchange failed due to:', err?.message || err);
     return res.status(500).json({
       error: 'Unexpected error during token exchange.',
-      message: err?.message || 'Unknown error.',
-      hint: 'Ensure Webflow credentials and redirect URI are valid.'
+      message: err?.message || 'Unknown error occurred during token exchange.',
+      hint: 'Ensure Webflow credentials, rate limiting, and redirect URI are correct.'
     });
   }
 }
