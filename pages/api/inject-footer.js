@@ -81,13 +81,15 @@ export default async function handler(req, res) {
       return res.status(200).json({ message: "Script already exists in global footer" });
     }
 
-    const patchUrl = `https://api.webflow.com/sites/${siteId}/customcode`;
-    console.log("🧩 PATCH URL (v1):", patchUrl);
+    const patchUrl = `https://api.webflow.com/sites/${siteId}`;
+    console.log("🧩 PATCH URL (v1 correct):", patchUrl);
     console.log("📡 Preparing to PATCH to Webflow API");
 
     console.log("📤 PATCH request body:", {
-      customCode: {
-        footer: currentFooterCode + '\n' + scriptTag,
+      site: {
+        customCode: {
+          footer: currentFooterCode + '\n' + scriptTag,
+        },
       },
     });
 
@@ -99,8 +101,10 @@ export default async function handler(req, res) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        customCode: {
-          footer: currentFooterCode + '\n' + scriptTag,
+        site: {
+          customCode: {
+            footer: currentFooterCode + '\n' + scriptTag,
+          },
         },
       }),
     });
@@ -128,8 +132,10 @@ export default async function handler(req, res) {
         url: patchUrl,
         tokenPrefix: token?.slice(0, 6) + "...",
         requestBody: {
-          customCode: {
-            footer: currentFooterCode + '\n' + scriptTag,
+          site: {
+            customCode: {
+              footer: currentFooterCode + '\n' + scriptTag,
+            },
           },
         },
         responseBody: patchData,
