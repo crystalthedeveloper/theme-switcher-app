@@ -11,6 +11,17 @@ export default function Callback() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (loading) {
+        setLoading(false);
+        setError('Request timed out. Please try again.');
+      }
+    }, 15000); // 15 seconds
+
+    return () => clearTimeout(timeout);
+  }, [loading]);
+
+  useEffect(() => {
     if (!router.isReady) return;
 
     const { code, error: oauthError, error_description, test } = router.query;
@@ -42,14 +53,18 @@ export default function Callback() {
           body: JSON.stringify({ code }),
         });
 
-        const data = await res.json();
+        let data;
+        try {
+          data = await res.json();
+        } catch (jsonError) {
+          if (isTest) console.error('❌ Failed to parse JSON:', jsonError);
+          throw new Error('Invalid response from server. Please try again.');
+        }
 
         if (isTest) console.log('📬 Response from /api/exchange-token:', data);
 
         if (!res.ok || !data.access_token || !data.site_id) {
-          if (isTest) {
-            console.error('⚠️ Token exchange failed:', data);
-          }
+          if (isTest) console.error('⚠️ Token exchange failed:', data);
           throw new Error(data.error || 'Missing access token or site ID from Webflow. Please reauthorize.');
         }
 
@@ -58,6 +73,7 @@ export default function Callback() {
         if (typeof window !== 'undefined') {
           sessionStorage.setItem('webflow_token', access_token);
           sessionStorage.setItem('webflow_site_id', site_id);
+          if (testMode) sessionStorage.setItem('webflow_test_mode', 'true');
         }
 
         if (testMode) {
@@ -71,7 +87,10 @@ export default function Callback() {
       } catch (err) {
         console.error('❌ Token exchange error:', err);
         setLoading(false);
-        const message = err?.message || 'Token exchange failed. Please try again.';
+        const message =
+          typeof err === 'string'
+            ? err
+            : err?.message || 'Token exchange failed. Please try again.';
         setError(message);
       }
     };

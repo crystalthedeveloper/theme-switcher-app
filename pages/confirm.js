@@ -27,6 +27,10 @@ export default function Confirm() {
     setStatus('Injecting Theme Switcher into global footer...');
 
     try {
+      if (!siteId || !accessToken) {
+        throw new Error('Missing site ID or token for injection.');
+      }
+
       if (testMode) console.log('📦 Sending request to /api/inject-footer with:', { siteId, token: accessToken?.slice(0, 6) + '...' });
 
       const res = await fetch('/api/inject-footer', {
@@ -50,7 +54,7 @@ export default function Confirm() {
       }
 
       if (!res.ok) {
-        throw new Error(result?.error || `Webflow API error (${res.status})`);
+        throw new Error(result?.error || `Webflow API error (${res.status}): ${result?.details?.statusText || 'Unknown error'}`);
       }
 
       if (testMode) console.log('✅ Global footer injection successful');
@@ -61,7 +65,8 @@ export default function Confirm() {
       console.error('❌ Injection Error:', {
         message: err.message,
         siteId,
-        token: accessToken?.slice(0, 6) + '...',
+        tokenPrefix: accessToken?.slice(0, 6) + '...',
+        requestBody: { siteId, token: accessToken },
       });
       setInjectionFailed(true);
       setStatus('Automatic installation failed. You can try again or follow manual install steps.');
