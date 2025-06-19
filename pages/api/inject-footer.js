@@ -1,4 +1,5 @@
 // pages/api/inject-footer.js
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -29,6 +30,29 @@ export default async function handler(req, res) {
 <script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
 
   try {
+    // Optional: Skip if already injected
+    const currentFooterRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "accept-version": "1.0.0",
+      },
+    });
+
+    const currentFooterText = await currentFooterRes.text();
+    let currentFooterData = {};
+    try {
+      currentFooterData = JSON.parse(currentFooterText);
+    } catch {
+      return res.status(500).json({ error: "Invalid JSON when fetching current footer", raw: currentFooterText });
+    }
+
+    const currentFooterCode = currentFooterData.footer || "";
+    if (currentFooterCode.includes('theme-switcher.js')) {
+      console.log("⚠️ Script already present in global footer. Skipping injection.");
+      return res.status(200).json({ message: "Script already exists in global footer" });
+    }
+
     const patchRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
       method: 'PATCH',
       headers: {
@@ -47,13 +71,14 @@ export default async function handler(req, res) {
     try {
       patchData = JSON.parse(patchText);
     } catch {
-      return res.status(500).json({ error: "Invalid JSON response from Webflow" });
+      return res.status(500).json({ error: "Invalid JSON response from Webflow", raw: patchText });
     }
 
     if (!patchRes.ok) {
       console.error("❌ Webflow API error:", patchData.message || patchData);
       return res.status(patchRes.status).json({
         error: patchData.message || "Webflow API error",
+        fullResponse: patchData,
       });
     }
 

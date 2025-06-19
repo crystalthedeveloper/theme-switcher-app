@@ -54,7 +54,7 @@ export default function Confirm() {
       console.error('❌ Injection Error:', err.message);
       setInjectionFailed(true);
       setStatus('Automatic installation failed. You can try again or follow manual install steps.');
-      setErrorMsg(err.message || 'Unknown error occurred while injecting the script.');
+      setErrorMsg(err?.response?.data?.message || err.message || 'Unknown error occurred while injecting the script.');
     } finally {
       setRetrying(false);
     }
@@ -82,7 +82,7 @@ export default function Confirm() {
     if (testMode) console.log('🔁 Retrying injection...');
     setInjectionFailed(false);
     setRetrying(true);
-    setTimeout(() => location.reload(), 300);
+    setTimeout(() => injectScript(site_id, token), 300);
   };
 
   return (
@@ -92,6 +92,9 @@ export default function Confirm() {
         <p style={{ color: 'red', marginTop: '1rem', fontSize: '0.9rem' }}>
           ⚠️ Missing site ID or token. Please reauthorize via the main page.
         </p>
+      )}
+      {retrying && (
+        <div style={{ margin: '1rem auto', width: '24px', height: '24px', border: '3px solid #ccc', borderTop: '3px solid #000', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
       )}
       <p style={{ maxWidth: '500px', margin: '1rem auto' }}>{status}</p>
 
@@ -133,6 +136,12 @@ export default function Confirm() {
           🧪 Test mode enabled — debug logs visible in browser console.
         </p>
       )}
+      <style jsx>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </main>
   );
 }
