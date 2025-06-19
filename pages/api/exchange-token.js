@@ -6,7 +6,7 @@ async function fetchSites(accessToken) {
     const siteRes = await fetch('https://api.webflow.com/v2/sites', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        'accept-version': '1.0.0',
+        'accept-version': '2.0.0',
       },
     });
 

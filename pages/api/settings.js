@@ -30,7 +30,7 @@ export default async function handler(req, res) {
     const response = await fetch(`https://api.webflow.com/v2/sites/${siteId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
-        "accept-version": "1.0.0"
+        "accept-version": "2.0.0"
       }
     });
 

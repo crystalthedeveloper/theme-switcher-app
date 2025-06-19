@@ -48,6 +48,7 @@ export default async function handler(req, res) {
   webflowAuthUrl.searchParams.set('redirect_uri', redirectUri);
   webflowAuthUrl.searchParams.set('scope', 'sites:read pages:read custom_code:write');
   webflowAuthUrl.searchParams.set('state', state);
+  webflowAuthUrl.searchParams.set('accept-version', '2.0.0');
 
   if (!webflowAuthUrl.toString().startsWith('https://webflow.com/oauth/authorize')) {
     console.warn('⚠️ Unexpected redirect URI:', webflowAuthUrl.toString());

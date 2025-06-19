@@ -28,7 +28,7 @@ export default async function handler(req, res) {
     const pagesRes = await fetch(`https://api.webflow.com/v2/sites/${site_id}/pages`, {
       headers: {
         Authorization: `Bearer ${token}`,
-        "accept-version": "1.0.0",
+        "accept-version": "2.0.0",
       },
     });
 
@@ -61,7 +61,7 @@ export default async function handler(req, res) {
             headers: {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
-              "accept-version": "1.0.0",
+              "accept-version": "2.0.0",
             },
             body: JSON.stringify({ body: cleanedBody, enabled: false }),
           }

@@ -49,7 +49,7 @@ export default function Callback() {
 
         const res = await fetch('/api/exchange-token', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'accept-version': '2.0.0' },
           body: JSON.stringify({ code }),
         });
 

@@ -37,6 +37,7 @@ export default function Confirm() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'accept-version': '2.0.0',
         },
         body: JSON.stringify({ siteId, token: accessToken }),
       });
