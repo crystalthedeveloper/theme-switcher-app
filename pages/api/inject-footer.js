@@ -81,7 +81,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ message: "Script already exists in global footer" });
     }
 
-    const patchUrl = `https://api.webflow.com/sites/${siteId}`;
+    const patchUrl = `https://api.webflow.com/sites/${siteId}/customcode`;
     console.log("🧩 PATCH URL (v1):", patchUrl);
     console.log("📡 Preparing to PATCH to Webflow API");
 

@@ -21,6 +21,7 @@ export default function Confirm() {
   const injectScript = async (siteIdOverride, tokenOverride) => {
     const siteId = siteIdOverride || site_id;
     const accessToken = tokenOverride || token;
+    console.log(`🕒 [${new Date().toISOString()}] InjectScript fired`);
     console.log('🚀 Starting injectScript with:', { siteId, accessToken });
     setInjectionFailed(false);
     setRetrying(true);
@@ -30,6 +31,16 @@ export default function Confirm() {
       if (!siteId || !accessToken) {
         throw new Error('Missing site ID or token for injection.');
       }
+
+      console.log('📡 Injecting with full request:', {
+        endpoint: '/api/inject-footer',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'accept-version': '2.0.0',
+        },
+        body: { siteId, token: accessToken }
+      });
 
       if (testMode) console.log('📦 Sending request to /api/inject-footer with:', { siteId, token: accessToken?.slice(0, 6) + '...' });
 
@@ -50,8 +61,9 @@ export default function Confirm() {
         result = await res.json();
         console.log('📨 Parsed response body:', result);
       } catch (e) {
-        console.log('❌ Failed to parse JSON or fetch failed:', res);
-        throw new Error(`Webflow API error (${res.status}): Unable to parse response.`);
+        const text = await res.text();
+        console.error('❌ Failed to parse response JSON. Raw response:', text);
+        throw new Error(`Webflow API error (${res.status}): ${text}`);
       }
 
       if (!res.ok) {
@@ -80,9 +92,11 @@ export default function Confirm() {
   useEffect(() => {
     if (typeof window === 'undefined' || !router.isReady) return;
 
-    console.log('🧾 Retrieved from sessionStorage:', {
-      siteId: sessionStorage.getItem('webflow_site_id'),
-      token: sessionStorage.getItem('webflow_token')
+    console.log('🧾 Checking sessionStorage and query:', {
+      sessionSiteId: sessionStorage.getItem('webflow_site_id'),
+      sessionToken: sessionStorage.getItem('webflow_token'),
+      querySiteId: site_id,
+      queryToken: token
     });
 
     let finalSiteId = sessionStorage.getItem('webflow_site_id') || site_id;
