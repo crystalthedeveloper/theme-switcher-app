@@ -1,5 +1,28 @@
 // pages/api/exchange-token.js
 
+async function fetchSites(accessToken) {
+  try {
+    const siteRes = await fetch('https://api.webflow.com/v2/sites', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'accept-version': '1.0.0',
+      },
+    });
+
+    const siteRaw = await siteRes.text();
+    const siteData = JSON.parse(siteRaw);
+    const hostedSites = Array.isArray(siteData?.sites)
+      ? siteData.sites.filter(site => site?.plan !== 'developer')
+      : [];
+
+    return hostedSites.length > 0
+      ? { success: true, sites: hostedSites }
+      : { success: false, reason: 'No hosted sites found' };
+  } catch (e) {
+    return { success: false, reason: e.message };
+  }
+}
+
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -33,8 +56,8 @@ export default async function handler(req, res) {
   try {
     const tokenRes = await fetch('https://api.webflow.com/oauth/access_token', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
         client_id: clientId,
         client_secret: clientSecret,
         code,
@@ -65,30 +88,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing access token from Webflow.' });
     }
 
-    const fetchSites = async () => {
-      try {
-        const siteRes = await fetch('https://api.webflow.com/v2/sites', {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'accept-version': '1.0.0',
-          },
-        });
-
-        const siteRaw = await siteRes.text();
-        const siteData = JSON.parse(siteRaw);
-        const hostedSites = Array.isArray(siteData?.sites)
-          ? siteData.sites.filter(site => site?.plan !== 'developer')
-          : [];
-
-        return hostedSites.length > 0
-          ? { success: true, sites: hostedSites }
-          : { success: false, reason: 'No hosted sites found' };
-      } catch (e) {
-        return { success: false, reason: e.message };
-      }
-    };
-
-    const siteResult = await fetchSites();
+    const siteResult = await fetchSites(accessToken);
 
     if (!siteResult.success) {
       return res.status(400).json({
@@ -98,9 +98,10 @@ export default async function handler(req, res) {
     }
 
     console.log("✅ Access Token starts with:", accessToken.slice(0, 6) + "...");
-    console.log("✅ Sites:", siteResult?.sites);
+    console.log("✅ Hosted Sites:", siteResult?.sites.map(site => site.name).join(", "));
 
-    const siteId = siteResult?.sites?.[0]?._id || siteResult?.sites?.[0]?.id;
+    const normalizeSiteId = (site) => site._id || site.id;
+    const siteId = normalizeSiteId(siteResult?.sites[0]);
 
     if (siteResult.sites.length === 0) {
       console.warn("⚠️ No hosted sites available. User may not have any published sites.");
