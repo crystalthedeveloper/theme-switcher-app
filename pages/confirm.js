@@ -32,16 +32,19 @@ export default function Confirm() {
         throw new Error('Missing site ID or token for injection.');
       }
 
-      const extensionScriptUrl = 'https://your-vercel-domain.vercel.app/webflow-extension/extension.js';
+      const extensionScriptUrl = 'https://685295c20fc5eb70274bfa4c.webflow-ext.com/extension.js';
 
       const script = document.createElement('script');
       script.src = extensionScriptUrl;
       script.async = true;
       script.onload = () => {
         console.log('✅ Extension script loaded successfully');
+        setStatus('✅ App installed successfully! Redirecting...');
         sessionStorage.setItem('webflow_site_id', siteId);
         sessionStorage.setItem('webflow_token', accessToken);
-        router.replace(`/success${testMode ? '?test=true' : ''}`);
+        setTimeout(() => {
+          router.replace(`/success${testMode ? '?test=true' : ''}`);
+        }, 1500);
       };
       script.onerror = () => {
         throw new Error('Failed to load the extension script.');
