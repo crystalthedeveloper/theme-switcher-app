@@ -97,10 +97,14 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log("✅ Access Token:", accessToken);
+    console.log("✅ Access Token starts with:", accessToken.slice(0, 6) + "...");
     console.log("✅ Sites:", siteResult?.sites);
 
     const siteId = siteResult?.sites?.[0]?._id || siteResult?.sites?.[0]?.id;
+
+    if (siteResult.sites.length === 0) {
+      console.warn("⚠️ No hosted sites available. User may not have any published sites.");
+    }
 
     if (!accessToken || !siteId) {
       return res.status(400).json({

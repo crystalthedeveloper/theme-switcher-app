@@ -2,10 +2,28 @@
 
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import Link from 'next/link';
 
 export default function Success() {
   const router = useRouter();
   const showManualInstall = router.query.manual === 'true';
+
+  const buttonStyle = {
+    padding: '10px 20px',
+    fontSize: '1rem',
+    cursor: 'pointer',
+  };
+
+  const preBlockStyle = {
+    background: '#f4f4f4',
+    padding: '10px',
+    borderRadius: '6px',
+    marginTop: '1rem',
+    fontSize: '0.85rem',
+    overflowX: 'auto',
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-word',
+  };
 
   return (
     <>
@@ -35,16 +53,7 @@ export default function Success() {
             </ol>
             <pre
               aria-label="Theme switcher script to copy"
-              style={{
-                background: '#f4f4f4',
-                padding: '10px',
-                borderRadius: '6px',
-                marginTop: '1rem',
-                fontSize: '0.85rem',
-                overflowX: 'auto',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-              }}
+              style={preBlockStyle}
             >
 &lt;script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer&gt;&lt;/script&gt;
             </pre>
@@ -58,17 +67,11 @@ export default function Success() {
         )}
 
         <div style={{ marginTop: '2.5rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
-          <a href="/" aria-label="Return to homepage">
-            <button
-              style={{
-                padding: '10px 20px',
-                fontSize: '1rem',
-                cursor: 'pointer',
-              }}
-            >
+          <Link href="/" aria-label="Return to homepage">
+            <button style={buttonStyle}>
               ← Home
             </button>
-          </a>
+          </Link>
 
           <a
             href="https://webflow.com/dashboard"
@@ -76,13 +79,7 @@ export default function Success() {
             rel="noopener noreferrer"
             aria-label="Open Webflow dashboard in new tab"
           >
-            <button
-              style={{
-                padding: '10px 20px',
-                fontSize: '1rem',
-                cursor: 'pointer',
-              }}
-            >
+            <button style={buttonStyle}>
               Webflow Dashboard
             </button>
           </a>

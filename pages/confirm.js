@@ -1,3 +1,5 @@
+// pages/confirm.js
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 
@@ -15,15 +17,15 @@ export default function Confirm() {
   const injectScript = async (siteIdOverride, tokenOverride) => {
     setInjectionFailed(false);
     setRetrying(true);
-    setStatus('Injecting Theme Switcher into Webflow Custom Code...');
+    setStatus('Injecting Theme Switcher into global footer...');
 
     const siteId = siteIdOverride || site_id;
     const accessToken = tokenOverride || token;
 
     try {
-      if (testMode) console.log('📦 Sending request to /api/pages with:', { siteId, token: accessToken?.slice(0, 6) + '...' });
+      if (testMode) console.log('📦 Sending request to /api/inject-footer with:', { siteId, token: accessToken?.slice(0, 6) + '...' });
 
-      const pagesRes = await fetch('/api/pages', {
+      const res = await fetch('/api/inject-footer', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -31,69 +33,20 @@ export default function Confirm() {
         body: JSON.stringify({ siteId, token: accessToken }),
       });
 
-      const raw = await pagesRes.text();
-      let pagesData;
-
+      const raw = await res.text();
+      let data;
       try {
-        pagesData = JSON.parse(raw);
+        data = JSON.parse(raw);
       } catch {
-        throw new Error('Invalid JSON from Webflow API.');
+        throw new Error('Invalid JSON from server response.');
       }
 
-      if (!pagesRes.ok || !Array.isArray(pagesData.pages)) {
-        console.warn('❌ Failed Webflow API response:', raw);
-        if (pagesRes.status === 401 || pagesRes.status === 403) {
-          if (testMode) console.warn('🔁 Token expired or unauthorized. Redirecting...');
-          router.replace(`/${testMode ? '?test=true' : ''}`);
-          return;
-        }
-        throw new Error(
-          pagesData?.message ||
-          '⚠️ Failed to fetch pages. Please ensure your token is valid and includes the required OAuth scopes: `sites:read`, `pages:read`, and `custom_code:write`. You can reauthorize from the homepage.'
-        );
-      }
-
-      const targetPage = pagesData.pages[0];
-      if (!targetPage || !targetPage._id) {
-        throw new Error('No valid pages found for this site.');
-      }
-      // Check if script is already present
-      const existingBody = targetPage?.customCode?.body || '';
-      if (existingBody.includes('theme-switcher.js')) {
-        router.replace(`/success${testMode ? '?test=true' : ''}`);
-        return;
-      }
-
-      const scriptTag = `
-<!-- Installed by Theme Switcher Webflow App -->
-<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
-
-      if (testMode) console.log('✏️ Injecting script into page:', targetPage._id);
-
-      const patchRes = await fetch(
-        `https://api.webflow.com/sites/${siteId}/pages/${targetPage._id}/custom-code`,
-        {
-          method: 'PATCH',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-            'accept-version': '1.0.0',
-          },
-          body: JSON.stringify({
-            body: scriptTag,
-            enabled: true,
-          }),
-        }
-      );
-
-      const patchText = await patchRes.text();
-
-      if (!patchRes.ok) {
-        throw new Error(`Custom Code API failed: ${patchText}`);
+      if (!res.ok) {
+        throw new Error(data?.error || 'Unknown error during script injection.');
       }
 
       // ✅ Script injected successfully
-      if (testMode) console.log('✅ Script injected successfully');
+      if (testMode) console.log('✅ Global footer injection successful');
       sessionStorage.setItem('webflow_site_id', siteId);
       sessionStorage.setItem('webflow_token', accessToken);
       router.replace(`/success${testMode ? '?test=true' : ''}`);

@@ -17,9 +17,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    if (testMode) console.log(`🧪 [Uninstall] Starting cleanup for site: ${site_id}`);
+    if (testMode) {
+      const shortToken = token.slice(0, 6) + "...";
+      console.log(`🧪 [Uninstall] Starting cleanup for site: ${site_id} | token: ${shortToken}`);
+    }
 
-    // Step 1: Get all pages on the site
     const pagesRes = await fetch(`https://api.webflow.com/v2/sites/${site_id}/pages`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -39,7 +41,10 @@ export default async function handler(req, res) {
       throw new Error("Unexpected response format from Webflow pages API.");
     }
 
-    // Step 2: Remove <script> tag from each page’s custom code
+    if (pages.length === 0) {
+      console.warn(`⚠️ [Uninstall] No pages found for site ${site_id}`);
+    }
+
     const removeScriptTag = (body = "") =>
       body.replace(/<script[^>]*theme-switcher\.js[^>]*><\/script>/gi, "").trim();
 
@@ -76,12 +81,6 @@ export default async function handler(req, res) {
 
     if (!testMode) {
       console.log(`🔔 Theme script uninstalled on ${cleaned.length} page(s) for site ${site_id}`);
-      // Optionally send log:
-      // await fetch("https://hooks.zapier.com/hooks/catch/123456/abcde", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ event: "uninstall", site_id, cleaned, failed }),
-      // });
     }
 
     return res.status(200).json({

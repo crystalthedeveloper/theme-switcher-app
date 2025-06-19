@@ -11,6 +11,7 @@ export default function Home() {
           name="description"
           content="Add a dark/light theme toggle to your Webflow site with one click. Built by Crystal The Developer."
         />
+        <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <main role="main" style={{ textAlign: 'center', padding: '4rem 1.5rem' }}>
@@ -34,6 +35,7 @@ export default function Home() {
           rel="noopener noreferrer"
         >
           <button
+            type="button"
             style={{
               padding: '12px 24px',
               marginTop: '2rem',
@@ -45,9 +47,9 @@ export default function Home() {
           </button>
         </a>
 
-        <div style={{ marginTop: '3rem', fontSize: '0.9rem', color: '#999' }}>
+        <footer style={{ marginTop: '3rem', fontSize: '0.9rem', color: '#999' }}>
           <p>Created by Crystal The Developer Inc. • Powered by the Webflow App SDK</p>
-        </div>
+        </footer>
       </main>
     </div>
   );
