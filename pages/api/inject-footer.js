@@ -1,4 +1,5 @@
 // pages/api/inject-footer.js
+
 import applyRateLimit from '../../lib/rateLimiter';
 
 export default async function handler(req, res) {
@@ -80,7 +81,7 @@ export default async function handler(req, res) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        footer: scriptTag,
+        footer: currentFooterCode + '\n' + scriptTag,
         enabled: true,
       }),
     });
