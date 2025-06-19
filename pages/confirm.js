@@ -33,19 +33,11 @@ export default function Confirm() {
         body: JSON.stringify({ siteId, token: accessToken }),
       });
 
-      const raw = await res.text();
-      let data;
-      try {
-        data = JSON.parse(raw);
-      } catch {
-        throw new Error('Invalid JSON from server response.');
-      }
-
       if (!res.ok) {
-        throw new Error(data?.error || 'Unknown error during script injection.');
+        const errorData = await res.json();
+        throw new Error(errorData?.error || 'Unknown error during script injection.');
       }
 
-      // ✅ Script injected successfully
       if (testMode) console.log('✅ Global footer injection successful');
       sessionStorage.setItem('webflow_site_id', siteId);
       sessionStorage.setItem('webflow_token', accessToken);
@@ -54,7 +46,7 @@ export default function Confirm() {
       console.error('❌ Injection Error:', err.message);
       setInjectionFailed(true);
       setStatus('Automatic installation failed. You can try again or follow manual install steps.');
-      setErrorMsg(err?.response?.data?.message || err.message || 'Unknown error occurred while injecting the script.');
+      setErrorMsg(err.message || 'Unknown error occurred while injecting the script.');
     } finally {
       setRetrying(false);
     }
