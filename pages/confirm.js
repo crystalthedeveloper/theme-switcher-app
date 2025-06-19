@@ -33,9 +33,9 @@ export default function Confirm() {
         body: JSON.stringify({ siteId, token: accessToken }),
       });
 
+      const result = await res.json();
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData?.error || 'Unknown error during script injection.');
+        throw new Error(result?.error || 'Unknown error during script injection.');
       }
 
       if (testMode) console.log('✅ Global footer injection successful');

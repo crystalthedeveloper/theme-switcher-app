@@ -7,7 +7,10 @@ export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
   if (req.method === "OPTIONS") return res.status(204).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
+  if (req.method !== "POST") {
+    console.warn("❌ Method not allowed:", req.method);
+    return res.status(405).json({ error: "Method Not Allowed", allowed: ["POST"] });
+  }
 
   const { siteId, token } = req.body || {};
   console.log("🔧 Injecting script into global footer:", { siteId, hasToken: !!token });
@@ -31,19 +34,26 @@ export default async function handler(req, res) {
 
   try {
     // Optional: Skip if already injected
-    const currentFooterRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "accept-version": "1.0.0",
-      },
-    });
+    let currentFooterRes;
+    try {
+      currentFooterRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "accept-version": "1.0.0",
+        },
+      });
+    } catch (fetchErr) {
+      console.error("❌ Failed to fetch current footer from Webflow API:", fetchErr);
+      return res.status(502).json({ error: "Failed to fetch current footer from Webflow API", details: fetchErr.message });
+    }
 
     const currentFooterText = await currentFooterRes.text();
     let currentFooterData = {};
     try {
       currentFooterData = JSON.parse(currentFooterText);
     } catch {
+      console.error("❌ Failed to parse JSON from Webflow footer GET response:", currentFooterText);
       return res.status(500).json({ error: "Invalid JSON when fetching current footer", raw: currentFooterText });
     }
 
@@ -71,6 +81,7 @@ export default async function handler(req, res) {
     try {
       patchData = JSON.parse(patchText);
     } catch {
+      console.error("❌ Failed to parse JSON from PATCH response:", patchText);
       return res.status(500).json({ error: "Invalid JSON response from Webflow", raw: patchText });
     }
 
@@ -87,6 +98,6 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error("❌ Unexpected error during injection:", err);
-    res.status(500).json({ error: "Unexpected error", details: err.message });
+    res.status(500).json({ error: "Unexpected error", details: err.message, stack: err.stack });
   }
 }
