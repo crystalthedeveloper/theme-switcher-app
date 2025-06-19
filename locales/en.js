@@ -50,7 +50,7 @@ To uninstall the app, visit your Webflow site’s Apps & Integrations tab and ch
   tryAgainButton: 'Try Again',
   manualInstall: 'Manual Install',
   unknownError: 'An unknown error occurred. Please try again later.',
-  paragraph: 'Follow the instructions below to ensure Theme Switcher is correctly installed.',
+  paragraph: 'Let your visitors switch between dark and light mode — no coding required.',
 };
 
 export default en;
