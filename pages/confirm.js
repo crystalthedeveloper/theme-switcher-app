@@ -6,6 +6,7 @@ import en from '../locales/en';
 
 export default function Confirm() {
   const router = useRouter();
+  console.log('🔍 Router query:', router.query);
   const { site_id, token, test } = router.query;
 
   const statusRef = useRef();
@@ -18,12 +19,12 @@ export default function Confirm() {
 
   // 🛠 Begin script injection
   const injectScript = async (siteIdOverride, tokenOverride) => {
+    const siteId = siteIdOverride || site_id;
+    const accessToken = tokenOverride || token;
+    console.log('🚀 Starting injectScript with:', { siteId, accessToken });
     setInjectionFailed(false);
     setRetrying(true);
     setStatus('Injecting Theme Switcher into global footer...');
-
-    const siteId = siteIdOverride || site_id;
-    const accessToken = tokenOverride || token;
 
     try {
       if (testMode) console.log('📦 Sending request to /api/inject-footer with:', { siteId, token: accessToken?.slice(0, 6) + '...' });
@@ -36,10 +37,15 @@ export default function Confirm() {
         body: JSON.stringify({ siteId, token: accessToken }),
       });
 
+      console.log('📨 Response status:', res.status);
+      console.log('📨 Response headers:', Object.fromEntries(res.headers.entries()));
+
       let result;
       try {
         result = await res.json();
+        console.log('📨 Parsed response body:', result);
       } catch (e) {
+        console.log('❌ Failed to parse JSON or fetch failed:', res);
         throw new Error(`Webflow API error (${res.status}): Unable to parse response.`);
       }
 
@@ -67,6 +73,11 @@ export default function Confirm() {
 
   useEffect(() => {
     if (typeof window === 'undefined' || !router.isReady) return;
+
+    console.log('🧾 Retrieved from sessionStorage:', {
+      siteId: sessionStorage.getItem('webflow_site_id'),
+      token: sessionStorage.getItem('webflow_token')
+    });
 
     let finalSiteId = sessionStorage.getItem('webflow_site_id') || site_id;
     let finalToken = sessionStorage.getItem('webflow_token') || token;

@@ -10,6 +10,9 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   res.setHeader("Cache-Control", "no-store");
 
+  console.log("📥 Incoming request body:", req.body);
+  console.log("🔎 Method:", req.method);
+
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") {
     console.warn("❌ Method not allowed:", req.method);
@@ -80,6 +83,7 @@ export default async function handler(req, res) {
 
     const patchUrl = `https://api.webflow.com/v2/sites/${siteId}/custom_code`;
     console.log("🧩 PATCH URL:", patchUrl);
+    console.log("📡 Preparing to PATCH to Webflow API");
 
     const patchRes = await fetch(patchUrl, {
       method: 'PATCH',
@@ -94,10 +98,14 @@ export default async function handler(req, res) {
       }),
     });
 
+    console.log("📨 PATCH response received");
+    console.log("📨 PATCH status:", patchRes.status, patchRes.statusText);
+
     let patchData;
     try {
       patchData = await patchRes.json();
     } catch (err) {
+      console.log("❗ Error parsing PATCH response JSON. Raw response body will be dumped if available.");
       console.error("❌ Failed to parse JSON from PATCH response:", {
         message: err.message,
         stack: err.stack,
@@ -126,6 +134,7 @@ export default async function handler(req, res) {
       });
     }
 
+    console.log("🎉 PATCH completed successfully. Injected script into footer.");
     console.log("✅ Script injected successfully into global footer");
     res.status(200).json({ message: "Script injected successfully into global footer" });
 
