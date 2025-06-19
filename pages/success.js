@@ -1,5 +1,7 @@
-//pages/success.js
+// pages/success.js
 
+
+import en from '../locales/en';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -12,6 +14,11 @@ export default function Success() {
     padding: '10px 20px',
     fontSize: '1rem',
     cursor: 'pointer',
+    backgroundColor: '#111',
+    color: '#fff',
+    border: '2px solid #000',
+    borderRadius: '4px',
+    outline: 'none',
   };
 
   const preBlockStyle = {
@@ -28,48 +35,48 @@ export default function Success() {
   return (
     <>
       <Head>
-        <title>Success – Theme Switcher Installed</title>
-        <meta name="description" content="Your Theme Switcher script was successfully added to your Webflow site." />
+        <title>{en.success.title}</title>
+        <meta name="description" content={en.success.metaDescription} />
       </Head>
       <main role="main" style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }}>
-        <h1 style={{ fontSize: '2rem' }} aria-live="polite">✅ Installation Complete</h1>
+        <h1 style={{ fontSize: '2rem' }} aria-live="polite" role="alert">{en.success.heading}</h1>
 
-        <p style={{ fontSize: '1.1rem', maxWidth: '480px', margin: '1rem auto' }}>
-          The Theme Switcher script was successfully injected into your Webflow project.
+        <p role="alert" style={{ fontSize: '1.1rem', maxWidth: '480px', margin: '1rem auto' }}>
+          {en.success.description}
         </p>
 
         {showManualInstall && (
-          <section aria-label="Manual Installation Instructions" style={{ maxWidth: '600px', margin: '2rem auto', textAlign: 'left' }}>
+          <section aria-label={en.success.manualInstallationAriaLabel} style={{ maxWidth: '600px', margin: '2rem auto', textAlign: 'left' }}>
             <h2 style={{ fontSize: '1.25rem', color: '#222', marginBottom: '0.5rem' }}>
-              Manual Installation Instructions
+              {en.success.manualInstallationTitle}
             </h2>
             <p style={{ fontSize: '0.95rem', color: '#555' }}>
-              If the Custom Code API was temporarily unavailable, you can still manually enable the toggle.
+              {en.success.manualInstallationIntro}
             </p>
             <ol style={{ fontSize: '0.9rem', color: '#444', marginTop: '1rem', paddingLeft: '1.2rem' }}>
-              <li>Open your Webflow <strong>Project Settings</strong>.</li>
-              <li>Go to the <strong>Custom Code</strong> tab.</li>
-              <li>Paste the following code inside the <strong>Footer Code</strong> box:</li>
+              <li>{en.success.manualSteps.step1}</li>
+              <li>{en.success.manualSteps.step2}</li>
+              <li>{en.success.manualSteps.step3}</li>
             </ol>
             <pre
-              aria-label="Theme switcher script to copy"
+              aria-label={en.success.scriptAriaLabel}
               style={preBlockStyle}
             >
 &lt;script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer&gt;&lt;/script&gt;
             </pre>
 
             <p style={{ fontSize: '0.85rem', color: '#999', marginTop: '2rem' }}>
-              To remove it, simply delete the script from your <strong>Custom Code</strong> tab.
+              {en.success.footerNoteRemoveScript}
               <br /><br />
-              To uninstall the app, visit your Webflow site’s <strong>Apps &amp; Integrations</strong> tab and choose <em>Uninstall</em> under Theme Switcher.
+              {en.success.footerNoteUninstallApp}
             </p>
           </section>
         )}
 
         <div style={{ marginTop: '2.5rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
-          <Link href="/" aria-label="Return to homepage">
-            <button style={buttonStyle}>
-              ← Home
+          <Link href="/" aria-label={en.success.homeAriaLabel}>
+            <button style={buttonStyle} aria-label={en.success.homeButtonAriaLabel}>
+              {en.success.homeButtonText}
             </button>
           </Link>
 
@@ -77,10 +84,10 @@ export default function Success() {
             href="https://webflow.com/dashboard"
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Open Webflow dashboard in new tab"
+            aria-label={en.success.webflowDashboardAriaLabel}
           >
-            <button style={buttonStyle}>
-              Webflow Dashboard
+            <button style={buttonStyle} aria-label={en.success.webflowDashboardButtonAriaLabel}>
+              {en.success.webflowDashboardButtonText}
             </button>
           </a>
         </div>

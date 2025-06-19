@@ -1,16 +1,15 @@
 // pages/index.js
 
 import Head from 'next/head';
+import en from '../locales/en';
 
 export default function Home() {
+  const t = en;
   return (
     <div>
       <Head>
-        <title>Theme Switcher for Webflow</title>
-        <meta
-          name="description"
-          content="Add a dark/light theme toggle to your Webflow site with one click. Built by Crystal The Developer."
-        />
+        <title>{t.title}</title>
+        <meta name="description" content={t.description} />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
@@ -23,10 +22,10 @@ export default function Home() {
           style={{ width: '80px', marginBottom: '1rem' }}
         />
 
-        <h1 style={{ fontSize: '2rem' }}>🎨 Theme Switcher for Webflow</h1>
+        <h1 style={{ fontSize: '2rem' }}>{t.heading}</h1>
 
         <p style={{ fontSize: '1.1rem', maxWidth: '480px', margin: '0 auto' }}>
-          Let your visitors switch between dark and light mode — no coding required.
+          {t.paragraph}
         </p>
 
         <a
@@ -43,12 +42,12 @@ export default function Home() {
               cursor: 'pointer',
             }}
           >
-            Install Theme Switcher
+            {t.button}
           </button>
         </a>
 
         <footer style={{ marginTop: '3rem', fontSize: '0.9rem', color: '#999' }}>
-          <p>Created by Crystal The Developer Inc. • Powered by the Webflow App SDK</p>
+          <p>{t.footer}</p>
         </footer>
       </main>
     </div>

@@ -1,6 +1,9 @@
 // pages/api/inject-footer.js
+import { applyRateLimit } from '../../lib/rateLimiter'
 
 export default async function handler(req, res) {
+  await applyRateLimit(req, res)
+  
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -13,7 +16,10 @@ export default async function handler(req, res) {
   }
 
   const { siteId, token } = req.body || {};
-  console.log("🔧 Injecting script into global footer:", { siteId, hasToken: !!token });
+  console.log("🔧 Injecting script into global footer:", {
+    siteId,
+    tokenPrefix: token?.slice(0, 6) + "...",
+  });
 
   const issues = [];
   if (!siteId || typeof siteId !== 'string') issues.push("Missing or invalid siteId");
@@ -44,7 +50,10 @@ export default async function handler(req, res) {
         },
       });
     } catch (fetchErr) {
-      console.error("❌ Failed to fetch current footer from Webflow API:", fetchErr);
+      console.error("❌ Failed to fetch current footer from Webflow API:", {
+        message: fetchErr.message,
+        stack: fetchErr.stack,
+      });
       return res.status(502).json({ error: "Failed to fetch current footer from Webflow API", details: fetchErr.message });
     }
 
@@ -97,7 +106,10 @@ export default async function handler(req, res) {
     res.status(200).json({ message: "Script injected successfully into global footer" });
 
   } catch (err) {
-    console.error("❌ Unexpected error during injection:", err);
+    console.error("❌ Unexpected error during injection:", {
+      message: err.message,
+      stack: err.stack,
+    });
     res.status(500).json({ error: "Unexpected error", details: err.message, stack: err.stack });
   }
 }

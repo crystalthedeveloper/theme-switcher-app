@@ -1,4 +1,5 @@
 // pages/api/exchange-token.js
+import { applyRateLimit } from '../../lib/rateLimiter'
 
 async function fetchSites(accessToken) {
   try {
@@ -24,6 +25,8 @@ async function fetchSites(accessToken) {
 }
 
 export default async function handler(req, res) {
+  await applyRateLimit(req, res)
+  
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -72,7 +75,10 @@ export default async function handler(req, res) {
     try {
       tokenData = JSON.parse(raw);
     } catch {
-      return res.status(500).json({ error: 'Invalid JSON from Webflow' });
+      return res.status(500).json({
+        error: 'Invalid JSON from Webflow',
+        hint: 'Webflow responded with non-JSON. Check credentials or redirect URI.'
+      });
     }
 
     if (!tokenRes.ok || tokenData.error) {
@@ -97,7 +103,7 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log("✅ Access Token starts with:", accessToken.slice(0, 6) + "...");
+    console.log("✅ Access Token:", accessToken.slice(0, 6) + "... (masked)");
     console.log("✅ Hosted Sites:", siteResult?.sites.map(site => site.name).join(", "));
 
     const normalizeSiteId = (site) => site._id || site.id;
@@ -123,6 +129,10 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error('❌ Unexpected error during token exchange:', err);
-    return res.status(500).json({ error: 'Unexpected error during token exchange.' });
+    return res.status(500).json({
+      error: 'Unexpected error during token exchange.',
+      message: err?.message || 'Unknown error.',
+      hint: 'Ensure Webflow credentials and redirect URI are valid.'
+    });
   }
 }

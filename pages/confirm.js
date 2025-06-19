@@ -1,11 +1,14 @@
 // pages/confirm.js
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
+import en from '../locales/en';
 
 export default function Confirm() {
   const router = useRouter();
   const { site_id, token, test } = router.query;
+
+  const statusRef = useRef();
 
   const [status, setStatus] = useState('⚠️ Please ensure you have authorized access with a valid token and site ID. This is required for the Theme Switcher App to function correctly.');
   const [injectionFailed, setInjectionFailed] = useState(false);
@@ -35,7 +38,7 @@ export default function Confirm() {
 
       const result = await res.json();
       if (!res.ok) {
-        throw new Error(result?.error || 'Unknown error during script injection.');
+        throw new Error(result?.error || en.unknownError);
       }
 
       if (testMode) console.log('✅ Global footer injection successful');
@@ -46,7 +49,7 @@ export default function Confirm() {
       console.error('❌ Injection Error:', err.message);
       setInjectionFailed(true);
       setStatus('Automatic installation failed. You can try again or follow manual install steps.');
-      setErrorMsg(err.message || 'Unknown error occurred while injecting the script.');
+      setErrorMsg(err.message || en.unknownError);
     } finally {
       setRetrying(false);
     }
@@ -64,11 +67,17 @@ export default function Confirm() {
       injectScript(finalSiteId, finalToken);
     } else {
       console.warn('⚠️ Missing site ID or token in sessionStorage or query.');
-      setStatus("⚠️ Missing access token or site ID from Webflow. Please reauthorize from the homepage.");
+      setStatus(en.missingCredentials);
       setInjectionFailed(true);
-      setErrorMsg("Missing access token or site ID from Webflow. Please return to the homepage and reauthorize.");
+      setErrorMsg(en.missingCredentials);
     }
   }, [router.isReady]);
+
+  useEffect(() => {
+    if (injectionFailed && statusRef.current) {
+      statusRef.current.focus();
+    }
+  }, [injectionFailed]);
 
   const handleRetry = () => {
     if (testMode) console.log('🔁 Retrying injection...');
@@ -79,20 +88,34 @@ export default function Confirm() {
 
   return (
     <main style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }}>
-      <h1>🔧 Setting up Theme Switcher...</h1>
+      <h1>{en.setupHeading}</h1>
       {(!site_id || !token) && (
         <p style={{ color: 'red', marginTop: '1rem', fontSize: '0.9rem' }}>
           ⚠️ Missing site ID or token. Please reauthorize via the main page.
         </p>
       )}
       {retrying && (
-        <div style={{ margin: '1rem auto', width: '24px', height: '24px', border: '3px solid #ccc', borderTop: '3px solid #000', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <div
+          aria-label="Loading"
+          role="status"
+          tabIndex="0"
+          style={{
+            margin: '1rem auto',
+            width: '24px',
+            height: '24px',
+            border: '3px solid #ccc',
+            borderTop: '3px solid #000',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite'
+          }}
+        />
       )}
-      <p style={{ maxWidth: '500px', margin: '1rem auto' }}>{status}</p>
+      <p aria-live="polite" tabIndex="-1" ref={statusRef} style={{ maxWidth: '500px', margin: '1rem auto' }}>{status}</p>
 
       {injectionFailed && (
         <div style={{ marginTop: '2rem' }}>
           <button
+            aria-label="Retry injection"
             onClick={handleRetry}
             disabled={retrying}
             style={{
@@ -101,22 +124,33 @@ export default function Confirm() {
               fontSize: '1rem',
               cursor: retrying ? 'not-allowed' : 'pointer',
               opacity: retrying ? 0.6 : 1,
+              backgroundColor: '#000',
+              color: '#fff',
+              border: '2px solid #000',
+              outline: '2px solid #fff',
+              outlineOffset: '2px'
             }}
           >
-            {retrying ? 'Retrying...' : 'Try Again'}
+            {retrying ? en.retrying : en.tryAgain}
           </button>
           <button
+            aria-label="Open manual install guide"
             onClick={() => router.push(`/success?manual=true${testMode ? '&test=true' : ''}`)}
             style={{
               padding: '10px 20px',
               fontSize: '1rem',
               cursor: 'pointer',
+              backgroundColor: '#000',
+              color: '#fff',
+              border: '2px solid #000',
+              outline: '2px solid #fff',
+              outlineOffset: '2px'
             }}
           >
-            Manual Install Guide
+            {en.manualInstall}
           </button>
           {errorMsg && (
-            <p style={{ color: 'red', marginTop: '1rem', fontSize: '0.9rem' }}>
+            <p role="alert" style={{ color: 'red', marginTop: '1rem', fontSize: '0.9rem' }}>
               ⚠️ {errorMsg}
             </p>
           )}

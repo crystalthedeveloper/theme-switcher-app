@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import en from '../locales/en';
 
 export default function Callback() {
   const router = useRouter();
@@ -80,15 +81,15 @@ export default function Callback() {
 
   return (
     <main style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }} aria-busy={loading}>
-      <h1>🔄 Connecting to Webflow...</h1>
+      <h1>{en.connecting}</h1>
 
-      <p>
+      <p aria-live="polite">
         {loading
-          ? 'Exchanging code and preparing your site list...'
-          : error || 'Something went wrong. Please try again from the start.'}
+          ? en.exchanging
+          : error || en.tryAgainFallback}
       </p>
 
-      {error && <p style={{ color: 'red', marginTop: '1rem' }}>{error}</p>}
+      {error && <p style={{ color: 'red', marginTop: '1rem' }} aria-live="assertive">{error}</p>}
 
       {loading && (
         <div style={{ fontSize: '2rem', marginTop: '1.5rem' }}>
@@ -105,9 +106,11 @@ export default function Callback() {
                 padding: '10px 20px',
                 fontSize: '1rem',
                 cursor: 'pointer',
+                outline: '2px solid transparent',
+                outlineOffset: '2px',
               }}
             >
-              ← Try Again
+              ← {en.tryAgain}
             </button>
           </a>
         </div>
@@ -115,7 +118,7 @@ export default function Callback() {
 
       {testMode && (
         <p style={{ marginTop: '2rem', fontSize: '0.9rem', color: '#999' }}>
-          🧪 Test mode enabled – debug logs are visible in your console
+          {en.testModeNotice}
         </p>
       )}
     </main>

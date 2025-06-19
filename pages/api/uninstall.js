@@ -1,6 +1,10 @@
 // pages/api/uninstall.js
 
+import { applyRateLimit } from '../../lib/rateLimiter'
+
 export default async function handler(req, res) {
+  await applyRateLimit(req, res)
+
   res.setHeader("Cache-Control", "no-store");
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -18,8 +22,7 @@ export default async function handler(req, res) {
 
   try {
     if (testMode) {
-      const shortToken = token.slice(0, 6) + "...";
-      console.log(`🧪 [Uninstall] Starting cleanup for site: ${site_id} | token: ${shortToken}`);
+      console.log(`🧪 [Uninstall] Starting cleanup for site: ${site_id} | token: [masked]`);
     }
 
     const pagesRes = await fetch(`https://api.webflow.com/v2/sites/${site_id}/pages`, {
@@ -31,7 +34,7 @@ export default async function handler(req, res) {
 
     if (!pagesRes.ok) {
       const errText = await pagesRes.text();
-      throw new Error(`Failed to fetch pages. Status: ${pagesRes.status}. ${errText}`);
+      throw new Error(`Webflow API failed to return pages. Status: ${pagesRes.status}. Response: ${errText}`);
     }
 
     const pagesData = await pagesRes.json();
@@ -89,7 +92,7 @@ export default async function handler(req, res) {
       failed,
     });
   } catch (err) {
-    console.error("❌ [Uninstall] Cleanup error:", err.message);
+    console.error("❌ [Uninstall] Cleanup error:", err.stack || err.message);
     return res.status(500).json({
       error: "Uninstall failed",
       details: err.message,
