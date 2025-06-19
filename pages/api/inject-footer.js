@@ -51,7 +51,7 @@ export default async function handler(req, res) {
     // Optional: Skip if already injected
     let currentFooterRes;
     try {
-      currentFooterRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom-code`, {
+      currentFooterRes = await fetch(`https://api.webflow.com/sites/${siteId}`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -81,7 +81,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ message: "Script already exists in global footer" });
     }
 
-    const patchUrl = `https://api.webflow.com/sites/${siteId}/custom_code`; // v1 endpoint remains the same
+    const patchUrl = `https://api.webflow.com/sites/${siteId}`;
     console.log("🧩 PATCH URL (v1):", patchUrl);
     console.log("📡 Preparing to PATCH to Webflow API");
 
