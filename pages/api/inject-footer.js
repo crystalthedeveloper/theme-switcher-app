@@ -1,5 +1,5 @@
 // pages/api/inject-footer.js
-import { applyRateLimit } from '../../lib/rateLimiter'
+import applyRateLimit from '../../lib/rateLimiter';
 
 export default async function handler(req, res) {
   await applyRateLimit(req, res)

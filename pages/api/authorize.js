@@ -1,6 +1,10 @@
 // pages/api/authorize.js
 
+import applyRateLimit from '../../lib/rateLimiter';
+
 export default async function handler(req, res) {
+  await applyRateLimit(req, res);
+  
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');

@@ -1,5 +1,5 @@
 // pages/api/exchange-token.js
-import { applyRateLimit } from '../../lib/rateLimiter'
+import applyRateLimit from '../../lib/rateLimiter';
 
 async function fetchSites(accessToken) {
   try {
