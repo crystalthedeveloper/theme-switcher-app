@@ -81,12 +81,12 @@ export default async function handler(req, res) {
       return res.status(200).json({ message: "Script already exists in global footer" });
     }
 
-    const patchUrl = `https://api.webflow.com/sites/${siteId}/custom_code`;
+    const patchUrl = `https://api.webflow.com/sites/${siteId}/custom_code`; // v1 endpoint remains the same
     console.log("🧩 PATCH URL (v1):", patchUrl);
     console.log("📡 Preparing to PATCH to Webflow API");
 
     console.log("📤 PATCH request body:", {
-      custom_code: {
+      customCode: {
         footer: currentFooterCode + '\n' + scriptTag,
       },
     });
@@ -99,7 +99,7 @@ export default async function handler(req, res) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        custom_code: {
+        customCode: {
           footer: currentFooterCode + '\n' + scriptTag,
         },
       }),
@@ -128,7 +128,7 @@ export default async function handler(req, res) {
         url: patchUrl,
         tokenPrefix: token?.slice(0, 6) + "...",
         requestBody: {
-          custom_code: {
+          customCode: {
             footer: currentFooterCode + '\n' + scriptTag,
           },
         },
