@@ -26,6 +26,11 @@ export default async function handler(req, res) {
   if (!siteId || typeof siteId !== 'string') issues.push("Missing or invalid siteId");
   if (!token || typeof token !== 'string') issues.push("Missing or invalid token");
 
+  // Validate Webflow site ID format (24-char hex)
+  if (!/^[a-f0-9]{24}$/i.test(siteId)) {
+    issues.push("Invalid siteId format (should be 24 hex chars)");
+  }
+
   if (issues.length > 0) {
     console.warn("⚠️ Request rejected due to:", issues.join("; "));
     return res.status(400).json({
@@ -73,7 +78,10 @@ export default async function handler(req, res) {
       return res.status(200).json({ message: "Script already exists in global footer" });
     }
 
-    const patchRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
+    const patchUrl = `https://api.webflow.com/v2/sites/${siteId}/custom_code`;
+    console.log("🧩 PATCH URL:", patchUrl);
+
+    const patchRes = await fetch(patchUrl, {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -100,7 +108,7 @@ export default async function handler(req, res) {
       const logDetails = {
         status: patchRes.status,
         statusText: patchRes.statusText,
-        url: `https://api.webflow.com/v2/sites/${siteId}/custom_code`,
+        url: patchUrl,
         tokenPrefix: token?.slice(0, 6) + "...",
         requestBody: {
           footer: currentFooterCode + '\n' + scriptTag,

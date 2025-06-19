@@ -38,7 +38,8 @@ export default function Confirm() {
 
       const result = await res.json();
       if (!res.ok) {
-        throw new Error(result?.error || en.unknownError);
+        const errorDetail = await res.text();
+        throw new Error(result?.error || `Webflow API error (${res.status}): ${errorDetail}`);
       }
 
       if (testMode) console.log('✅ Global footer injection successful');
@@ -46,7 +47,11 @@ export default function Confirm() {
       sessionStorage.setItem('webflow_token', accessToken);
       router.replace(`/success${testMode ? '?test=true' : ''}`);
     } catch (err) {
-      console.error('❌ Injection Error:', err.message);
+      console.error('❌ Injection Error:', {
+        message: err.message,
+        siteId,
+        token: accessToken?.slice(0, 6) + '...',
+      });
       setInjectionFailed(true);
       setStatus('Automatic installation failed. You can try again or follow manual install steps.');
       setErrorMsg(err.message || en.unknownError);
