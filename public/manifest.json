@@ -1,0 +1,15 @@
+{
+  "id": "theme-switcher-extension",
+  "version": "1.0.0",
+  "name": "Theme Switcher",
+  "description": "Injects the Theme Switcher script automatically into the Webflow Designer.",
+  "scripts": [
+    {
+      "src": "https://theme-toggle-webflow.vercel.app/extension.js",
+      "location": "designer"
+    }
+  ],
+  "match": {
+    "url": "*"
+  }
+}
