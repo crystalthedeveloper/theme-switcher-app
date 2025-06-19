@@ -18,7 +18,7 @@ export default function Settings() {
 
   const reinject = async () => {
     setMessage('Reinjecting...');
-    const res = await fetch('/api/inject-footer', {
+    const res = await fetch('/api/inject-designer', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ siteId, token }),
@@ -56,6 +56,9 @@ export default function Settings() {
   return (
     <main style={{ padding: '2rem', textAlign: 'center' }}>
       <h1>⚙️ Theme Switcher Settings</h1>
+      <p style={{ color: '#666', fontSize: '0.9rem' }}>
+        Scripts now inject through Webflow’s Designer Extension API.
+      </p>
 
       <p>
         <strong>Site ID:</strong> {siteId || 'Not found'}

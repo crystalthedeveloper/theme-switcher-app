@@ -25,55 +25,29 @@ export default function Confirm() {
     console.log('🚀 Starting injectScript with:', { siteId, accessToken });
     setInjectionFailed(false);
     setRetrying(true);
-    setStatus('Injecting Theme Switcher into global footer...');
+    setStatus('Injecting Theme Switcher into Webflow Designer...');
 
     try {
       if (!siteId || !accessToken) {
         throw new Error('Missing site ID or token for injection.');
       }
 
-      console.log('📡 Injecting with full request:', {
-        endpoint: '/api/inject-footer',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'accept-version': '2.0.0',
-        },
-        body: { siteId, token: accessToken }
-      });
+      const extensionScriptUrl = 'https://your-vercel-domain.vercel.app/webflow-extension/extension.js';
 
-      if (testMode) console.log('📦 Sending request to /api/inject-footer with:', { siteId, token: accessToken?.slice(0, 6) + '...' });
+      const script = document.createElement('script');
+      script.src = extensionScriptUrl;
+      script.async = true;
+      script.onload = () => {
+        console.log('✅ Extension script loaded successfully');
+        sessionStorage.setItem('webflow_site_id', siteId);
+        sessionStorage.setItem('webflow_token', accessToken);
+        router.replace(`/success${testMode ? '?test=true' : ''}`);
+      };
+      script.onerror = () => {
+        throw new Error('Failed to load the extension script.');
+      };
 
-      const res = await fetch('/api/inject-footer', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'accept-version': '2.0.0',
-        },
-        body: JSON.stringify({ siteId, token: accessToken }),
-      });
-
-      console.log('📨 Response status:', res.status);
-      console.log('📨 Response headers:', Object.fromEntries(res.headers.entries()));
-
-      let result;
-      try {
-        result = await res.json();
-        console.log('📨 Parsed response body:', result);
-      } catch (e) {
-        const text = await res.text();
-        console.error('❌ Failed to parse response JSON. Raw response:', text);
-        throw new Error(`Webflow API error (${res.status}): ${text}`);
-      }
-
-      if (!res.ok) {
-        throw new Error(result?.error || `Webflow API error (${res.status}): ${result?.details?.statusText || 'Unknown error'}`);
-      }
-
-      if (testMode) console.log('✅ Global footer injection successful');
-      sessionStorage.setItem('webflow_site_id', siteId);
-      sessionStorage.setItem('webflow_token', accessToken);
-      router.replace(`/success${testMode ? '?test=true' : ''}`);
+      document.head.appendChild(script);
     } catch (err) {
       console.error('❌ Injection Error:', {
         message: err.message,
@@ -82,7 +56,7 @@ export default function Confirm() {
         requestBody: { siteId, token: accessToken },
       });
       setInjectionFailed(true);
-      setStatus('Automatic installation failed. You can try again or follow manual install steps.');
+      setStatus('Extension script injection failed. Try again or use manual steps.');
       setErrorMsg(err.message || en.unknownError);
     } finally {
       setRetrying(false);
