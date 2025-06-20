@@ -21,7 +21,6 @@ export default function Confirm() {
   const injectScript = async (siteIdOverride, tokenOverride) => {
     const siteId = siteIdOverride || site_id;
     const accessToken = tokenOverride || token;
-    console.log(`🕒 [${new Date().toISOString()}] InjectScript fired`);
     console.log('🚀 Starting injectScript with:', { siteId, accessToken });
     setInjectionFailed(false);
     setRetrying(true);
