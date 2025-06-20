@@ -35,6 +35,7 @@
     "url": "https://webflow.com/design/*"
   },
   "healthCheck": {
-    "url": "https://theme-toggle-webflow.vercel.app/__webflow"
-  }
+  "url": "https://theme-toggle-webflow.vercel.app/api/__webflow"
+ }
+
 }
