@@ -2,7 +2,7 @@
 
 // Prevent script from running outside the Webflow Designer
 if (!window.Webflow || !window.Webflow.require || !window.Webflow.require('ix2')) {
-  console.warn('Theme Switcher extension is not running inside Webflow Designer.');
+  console.warn('🚫 Theme Switcher extension is not running inside Webflow Designer.');
   return;
 }
 
@@ -39,39 +39,56 @@ function initThemeSwitcherExtension() {
   const copyBtn = document.getElementById('copy-script');
 
   if (addBtn) {
+    console.log('🔗 Binding Add button...');
     addBtn.onclick = async () => {
       console.log('➕ Add Script button clicked');
       try {
         const extension = window.Webflow?.require?.('designer-extension');
         if (extension?.actions?.addEmbedBlock) {
+          console.log('🧩 addEmbedBlock API found');
           await extension.actions.addEmbedBlock({
             code: themeScript,
             location: 'footer',
           });
           alert('✅ Script added to the current page.');
         } else {
+          console.warn('❌ addEmbedBlock not available in designer-extension');
           alert('❌ Designer Extension API not available.');
         }
       } catch (err) {
+        console.error('⚠️ Error injecting script:', err);
         alert('⚠️ Failed to inject script. Try again or use Copy Script.');
       }
     };
+  } else {
+    console.warn('⚠️ Add button not found in DOM');
   }
 
   if (copyBtn) {
+    console.log('🔗 Binding Copy button...');
     copyBtn.onclick = () => {
       console.log('📋 Copy Script button clicked');
-      navigator.clipboard.writeText(themeScript).then(() => {
-        alert('📋 Script copied! Paste into Site Settings > Footer.');
-      });
+      navigator.clipboard.writeText(themeScript)
+        .then(() => {
+          alert('📋 Script copied! Paste into Site Settings > Footer.');
+        })
+        .catch(err => {
+          console.error('❌ Clipboard copy failed:', err);
+        });
     };
+  } else {
+    console.warn('⚠️ Copy button not found in DOM');
   }
 
   const dismissBtn = document.getElementById('dismiss-panel');
   if (dismissBtn) {
+    console.log('🔗 Binding Dismiss button...');
     dismissBtn.onclick = () => {
+      console.log('❌ Dismissing Theme Switcher panel');
       panel.remove();
     };
+  } else {
+    console.warn('⚠️ Dismiss button not found in DOM');
   }
 }
 
@@ -79,11 +96,14 @@ function initThemeSwitcherExtension() {
 document.addEventListener('DOMContentLoaded', () => {
   try {
     console.log('📦 DOM ready. Checking for Webflow Designer Extension API...');
-    if (window.Webflow?.require?.('designer-extension')) {
+    const designerApi = window.Webflow?.require?.('designer-extension');
+    if (designerApi) {
+      console.log('✅ Designer Extension API available');
       initThemeSwitcherExtension();
+    } else {
+      console.warn('❌ Designer Extension API not found');
     }
   } catch (err) {
     console.error('❌ Theme Switcher Extension failed to initialize:', err);
-    console.error('❌ Error initializing Theme Switcher extension:', err);
   }
 });

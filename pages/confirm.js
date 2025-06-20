@@ -22,12 +22,13 @@ export default function Confirm() {
       queryToken: token
     });
 
-    const finalSiteId = sessionStorage.getItem('webflow_site_id') || site_id;
-    const finalToken = sessionStorage.getItem('webflow_token') || token;
+    const effectiveSiteId = sessionStorage.getItem('webflow_site_id') || site_id;
+    const effectiveToken = sessionStorage.getItem('webflow_token') || token;
 
-    if (finalSiteId && finalToken) {
-      sessionStorage.setItem('webflow_site_id', finalSiteId);
-      sessionStorage.setItem('webflow_token', finalToken);
+    if (effectiveSiteId && effectiveToken) {
+      sessionStorage.setItem('webflow_site_id', effectiveSiteId);
+      sessionStorage.setItem('webflow_token', effectiveToken);
+      console.log('✅ Redirecting to /success with site and token saved.');
       router.replace(`/success${testMode ? '?test=true' : ''}`);
     } else {
       console.warn('⚠️ Missing site ID or token in sessionStorage or query.');
@@ -39,15 +40,15 @@ export default function Confirm() {
     <main style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }}>
       <h1>{en.setupHeading}</h1>
       {(!site_id || !token) && (
-        <p style={{ color: 'red', marginTop: '1rem', fontSize: '0.9rem' }}>
+        <p style={{ color: 'red', marginTop: '1rem', fontSize: '1rem' }}>
           ⚠️ Missing site ID or token. Please reauthorize via the main page.
         </p>
       )}
       <p aria-live="polite" tabIndex="-1" style={{ maxWidth: '500px', margin: '1rem auto' }}>{status}</p>
 
       {testMode && (
-        <p style={{ marginTop: '2rem', fontSize: '0.9rem', color: '#999' }}>
-          🧪 Test mode enabled — debug logs visible in browser console.
+        <p style={{ marginTop: '2rem', fontSize: '1rem', color: '#999' }}>
+          🧪 Test mode is enabled — check the browser console for debug logs.
         </p>
       )}
     </main>
