@@ -81,7 +81,7 @@ export default function Callback() {
           if (warning) console.warn('⚠️ Warning:', warning);
         }
 
-        const redirectUrl = `/confirm?site_id=${site_id}&token=${access_token}${testMode ? '&test=true' : ''}`;
+        const redirectUrl = `/?installed=true&site_id=${site_id}&token=${access_token}${testMode ? '&test=true' : ''}`;
         if (testMode) console.log('➡️ Redirecting to:', redirectUrl);
         router.replace(redirectUrl);
       } catch (err) {

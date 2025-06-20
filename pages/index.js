@@ -3,9 +3,17 @@
 import Head from 'next/head';
 import en from '../locales/en';
 import styles from './css/index.module.css';
+import { useEffect, useState } from 'react';
 
 export default function Home() {
   const t = en;
+  const [appInstalled, setAppInstalled] = useState(false);
+
+  useEffect(() => {
+    const isInstalled = window.location.search.includes('installed=true'); // simulate condition
+    setAppInstalled(isInstalled);
+  }, []);
+
   return (
     <div>
       <Head>
@@ -41,6 +49,25 @@ export default function Home() {
             {en.buttonInstall}
           </button>
         </a>
+
+        {appInstalled && (
+          <div className={styles['button-group']}>
+            <button
+              type="button"
+              className={styles['main-button']}
+              onClick={() => alert('Embed Script Added')}
+            >
+              Add Embed
+            </button>
+            <button
+              type="button"
+              className={styles['main-button']}
+              onClick={() => navigator.clipboard.writeText('<script src="..."></script>')}
+            >
+              Copy Script Tag
+            </button>
+          </div>
+        )}
 
         <footer className={styles['main-footer']}>
           <p>{en.footer}</p>
