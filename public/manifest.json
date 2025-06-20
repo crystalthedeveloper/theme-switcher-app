@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "name": "Theme Switcher for Webflow",
   "short_name": "ThemeSwitcher",
-  "title": "Theme Switcher",
   "description": "Let users toggle dark and light mode on your Webflow site. Install via the Designer or copy the script manually.",
   "display": "standalone",
   "background_color": "#ffffff",

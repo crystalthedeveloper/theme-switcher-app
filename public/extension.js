@@ -26,10 +26,10 @@ function initThemeSwitcherExtension() {
   panel.style.maxWidth = '320px';
   panel.innerHTML = `
     <strong style="display:block; margin-bottom: 12px;">🌓 Theme Switcher</strong>
-    <button id="add-script" style="margin-bottom: 10px; width: 100%;" aria-label="Add Theme Switcher script to this Webflow page">➕ Add to This Page</button>
-    <button id="copy-script" style="width: 100%;" aria-label="Copy Theme Switcher script for site footer">📋 Copy Script for Footer</button>
+    <button type="button" id="add-script" style="margin-bottom: 10px; width: 100%;" aria-label="Add Theme Switcher script to this Webflow page">➕ Add to This Page</button>
+    <button type="button" id="copy-script" style="width: 100%;" aria-label="Copy Theme Switcher script for site footer">📋 Copy Script for Footer</button>
     <small style="display:block; margin-top: 10px; font-size: 11px; color: #ccc;">To apply globally, paste it in Site Settings > Custom Code</small>
-    <button id="dismiss-panel" style="margin-top: 10px; width: 100%;">❌ Close</button>
+    <button type="button" id="dismiss-panel" style="margin-top: 10px; width: 100%;">❌ Close</button>
   `;
 
   document.body.appendChild(panel);
@@ -93,7 +93,7 @@ function initThemeSwitcherExtension() {
 }
 
 // Delay until DOM is ready and extension environment is confirmed
-document.addEventListener('DOMContentLoaded', () => {
+const runOnReady = () => {
   try {
     console.log('📦 DOM ready. Checking for Webflow Designer Extension API...');
     const designerApi = window.Webflow?.require?.('designer-extension');
@@ -106,4 +106,10 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch (err) {
     console.error('❌ Theme Switcher Extension failed to initialize:', err);
   }
-});
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', runOnReady);
+} else {
+  runOnReady();
+}
