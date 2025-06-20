@@ -5,6 +5,8 @@ import en from '../locales/en';
 import styles from './css/index.module.css';
 import { useEffect, useState } from 'react';
 
+const scriptTag = '<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js"></script>';
+
 export default function Home() {
   const t = en;
   const [appInstalled, setAppInstalled] = useState(false);
@@ -30,22 +32,6 @@ export default function Home() {
     setTimeout(() => setShowMessage(false), 4000);
   };
 
-  const handleCopyScript = () => {
-    const scriptTag =
-      '<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js"></script>';
-
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(scriptTag)
-        .then(() => showFeedback('📋 Script copied! Paste it into Site Settings > Footer.'))
-        .catch((err) => {
-          console.error('❌ Clipboard API error:', err);
-          fallbackCopy(scriptTag);
-        });
-    } else {
-      fallbackCopy(scriptTag);
-    }
-  };
-
   const fallbackCopy = (text) => {
     const textarea = document.createElement('textarea');
     textarea.value = text;
@@ -57,16 +43,27 @@ export default function Home() {
     textarea.select();
     try {
       const success = document.execCommand('copy');
-      if (success) {
-        showFeedback('📋 Script copied using fallback!');
-      } else {
-        throw new Error('execCommand failed');
-      }
+      showFeedback(success
+        ? '📋 Script copied! Paste it into Site Settings > Footer.'
+        : '⚠️ Fallback failed. Copy manually.');
     } catch (err) {
       console.error('❌ Fallback copy failed:', err);
       showFeedback('⚠️ Please copy the script manually.');
     }
     document.body.removeChild(textarea);
+  };
+
+  const handleCopyScript = () => {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(scriptTag)
+        .then(() => showFeedback('📋 Script copied! Paste it into Site Settings > Footer.'))
+        .catch((err) => {
+          console.error('❌ Clipboard API error:', err);
+          fallbackCopy(scriptTag);
+        });
+    } else {
+      fallbackCopy(scriptTag);
+    }
   };
 
   return (
