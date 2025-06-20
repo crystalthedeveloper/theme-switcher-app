@@ -27,7 +27,7 @@
   ],
   "scripts": [
     {
-      "src": "/extension.js",
+      "src": "https://theme-toggle-webflow.vercel.app/extension.js",
       "location": "designer"
     }
   ],
@@ -35,7 +35,7 @@
     "url": "https://webflow.com/design/*"
   },
   "healthCheck": {
-    "url": "/__webflow"
+    "url": "https://theme-toggle-webflow.vercel.app/__webflow"
   },
   "permissions": [],
   "author": {
