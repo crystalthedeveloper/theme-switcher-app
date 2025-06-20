@@ -1,0 +1,70 @@
+.main {
+  text-align: center;
+  margin-top: 5rem;
+  padding: 0 1.5rem;
+}
+
+.heading {
+  font-size: 2rem;
+}
+
+.paragraph {
+  font-size: 1.1rem;
+  max-width: 480px;
+  margin: 1rem auto;
+}
+
+.manualSection {
+  max-width: 600px;
+  margin: 2rem auto;
+  text-align: left;
+}
+
+.manualTitle {
+  font-size: 1.25rem;
+  color: #222;
+  margin-bottom: 0.5rem;
+}
+
+.manualIntro,
+.manualRemoveNote,
+.manualParagraph {
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.manualSteps {
+  font-size: 0.9rem;
+  color: #444;
+  margin-top: 1rem;
+  padding-left: 1.2rem;
+}
+
+.scriptBlock {
+  background: #f4f4f4;
+  padding: 10px;
+  border-radius: 6px;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.buttons {
+  margin-top: 2.5rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.button {
+  padding: 10px 20px;
+  font-size: 1rem;
+  cursor: pointer;
+  background-color: #111;
+  color: #fff;
+  border: 2px solid #000;
+  border-radius: 4px;
+  outline: none;
+}

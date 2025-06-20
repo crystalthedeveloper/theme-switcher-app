@@ -5,15 +5,6 @@ const en = {
     metaDescription: 'Theme Switcher installation complete.',
     heading: 'Success! 🎉',
     description: 'The Theme Switcher script has been installed on your Webflow site.',
-    manualInstallationAriaLabel: 'Manual installation section',
-    manualInstallationTitle: 'Manual Installation Instructions',
-    manualInstallationIntro: 'Follow these steps to manually add the Theme Switcher to your site:',
-    manualSteps: {
-      step1: 'Open your Webflow Project Settings.',
-      step2: 'Go to the Custom Code tab.',
-      step3: 'Paste the following code into the Footer Code box.',
-    },
-    scriptAriaLabel: 'Script code block',
     footerNoteRemoveScript: 'To remove it, simply delete the script from your Custom Code tab.',
     footerNoteUninstallApp: 'To uninstall the app, visit your Webflow site’s Apps & Integrations tab and choose Uninstall under Theme Switcher.',
     homeAriaLabel: 'Go to homepage',
@@ -22,17 +13,6 @@ const en = {
     webflowDashboardAriaLabel: 'Open Webflow Dashboard',
     webflowDashboardButtonAriaLabel: 'Open Webflow Dashboard',
     webflowDashboardButtonText: 'Webflow Dashboard',
-  },
-  manual: {
-    title: 'Manual Installation Instructions',
-    note: 'If the Custom Code API was temporarily unavailable, you can still manually enable the toggle.',
-    steps: [
-      'Open your Webflow Project Settings.',
-      'Go to the Custom Code tab.',
-      'Paste the following code inside the Footer Code box:',
-    ],
-    removalNote: `To remove it, simply delete the script from your Custom Code tab.
-To uninstall the app, visit your Webflow site’s Apps & Integrations tab and choose Uninstall under Theme Switcher.`,
   },
   nav: {
     home: '← Home',
@@ -50,7 +30,6 @@ To uninstall the app, visit your Webflow site’s Apps & Integrations tab and ch
   tryAgainButton: 'Try Again',
   manualInstall: 'Manual Install',
   unknownError: 'An unknown error occurred. Please try again later.',
-  paragraph: 'Let your visitors switch between dark and light mode — no coding required.',
   button:'Install Theme Switcher',
 };
 

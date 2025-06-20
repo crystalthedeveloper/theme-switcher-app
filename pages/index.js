@@ -25,7 +25,7 @@ export default function Home() {
         <h1 style={{ fontSize: '2rem' }}>{t.heading}</h1>
 
         <p style={{ fontSize: '1.1rem', maxWidth: '480px', margin: '0 auto' }}>
-          {t.paragraph}
+         Let your visitors switch between dark and light mode — no coding required.
         </p>
 
         <a
