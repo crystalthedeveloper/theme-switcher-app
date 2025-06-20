@@ -4,9 +4,14 @@
   const themeScriptUrl = 'https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js';
   const themeScriptTag = `<script src="${themeScriptUrl}"><\/script>`;
 
+  const log = (...args) => console.log('🌓 ThemeSwitcher:', ...args);
+  const error = (...args) => console.error('❌ ThemeSwitcher:', ...args);
+
   const initThemeSwitcher = () => {
     if (sessionStorage.getItem('theme-switcher-dismissed') === 'true') return;
     if (document.getElementById('theme-switcher-panel')) return;
+
+    log('Initializing Theme Switcher panel...');
 
     const panel = document.createElement('div');
     panel.id = 'theme-switcher-panel';
@@ -37,6 +42,7 @@
     `;
 
     document.body.appendChild(panel);
+    log('Panel injected into page');
 
     const addBtn = document.getElementById('add-script');
     const copyBtn = document.getElementById('copy-script');
@@ -44,6 +50,7 @@
 
     const scriptAlreadyExists = [...document.querySelectorAll('script')].some(s => s.src === themeScriptUrl);
     if (scriptAlreadyExists) {
+      log('Script already present on page');
       addBtn.disabled = true;
       addBtn.textContent = '✅ Script already added';
       addBtn.style.backgroundColor = '#444';
@@ -52,59 +59,68 @@
 
     if (addBtn && !addBtn.disabled) {
       addBtn.onclick = async () => {
+        log('➕ Add Script clicked');
         try {
           const extension = window.Webflow?.require?.('designer-extension');
-          if (extension?.actions?.addEmbedBlock) {
-            await extension.actions.addEmbedBlock({
-              code: themeScriptTag,
-              location: 'footer',
-            });
-            alert('✅ Script added!');
-            addBtn.disabled = true;
-            addBtn.textContent = '✅ Script already added';
-            addBtn.style.backgroundColor = '#444';
-            addBtn.style.cursor = 'default';
-          } else {
-            alert('❌ Designer Extension API not available.');
-          }
+          log('Extension:', extension);
+
+          if (!extension) throw new Error('Designer extension not available');
+          if (!extension.actions?.addEmbedBlock) throw new Error('addEmbedBlock not found on extension.actions');
+
+          await extension.actions.addEmbedBlock({
+            code: themeScriptTag,
+            location: 'footer',
+          });
+
+          alert('✅ Script added to this page!');
+          addBtn.disabled = true;
+          addBtn.textContent = '✅ Script already added';
+          addBtn.style.backgroundColor = '#444';
+          addBtn.style.cursor = 'default';
         } catch (err) {
-          console.error('❌ Failed to add script:', err);
-          alert('⚠️ Script injection failed.');
+          error('Script injection failed:', err);
+          alert(`⚠️ Failed to add script:\n${err.message}`);
         }
       };
     }
 
-    copyBtn.onclick = () => {
-      const textarea = document.createElement('textarea');
-      textarea.value = themeScriptTag;
-      textarea.setAttribute('readonly', '');
-      textarea.style.position = 'absolute';
-      textarea.style.left = '-9999px';
-      document.body.appendChild(textarea);
-      textarea.select();
-      try {
-        const success = document.execCommand('copy');
-        alert(success
-          ? '📋 Script copied! Paste into Site Settings > Footer.'
-          : '⚠️ Copy failed. Try manually.');
-      } catch (err) {
-        console.error('❌ Copy failed:', err);
-        alert('⚠️ Copy failed. Try manually.');
-      }
-      document.body.removeChild(textarea);
-    };
+    if (copyBtn) {
+      copyBtn.onclick = () => {
+        log('📋 Copy Script clicked');
+        const textarea = document.createElement('textarea');
+        textarea.value = themeScriptTag;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'absolute';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          const success = document.execCommand('copy');
+          alert(success
+            ? '📋 Script copied! Paste into Site Settings > Footer.'
+            : '⚠️ Copy failed. Try manually.');
+        } catch (err) {
+          error('Clipboard copy failed:', err);
+          alert('⚠️ Copy failed. Try manually.');
+        }
+        document.body.removeChild(textarea);
+      };
+    }
 
     dismissBtn.onclick = () => {
       sessionStorage.setItem('theme-switcher-dismissed', 'true');
       panel.remove();
+      log('Panel dismissed by user');
     };
   };
 
   const waitForDesignerAPI = () => {
+    log('Waiting for Designer API...');
     const interval = setInterval(() => {
       const extension = window.Webflow?.require?.('designer-extension');
       if (extension) {
         clearInterval(interval);
+        log('✅ Designer Extension API detected');
         initThemeSwitcher();
       }
     }, 300);
