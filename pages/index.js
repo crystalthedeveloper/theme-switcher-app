@@ -2,6 +2,7 @@
 
 import Head from 'next/head';
 import en from '../locales/en';
+import styles from './css/index.module.css';
 
 export default function Home() {
   const t = en;
@@ -13,18 +14,18 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main role="main" style={{ textAlign: 'center', padding: '4rem 1.5rem' }}>
+      <main role="main" className={styles['main-content']}>
         <img
           src="/logo.png"
           alt="Crystal The Developer Logo"
           role="img"
           aria-label="Logo of Crystal The Developer"
-          style={{ width: '80px', marginBottom: '1rem' }}
+          className={styles.logo}
         />
 
-        <h1 style={{ fontSize: '2rem' }}>{t.heading}</h1>
+        <h1 className={styles['main-heading']}>Theme Switcher</h1>
 
-        <p style={{ fontSize: '1.1rem', maxWidth: '480px', margin: '0 auto' }}>
+        <p className={styles['main-subheading']}>
          Let your visitors switch between dark and light mode — no coding required.
         </p>
 
@@ -35,18 +36,13 @@ export default function Home() {
         >
           <button
             type="button"
-            style={{
-              padding: '12px 24px',
-              marginTop: '2rem',
-              fontSize: '1rem',
-              cursor: 'pointer',
-            }}
+            className={styles['main-button']}
           >
             {t.button}
           </button>
         </a>
 
-        <footer style={{ marginTop: '3rem', fontSize: '0.9rem', color: '#999' }}>
+        <footer className={styles['main-footer']}>
           <p>{t.footer}</p>
         </footer>
       </main>
