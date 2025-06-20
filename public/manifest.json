@@ -20,6 +20,6 @@
     }
   ],
   "match": {
-    "url": "*"
+    "url": "https://webflow.com/design/*"
   }
 }

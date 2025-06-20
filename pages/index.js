@@ -8,16 +8,37 @@ import { useEffect, useState } from 'react';
 export default function Home() {
   const t = en;
   const [appInstalled, setAppInstalled] = useState(false);
+  const [message, setMessage] = useState('');
+  const [showMessage, setShowMessage] = useState(false);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const installed = urlParams.get('installed') === 'true';
-    if (installed) {
+    const installedFromURL = urlParams.get('installed') === 'true';
+    const isInDesigner = window.self !== window.top;
+
+    if (installedFromURL || isInDesigner) {
       sessionStorage.setItem('webflow-app-installed', 'true');
     }
+
     const savedInstalled = sessionStorage.getItem('webflow-app-installed') === 'true';
     setAppInstalled(savedInstalled);
   }, []);
+
+  const showFeedback = (msg) => {
+    setMessage(msg);
+    setShowMessage(true);
+    setTimeout(() => setShowMessage(false), 3000);
+  };
+
+  const handleCopyScript = () => {
+    const scriptTag = '<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js"></script>';
+    navigator.clipboard.writeText(scriptTag)
+      .then(() => showFeedback('📋 Script copied! Paste it into Site Settings > Footer.'))
+      .catch(err => {
+        console.error('❌ Clipboard error:', err);
+        showFeedback('⚠️ Failed to copy script. Try again.');
+      });
+  };
 
   return (
     <div>
@@ -42,37 +63,46 @@ export default function Home() {
           Let your visitors switch between dark and light mode — no coding required.
         </p>
 
-        <a
-          href={`https://webflow.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.NEXT_PUBLIC_BASE_URL + '/callback')}&response_type=code&scope=sites:read pages:read custom_code:write`}
-          aria-label="Authorize with Webflow and connect this app"
-          rel="noopener noreferrer"
-        >
-          <button
-            type="button"
-            className={styles['main-button']}
+        {!appInstalled && (
+          <a
+            href={`https://webflow.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.NEXT_PUBLIC_BASE_URL + '/callback')}&response_type=code&scope=sites:read pages:read custom_code:write`}
+            aria-label="Authorize with Webflow and connect this app"
+            rel="noopener noreferrer"
           >
-            {en.buttonInstall}
-          </button>
-        </a>
+            <button type="button" className={styles['main-button']}>
+              {en.buttonInstall}
+            </button>
+          </a>
+        )}
 
         {appInstalled && (
           <div className={styles['button-group']}>
             <button
               type="button"
               className={styles['main-button']}
-              onClick={() => alert('Embed Script Added')}
+              onClick={() =>
+                showFeedback('✅ Use the Webflow Designer Extension panel to insert the script.')
+              }
             >
               Add Embed
             </button>
             <button
               type="button"
               className={styles['main-button']}
-              onClick={() => navigator.clipboard.writeText('<script src="..."></script>')}
+              onClick={handleCopyScript}
             >
               Copy Script Tag
             </button>
           </div>
         )}
+
+        <div
+          className={`${styles.feedback} ${!showMessage ? styles.hidden : ''}`}
+          role="status"
+          aria-live="polite"
+        >
+          {message}
+        </div>
 
         <footer className={styles['main-footer']}>
           <p>{en.footer}</p>
