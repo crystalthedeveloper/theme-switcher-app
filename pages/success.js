@@ -6,32 +6,28 @@ import Link from 'next/link';
 import styles from './css/success.module.css';
 
 export default function Success() {
-
   return (
     <>
       <Head>
         <title>Success – Theme Switcher Installed</title>
         <meta name="description" content={en.success.metaDescription} />
       </Head>
-      <main role="main" className={styles.main}>
+      <main className={styles.main}>
         <img
           src="/logo.png"
           alt="Crystal The Developer Logo"
-          role="img"
-          aria-label="Logo of Crystal The Developer"
           className={styles.logo}
         />
-        <h1 className={styles['main-heading']} aria-live="polite" role="alert">Success! 🎉</h1>
-        <h2 className={styles['main-heading']} aria-live="polite" role="alert">The Theme Switcher App Has Been Installed</h2>
+        <h1 className={styles['main-heading']}>The Theme Switcher App Has Been Installed</h1>
 
-        <p role="alert" className={styles.message}>
-          The Theme Switcher app has been installed on your Webflow site.
+        <p className={styles.message}>
+          {en.success.description}
         </p>
 
         <div className={styles.buttonRow}>
           <Link href="https://theme-switcher-app.webflow.io/" aria-label={en.success.homeAriaLabel}>
-            <button className={styles.button} aria-label={'Go back to homepage'}>
-              {en.success.buttonHome}
+            <button className={styles.button} aria-label={en.success.homeButtonAriaLabel}>
+              {en.success.homeButtonText}
             </button>
           </Link>
 
@@ -41,8 +37,8 @@ export default function Success() {
             rel="noopener noreferrer"
             aria-label={en.success.webflowDashboardAriaLabel}
           >
-            <button className={styles.button} aria-label={'Open Webflow Dashboard'}>
-              {en.success.buttonWebflowDashboard}
+            <button className={styles.button} aria-label={en.success.webflowDashboardButtonAriaLabel}>
+              {en.success.webflowDashboardButtonText}
             </button>
           </a>
         </div>
