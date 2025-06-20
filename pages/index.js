@@ -10,7 +10,7 @@ export default function Home() {
     <div>
       <Head>
         <title>{t.title}</title>
-        <meta name="description" content={t.description} />
+        <meta name="description" content={en.description} />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
@@ -26,7 +26,7 @@ export default function Home() {
         <h1 className={styles['main-heading']}>Theme Switcher</h1>
 
         <p className={styles['main-subheading']}>
-         Let your visitors switch between dark and light mode — no coding required.
+          Let your visitors switch between dark and light mode — no coding required.
         </p>
 
         <a
@@ -38,12 +38,12 @@ export default function Home() {
             type="button"
             className={styles['main-button']}
           >
-            {t.button}
+            {en.buttonInstall}
           </button>
         </a>
 
         <footer className={styles['main-footer']}>
-          <p>{t.footer}</p>
+          <p>{en.footer}</p>
         </footer>
       </main>
     </div>

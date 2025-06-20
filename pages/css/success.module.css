@@ -4,10 +4,16 @@
   padding: 0 2rem;
 }
 
-.heading {
-  font-size: 2.25rem;
-  color: #111;
-  margin-bottom: 1rem;
+.logo {
+  max-width: 160px;
+  height: auto;
+}
+
+.main-heading {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 1rem 0 0.5rem;
+  color: #111111;
 }
 
 .paragraph {
@@ -61,7 +67,15 @@
   margin-top: 3rem;
   display: flex;
   justify-content: center;
-  gap: 1.5rem;
+  gap: 2rem;
+}
+
+.buttonRow {
+  margin-top: 3rem;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 2rem;
 }
 
 .button {

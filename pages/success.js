@@ -11,10 +11,18 @@ export default function Success() {
     <>
       <Head>
         <title>Success – Theme Switcher Installed</title>
-        <meta name="description" content="Your Theme Switcher script has been successfully installed in Webflow." />
+        <meta name="description" content={en.success.metaDescription} />
       </Head>
       <main role="main" className={styles.main}>
-        <h1 className={styles.heading} aria-live="polite" role="alert">The Theme Switcher App Has Been Installed</h1>
+        <img
+          src="/logo.png"
+          alt="Crystal The Developer Logo"
+          role="img"
+          aria-label="Logo of Crystal The Developer"
+          className={styles.logo}
+        />
+        <h1 className={styles['main-heading']} aria-live="polite" role="alert">Success! 🎉</h1>
+        <h2 className={styles['main-heading']} aria-live="polite" role="alert">The Theme Switcher App Has Been Installed</h2>
 
         <p role="alert" className={styles.message}>
           The Theme Switcher app has been installed on your Webflow site.
@@ -22,8 +30,8 @@ export default function Success() {
 
         <div className={styles.buttonRow}>
           <Link href="https://theme-switcher-app.webflow.io/" aria-label={en.success.homeAriaLabel}>
-            <button className={styles.button} aria-label={en.success.homeButtonAriaLabel}>
-              {en.success.homeButtonText}
+            <button className={styles.button} aria-label={'Go back to homepage'}>
+              {en.success.buttonHome}
             </button>
           </Link>
 
@@ -33,8 +41,8 @@ export default function Success() {
             rel="noopener noreferrer"
             aria-label={en.success.webflowDashboardAriaLabel}
           >
-            <button className={styles.button} aria-label={en.success.webflowDashboardButtonAriaLabel}>
-              {en.success.webflowDashboardButtonText}
+            <button className={styles.button} aria-label={'Open Webflow Dashboard'}>
+              {en.success.buttonWebflowDashboard}
             </button>
           </a>
         </div>
