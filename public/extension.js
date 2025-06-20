@@ -1,12 +1,20 @@
 // /public/extension.js
 
-// Prevent script from running outside the Webflow Designer
-if (!window.Webflow || !window.Webflow.require || !window.Webflow.require('ix2')) {
+// Detect if we're inside the Webflow Designer environment
+const isInDesigner = window.location.href.includes('webflow.com/design');
+
+if (!isInDesigner || !window.Webflow || !window.Webflow.require) {
   console.warn('🚫 Theme Switcher extension is not running inside Webflow Designer.');
   return;
 }
 
 function initThemeSwitcherExtension() {
+  // Check if user has previously dismissed the panel
+  if (sessionStorage.getItem('theme-switcher-dismissed') === 'true') {
+    console.log('🚫 Panel was dismissed earlier. Skipping display.');
+    return;
+  }
+
   console.log('🚀 Initializing Theme Switcher Extension...');
 
   const themeScript = '<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js"><\/script>';
@@ -14,6 +22,7 @@ function initThemeSwitcherExtension() {
   const panel = document.createElement('div');
   panel.setAttribute('role', 'dialog');
   panel.setAttribute('aria-labelledby', 'theme-switcher-heading');
+  panel.setAttribute('aria-modal', 'true');
   panel.style.position = 'fixed';
   panel.style.bottom = '20px';
   panel.style.right = '20px';
@@ -25,12 +34,13 @@ function initThemeSwitcherExtension() {
   panel.style.fontFamily = 'sans-serif';
   panel.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.4)';
   panel.style.maxWidth = '320px';
+  panel.style.lineHeight = '1.4';
   panel.innerHTML = `
     <h2 id="theme-switcher-heading" style="font-size:16px; margin-bottom: 12px;">🌓 Theme Switcher</h2>
     <button type="button" id="add-script" style="margin-bottom: 10px; width: 100%;" aria-label="Add Theme Switcher script to this Webflow page">➕ Add to This Page</button>
     <button type="button" id="copy-script" style="width: 100%;" aria-label="Copy Theme Switcher script for site footer">📋 Copy Script for Footer</button>
     <small style="display:block; margin-top: 10px; font-size: 11px; color: #ccc;">To apply globally, paste it in Site Settings > Custom Code</small>
-    <button type="button" id="dismiss-panel" style="margin-top: 10px; width: 100%;">❌ Close</button>
+    <button type="button" id="dismiss-panel" style="margin-top: 10px; width: 100%;" aria-label="Dismiss this panel">❌ Close</button>
   `;
 
   document.body.appendChild(panel);
@@ -38,6 +48,7 @@ function initThemeSwitcherExtension() {
 
   const addBtn = document.getElementById('add-script');
   const copyBtn = document.getElementById('copy-script');
+  const dismissBtn = document.getElementById('dismiss-panel');
 
   if (addBtn) {
     console.log('🔗 Binding Add button...');
@@ -61,8 +72,6 @@ function initThemeSwitcherExtension() {
         alert('⚠️ Failed to inject script. Try again or use Copy Script.');
       }
     };
-  } else {
-    console.warn('⚠️ Add button not found in DOM');
   }
 
   if (copyBtn) {
@@ -70,43 +79,32 @@ function initThemeSwitcherExtension() {
     copyBtn.onclick = () => {
       console.log('📋 Copy Script button clicked');
       navigator.clipboard.writeText(themeScript)
-        .then(() => {
-          alert('📋 Script copied! Paste into Site Settings > Footer.');
-        })
-        .catch(err => {
-          console.error('❌ Clipboard copy failed:', err);
-        });
+        .then(() => alert('📋 Script copied! Paste into Site Settings > Footer.'))
+        .catch(err => console.error('❌ Clipboard copy failed:', err));
     };
-  } else {
-    console.warn('⚠️ Copy button not found in DOM');
   }
 
-  const dismissBtn = document.getElementById('dismiss-panel');
   if (dismissBtn) {
     console.log('🔗 Binding Dismiss button...');
     dismissBtn.onclick = () => {
       console.log('❌ Dismissing Theme Switcher panel');
+      sessionStorage.setItem('theme-switcher-dismissed', 'true');
       panel.remove();
     };
-  } else {
-    console.warn('⚠️ Dismiss button not found in DOM');
   }
 }
 
-// Delay until DOM is ready and extension environment is confirmed
+// Safe run when DOM is ready and Designer Extension API is available
 const runOnReady = () => {
-  try {
-    console.log('📦 DOM ready. Checking for Webflow Designer Extension API...');
+  console.log('📦 DOM ready. Waiting for Designer Extension API...');
+  const interval = setInterval(() => {
     const designerApi = window.Webflow?.require?.('designer-extension');
     if (designerApi) {
+      clearInterval(interval);
       console.log('✅ Designer Extension API available');
       initThemeSwitcherExtension();
-    } else {
-      console.warn('❌ Designer Extension API not found. Are you in Webflow Designer?');
     }
-  } catch (err) {
-    console.error('❌ Theme Switcher Extension failed to initialize:', err);
-  }
+  }, 300);
 };
 
 if (document.readyState === 'loading') {
