@@ -72,19 +72,16 @@ export default function Success() {
             </p>
 
             <h2 style={{ fontSize: '1.25rem', color: '#222', marginTop: '2rem', marginBottom: '0.5rem' }}>
-              Add via Webflow Designer Extension
+              Installed via Designer Extension
             </h2>
             <p style={{ fontSize: '0.95rem', color: '#555' }}>
-              To inject the Theme Switcher script automatically using the Designer Extension:
+              You’re all set! The Theme Switcher script has been automatically injected using the Designer Extension.
             </p>
-            <ol style={{ fontSize: '0.9rem', color: '#444', marginTop: '1rem', paddingLeft: '1.2rem' }}>
-              <li>Go to your Webflow site in the Designer.</li>
-              <li>Open the “Apps” panel on the left sidebar.</li>
-              <li>Find and open the “Theme Switcher” app.</li>
-              <li>The script will automatically be injected and ready for preview and publish.</li>
-            </ol>
+            <p style={{ fontSize: '0.9rem', color: '#444', marginTop: '1rem' }}>
+              If you ever want to remove it, just uninstall the app from the Webflow “Apps” panel.
+            </p>
             <p style={{ fontSize: '0.85rem', color: '#999', marginTop: '2rem' }}>
-              You do not need to manually paste any script if you use the Designer Extension.
+              You don’t need to manually paste anything into the Custom Code area.
             </p>
           </section>
         )}
