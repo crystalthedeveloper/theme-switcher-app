@@ -34,7 +34,6 @@ export default function Home() {
     const scriptTag =
       '<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js"></script>';
 
-    // Try Clipboard API first
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(scriptTag)
         .then(() => showFeedback('📋 Script copied! Paste it into Site Settings > Footer.'))
@@ -57,15 +56,15 @@ export default function Home() {
 
     textarea.select();
     try {
-      const successful = document.execCommand('copy');
-      if (successful) {
-        showFeedback('📋 Script copied using fallback method!');
+      const success = document.execCommand('copy');
+      if (success) {
+        showFeedback('📋 Script copied using fallback!');
       } else {
-        throw new Error('execCommand returned false');
+        throw new Error('execCommand failed');
       }
     } catch (err) {
       console.error('❌ Fallback copy failed:', err);
-      showFeedback('⚠️ Failed to copy script. Please copy it manually.');
+      showFeedback('⚠️ Please copy the script manually.');
     }
     document.body.removeChild(textarea);
   };
@@ -74,7 +73,7 @@ export default function Home() {
     <div>
       <Head>
         <title>{t.title}</title>
-        <meta name="description" content={en.description} />
+        <meta name="description" content={t.description} />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
@@ -82,8 +81,6 @@ export default function Home() {
         <img
           src="/logo.png"
           alt="Crystal The Developer Logo"
-          role="img"
-          aria-label="Logo of Crystal The Developer"
           className={styles.logo}
         />
 
@@ -93,24 +90,17 @@ export default function Home() {
           Let your visitors switch between dark and light mode — no coding required.
         </p>
 
-        {!appInstalled && (
+        {!appInstalled ? (
           <a
-            href={`https://webflow.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID}&redirect_uri=${encodeURIComponent(
-              process.env.NEXT_PUBLIC_BASE_URL + '/callback'
-            )}&response_type=code&scope=sites:read pages:read custom_code:write`}
-            aria-label="Authorize with Webflow and connect this app"
+            href={`https://webflow.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.NEXT_PUBLIC_BASE_URL + '/callback')}&response_type=code&scope=sites:read pages:read custom_code:write`}
+            aria-label="Connect Webflow app"
             rel="noopener noreferrer"
           >
-            <button type="button" className={styles['main-button']}>
-              {en.buttonInstall}
-            </button>
+            <button className={styles['main-button']}>{t.buttonInstall}</button>
           </a>
-        )}
-
-        {appInstalled && (
+        ) : (
           <div className={styles['button-group']}>
             <button
-              type="button"
               className={styles['main-button']}
               onClick={() =>
                 showFeedback('✅ Use the Webflow Designer Extension panel to insert the script.')
@@ -119,7 +109,6 @@ export default function Home() {
               Add Embed
             </button>
             <button
-              type="button"
               className={styles['main-button']}
               onClick={handleCopyScript}
             >
@@ -137,7 +126,7 @@ export default function Home() {
         </div>
 
         <footer className={styles['main-footer']}>
-          <p>{en.footer}</p>
+          <p>{t.footer}</p>
         </footer>
       </main>
     </div>
