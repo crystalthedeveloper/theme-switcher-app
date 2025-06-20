@@ -41,6 +41,19 @@ export default function Success() {
               {en.success.webflowDashboardButtonText}
             </button>
           </a>
+
+          <a
+            href={`https://webflow.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.NEXT_PUBLIC_BASE_URL + '/callback')}&response_type=code&scope=sites:read pages:read custom_code:write`}
+            aria-label="Authorize with Webflow and connect this app"
+            rel="noopener noreferrer"
+          >
+            <button
+              type="button"
+              className={styles.button}
+            >
+              {en.success.buttonInstallAgainText}
+            </button>
+          </a>
         </div>
       </main>
     </>

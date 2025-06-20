@@ -12,6 +12,7 @@ const en = {
         homeButtonAriaLabel: 'Go back to homepage',
         webflowDashboardButtonAriaLabel: 'Open Webflow Dashboard',
         webflowDashboardButtonText: 'Webflow Dashboard',
+        buttonInstallAgainText: 'Install Again',
     },
     connecting: 'Connecting to Webflow...',
     exchanging: 'Exchanging authorization code...',
