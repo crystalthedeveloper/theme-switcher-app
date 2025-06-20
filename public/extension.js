@@ -7,6 +7,8 @@ if (!window.Webflow || !window.Webflow.require || !window.Webflow.require('ix2')
 }
 
 function initThemeSwitcherExtension() {
+  console.log('🚀 Initializing Theme Switcher Extension...');
+
   const themeScript = '<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js"><\/script>';
 
   const panel = document.createElement('div');
@@ -31,12 +33,14 @@ function initThemeSwitcherExtension() {
   `;
 
   document.body.appendChild(panel);
+  console.log('✅ Panel injected into the DOM');
 
   const addBtn = document.getElementById('add-script');
   const copyBtn = document.getElementById('copy-script');
 
   if (addBtn) {
     addBtn.onclick = async () => {
+      console.log('➕ Add Script button clicked');
       try {
         const extension = window.Webflow?.require?.('designer-extension');
         if (extension?.actions?.addEmbedBlock) {
@@ -56,6 +60,7 @@ function initThemeSwitcherExtension() {
 
   if (copyBtn) {
     copyBtn.onclick = () => {
+      console.log('📋 Copy Script button clicked');
       navigator.clipboard.writeText(themeScript).then(() => {
         alert('📋 Script copied! Paste into Site Settings > Footer.');
       });
@@ -73,10 +78,12 @@ function initThemeSwitcherExtension() {
 // Delay until DOM is ready and extension environment is confirmed
 document.addEventListener('DOMContentLoaded', () => {
   try {
+    console.log('📦 DOM ready. Checking for Webflow Designer Extension API...');
     if (window.Webflow?.require?.('designer-extension')) {
       initThemeSwitcherExtension();
     }
   } catch (err) {
+    console.error('❌ Theme Switcher Extension failed to initialize:', err);
     console.error('❌ Error initializing Theme Switcher extension:', err);
   }
 });
