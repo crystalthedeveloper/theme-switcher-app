@@ -10,8 +10,13 @@ export default function Home() {
   const [appInstalled, setAppInstalled] = useState(false);
 
   useEffect(() => {
-    const isInstalled = window.location.search.includes('installed=true'); // simulate condition
-    setAppInstalled(isInstalled);
+    const urlParams = new URLSearchParams(window.location.search);
+    const installed = urlParams.get('installed') === 'true';
+    if (installed) {
+      sessionStorage.setItem('webflow-app-installed', 'true');
+    }
+    const savedInstalled = sessionStorage.getItem('webflow-app-installed') === 'true';
+    setAppInstalled(savedInstalled);
   }, []);
 
   return (

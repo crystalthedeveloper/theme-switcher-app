@@ -12,7 +12,8 @@ function initThemeSwitcherExtension() {
   const themeScript = '<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js"><\/script>';
 
   const panel = document.createElement('div');
-  panel.setAttribute('role', 'region');
+  panel.setAttribute('role', 'dialog');
+  panel.setAttribute('aria-labelledby', 'theme-switcher-heading');
   panel.style.position = 'fixed';
   panel.style.bottom = '20px';
   panel.style.right = '20px';
@@ -25,7 +26,7 @@ function initThemeSwitcherExtension() {
   panel.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.4)';
   panel.style.maxWidth = '320px';
   panel.innerHTML = `
-    <strong style="display:block; margin-bottom: 12px;">🌓 Theme Switcher</strong>
+    <h2 id="theme-switcher-heading" style="font-size:16px; margin-bottom: 12px;">🌓 Theme Switcher</h2>
     <button type="button" id="add-script" style="margin-bottom: 10px; width: 100%;" aria-label="Add Theme Switcher script to this Webflow page">➕ Add to This Page</button>
     <button type="button" id="copy-script" style="width: 100%;" aria-label="Copy Theme Switcher script for site footer">📋 Copy Script for Footer</button>
     <small style="display:block; margin-top: 10px; font-size: 11px; color: #ccc;">To apply globally, paste it in Site Settings > Custom Code</small>
@@ -101,7 +102,7 @@ const runOnReady = () => {
       console.log('✅ Designer Extension API available');
       initThemeSwitcherExtension();
     } else {
-      console.warn('❌ Designer Extension API not found');
+      console.warn('❌ Designer Extension API not found. Are you in Webflow Designer?');
     }
   } catch (err) {
     console.error('❌ Theme Switcher Extension failed to initialize:', err);
