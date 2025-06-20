@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "name": "Theme Switcher",
   "description": "Injects the Theme Switcher script automatically into the Webflow Designer.",
+  "start_url": "https://theme-toggle-webflow.vercel.app/",
+  "display": "standalone",
   "scripts": [
     {
       "src": "https://theme-toggle-webflow.vercel.app/extension.js",
@@ -11,5 +13,9 @@
   ],
   "match": {
     "url": "*"
+  },
+  "icons": {
+    "128": "https://theme-toggle-webflow.vercel.app/icon-128.png",
+    "512": "https://theme-toggle-webflow.vercel.app/icon-512.png"
   }
 }
