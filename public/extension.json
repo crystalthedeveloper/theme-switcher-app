@@ -1,0 +1,54 @@
+{
+  "id": "theme-switcher-extension",
+  "version": "1.0.0",
+  "name": "Theme Switcher for Webflow",
+  "short_name": "ThemeSwitcher",
+  "description": "Let visitors toggle between dark and light themes. Add to a specific page or apply globally via Site Settings.",
+  "lang": "en-US",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff",
+
+  "icons": [
+    {
+      "src": "/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+
+  "scripts": [
+    {
+      "src": "https://theme-toggle-webflow.vercel.app/extension.js",
+      "location": "designer"
+    }
+  ],
+
+  "match": {
+    "url": "https://webflow.com/design/*"
+  },
+
+  "healthCheck": {
+    "url": "https://theme-toggle-webflow.vercel.app/__webflow"
+  },
+
+  "permissions": ["custom_code:write", "sites:read"],
+
+  "author": {
+    "name": "Crystal The Developer",
+    "url": "https://www.crystalthedeveloper.ca"
+  },
+
+  "homepage_url": "https://theme-toggle-webflow.vercel.app",
+  "support_url": "https://www.crystalthedeveloper.ca#contact"
+}
