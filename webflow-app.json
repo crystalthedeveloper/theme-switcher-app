@@ -1,0 +1,28 @@
+{
+  "id": "theme-switcher",
+  "name": "Theme Switcher",
+  "description": "Let users toggle between light and dark mode on their Webflow site with no code.",
+  "icon": "/icon-128.png",
+  "category": "Utilities",
+  "subcategory": "Theme & Style",
+  "preview_url": "https://theme-toggle-webflow.vercel.app",
+  "installation": {
+    "type": "oauth",
+    "redirect_uri": "https://theme-toggle-webflow.vercel.app/callback",
+    "permissions": [
+      "sites:read",
+      "pages:read",
+      "custom_code:write"
+    ]
+  },
+  "extension": {
+    "src": "/extension.json"
+  },
+  "author": {
+    "name": "Crystal The Developer",
+    "url": "https://www.crystalthedeveloper.ca"
+  },
+  "support_url": "https://www.crystalthedeveloper.ca#contact",
+  "terms_url": "https://www.crystalthedeveloper.ca#terms",
+  "privacy_url": "https://www.crystalthedeveloper.ca#privacy"
+}
