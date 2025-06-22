@@ -1,32 +1,34 @@
 // pages/api/exchange-token.js
+
 import applyRateLimit from '../../lib/rateLimiter';
 
 async function fetchSites(accessToken) {
   try {
-    const siteRes = await fetch('https://api.webflow.com/v2/sites', {
+    const res = await fetch('https://api.webflow.com/v2/sites', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'accept-version': '2.0.0',
       },
     });
 
-    const siteRaw = await siteRes.text();
-    const siteData = JSON.parse(siteRaw);
-    const hostedSites = Array.isArray(siteData?.sites)
-      ? siteData.sites.filter(site => site?.plan !== 'developer')
+    const raw = await res.text();
+    const data = JSON.parse(raw);
+
+    const hostedSites = Array.isArray(data?.sites)
+      ? data.sites.filter(site => site?.plan !== 'developer')
       : [];
 
-    return hostedSites.length > 0
+    return hostedSites.length
       ? { success: true, sites: hostedSites }
       : { success: false, reason: 'No hosted sites found' };
-  } catch (e) {
-    return { success: false, reason: e.message };
+  } catch (err) {
+    return { success: false, reason: err.message };
   }
 }
 
 export default async function handler(req, res) {
-  //await applyRateLimit(req, res);
-  
+  // await applyRateLimit(req, res);
+
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -38,21 +40,13 @@ export default async function handler(req, res) {
   const { code } = req.body;
   if (!code) return res.status(400).json({ error: 'Missing authorization code' });
 
-  const clientId = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID;
-  const clientSecret = process.env.WEBFLOW_CLIENT_SECRET;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+  const { NEXT_PUBLIC_WEBFLOW_CLIENT_ID: clientId, NEXT_PUBLIC_BASE_URL: baseUrl, WEBFLOW_CLIENT_SECRET: clientSecret } = process.env;
   const redirectUri = `${baseUrl}/callback`;
 
-  const missingEnv = {
-    clientId: !clientId,
-    clientSecret: !clientSecret,
-    baseUrl: !baseUrl,
-  };
-
-  if (Object.values(missingEnv).includes(true)) {
+  if (!clientId || !clientSecret || !baseUrl) {
     return res.status(500).json({
-      error: 'Missing required environment variables.',
-      details: missingEnv,
+      error: 'Missing required environment variables',
+      details: { clientId: !clientId, clientSecret: !clientSecret, baseUrl: !baseUrl }
     });
   }
 
@@ -77,47 +71,34 @@ export default async function handler(req, res) {
     } catch {
       return res.status(500).json({
         error: 'Invalid JSON from Webflow',
-        hint: 'Webflow responded with non-JSON. Check credentials or redirect URI.'
+        hint: 'Check client credentials or redirect URI',
       });
     }
 
-    if (!tokenRes.ok || tokenData.error) {
+    if (!tokenRes.ok || tokenData?.error || !tokenData?.access_token) {
       return res.status(400).json({
-        error: tokenData.error_description || 'Token exchange failed',
-        hint: 'Check client_id, client_secret, and redirect_uri.',
+        error: tokenData?.error_description || 'Token exchange failed',
         details: tokenData,
       });
     }
 
     const accessToken = tokenData.access_token;
-    if (!accessToken) {
-      return res.status(400).json({ error: 'Missing access token from Webflow.' });
-    }
-
     const siteResult = await fetchSites(accessToken);
 
     if (!siteResult.success) {
       return res.status(400).json({
-        error: 'Failed to fetch sites from Webflow.',
+        error: 'Failed to fetch sites',
         details: siteResult.reason,
       });
     }
 
-    console.log("✅ Access Token: **** (masked)");
-    console.log("✅ Hosted Sites:", siteResult?.sites.map(site => site.name).join(", "));
+    const siteId = siteResult.sites[0]?._id || siteResult.sites[0]?.id;
 
-    const normalizeSiteId = (site) => site._id || site.id;
-    const siteId = normalizeSiteId(siteResult?.sites[0]);
-
-    if (siteResult.sites.length === 0) {
-      console.warn("⚠️ No hosted sites available. User may not have any published sites.");
+    if (!siteId) {
+      return res.status(400).json({ error: 'No valid hosted site found' });
     }
 
-    if (!accessToken || !siteId) {
-      return res.status(400).json({
-        error: 'Missing access token or site ID from Webflow. Please reauthorize.',
-      });
-    }
+    console.log('✅ Token received, hosted site:', siteId);
 
     return res.status(200).json({
       access_token: accessToken,
@@ -128,11 +109,10 @@ export default async function handler(req, res) {
       expires_in: 3600,
     });
   } catch (err) {
-    console.error('❌ Token exchange failed due to:', err?.message || err);
+    console.error('❌ Exchange error:', err);
     return res.status(500).json({
-      error: 'Unexpected error during token exchange.',
-      message: err?.message || 'Unknown error occurred during token exchange.',
-      hint: 'Ensure Webflow credentials, rate limiting, and redirect URI are correct.'
+      error: 'Unexpected error during token exchange',
+      message: err?.message || 'Unknown error',
     });
   }
 }

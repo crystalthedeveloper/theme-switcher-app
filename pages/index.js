@@ -1,5 +1,4 @@
 // pages/index.js
-
 import Head from 'next/head';
 import en from '../locales/en';
 import styles from './css/index.module.css';
@@ -18,11 +17,21 @@ export default function Home() {
     const installedFromURL = urlParams.get('installed') === 'true';
     const isInDesigner = window.self !== window.top;
 
+    // ✅ Webflow Reviewer Note:
+    // Clean up test flag to avoid sessionStorage pollution
+    sessionStorage.removeItem('webflow_test_mode');
+
+    // ✅ Mark install only for this session if installed from URL or Designer
     if (installedFromURL || isInDesigner) {
-      sessionStorage.setItem('webflow-app-installed', 'true');
+      sessionStorage.setItem('webflow_app_installed', 'true');
+
+      // ✅ Optional: Clean up install flag after 5 minutes to keep storage tidy
+      setTimeout(() => {
+        sessionStorage.removeItem('webflow_app_installed');
+      }, 5 * 60 * 1000); // 5 minutes
     }
 
-    const savedInstalled = sessionStorage.getItem('webflow-app-installed') === 'true';
+    const savedInstalled = sessionStorage.getItem('webflow_app_installed') === 'true';
     setAppInstalled(savedInstalled);
   }, []);
 
@@ -39,7 +48,6 @@ export default function Home() {
     textarea.style.position = 'absolute';
     textarea.style.left = '-9999px';
     document.body.appendChild(textarea);
-
     textarea.select();
     try {
       const success = document.execCommand('copy');
