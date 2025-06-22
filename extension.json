@@ -42,7 +42,7 @@
     "url": "https://theme-toggle-webflow.vercel.app/__webflow"
   },
 
-  "permissions": [],
+  "permissions": ["custom_code:write", "sites:read"],
 
   "author": {
     "name": "Crystal The Developer",
