@@ -36,17 +36,15 @@
     panel.innerHTML = `
       <h2 id="theme-switcher-heading" style="font-size:16px; margin-bottom:12px;">🌓 Theme Switcher</h2>
 
-      <button id="add-embed-button" style="margin-bottom:10px;width:100%;padding:8px;font-size:14px;">➕ Add to This Page</button>
-      <button id="copy-script" style="width:100%;padding:8px;font-size:14px;">📋 Copy Script for Footer</button>
+      <button id="copy-script" style="width:100%;padding:8px;font-size:14px;">📋 Copy Script Tag</button>
 
       <div style="background:#111; padding:12px; border-radius:8px; margin-top:12px; color:#00ff88; font-size:13px;">
         ✅ <strong>Installed!</strong><br />
-        Use this panel while inside the Webflow Designer to add the script.<br /><br />
-        If nothing happens when clicking "Add to This Page", try:
+        Webflow does not allow automatic injection into Site or Page settings.<br /><br />
+        <strong>Please paste the copied script</strong> manually into:<br />
         <ul style="margin:6px 0 0 1rem; padding:0; color:#ccc; font-size:12px;">
-          <li>Click once in the canvas</li>
-          <li>Wait a second after loading</li>
-          <li>Check console for permission errors</li>
+          <li>Site Settings → Custom Code → Footer</li>
+          <li>OR any specific page → Page Settings → Footer</li>
         </ul>
       </div>
 
@@ -56,50 +54,12 @@
     document.body.appendChild(panel);
     log('Panel rendered.');
 
-    const addBtn = panel.querySelector('#add-embed-button');
     const copyBtn = panel.querySelector('#copy-script');
     const dismissBtn = panel.querySelector('#dismiss-panel');
 
-    const scriptAlreadyExists = [...document.scripts].some(s => s.src === THEME_SCRIPT_URL);
-    if (scriptAlreadyExists) {
-      addBtn.disabled = true;
-      addBtn.textContent = '✅ Script already added';
-      addBtn.style.backgroundColor = '#444';
-      addBtn.style.cursor = 'default';
-    }
-
-    addBtn.addEventListener('click', async () => {
-      try {
-        const extension =
-          window.Webflow?.require?.('designer-extension') ||
-          window.Webflow?.EditorExtension;
-
-        if (!extension) throw new Error('🛑 Webflow Extension API not found');
-
-        const addEmbed = extension.actions?.addEmbedBlock || extension.addEmbed;
-        if (!addEmbed) {
-          throw new Error('⚠️ Embed function missing — check your permissions (custom_code:write)');
-        }
-
-        await addEmbed({
-          code: THEME_SCRIPT_TAG,
-          location: 'footer'
-        });
-
-        alert('✅ Script added!');
-        addBtn.disabled = true;
-        addBtn.textContent = '✅ Script already added';
-        addBtn.style.backgroundColor = '#444';
-        addBtn.style.cursor = 'default';
-      } catch (err) {
-        error('Embed injection failed:', err);
-        alert(`⚠️ Failed to add script:\n${err.message}`);
-      }
-    });
-
     copyBtn.addEventListener('click', () => {
       navigator.clipboard.writeText(THEME_SCRIPT_TAG).then(() => {
-        alert('📋 Script copied! Paste into Site Settings > Footer.');
+        alert('📋 Script copied! Paste into Webflow Site Settings → Footer.');
       }).catch(err => {
         error('Clipboard error:', err);
         alert('⚠️ Couldn’t copy automatically. Try manually.');

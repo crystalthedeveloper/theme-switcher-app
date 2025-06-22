@@ -17,18 +17,13 @@ export default function Home() {
     const installedFromURL = urlParams.get('installed') === 'true';
     const isInDesigner = window.self !== window.top;
 
-    // ✅ Webflow Reviewer Note:
-    // Clean up test flag to avoid sessionStorage pollution
     sessionStorage.removeItem('webflow_test_mode');
 
-    // ✅ Mark install only for this session if installed from URL or Designer
     if (installedFromURL || isInDesigner) {
       sessionStorage.setItem('webflow_app_installed', 'true');
-
-      // ✅ Optional: Clean up install flag after 5 minutes to keep storage tidy
       setTimeout(() => {
         sessionStorage.removeItem('webflow_app_installed');
-      }, 5 * 60 * 1000); // 5 minutes
+      }, 5 * 60 * 1000);
     }
 
     const savedInstalled = sessionStorage.getItem('webflow_app_installed') === 'true';
@@ -95,12 +90,29 @@ export default function Home() {
           Theme Switcher {appInstalled && <span style={{ fontSize: '1rem', marginLeft: '0.5rem' }}>✅ Installed</span>}
         </h1>
 
-
         <p className={styles['main-subheading']}>
           Let your visitors switch between dark and light mode — no coding required.
         </p>
 
-        {!appInstalled ? (
+        {appInstalled && (
+          <>
+            <div className={styles['button-group']}>
+              <button
+                className={styles['main-button']}
+                onClick={handleCopyScript}
+              >
+                📋 Copy Script Tag
+              </button>
+            </div>
+
+            <p className={styles['main-subheading']} style={{ marginTop: '1rem' }}>
+              ⚠️ Due to Webflow’s security rules, script injection into Site or Page Settings must be done manually.<br />
+              Please paste the copied code into <strong>Site Settings → Global Custom Code</strong> or any page where you want Theme Switcher to work.
+            </p>
+          </>
+        )}
+
+        {!appInstalled && (
           <a
             href={`https://webflow.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.NEXT_PUBLIC_BASE_URL + '/callback')}&response_type=code&scope=sites:read pages:read custom_code:write`}
             aria-label="Connect Webflow app"
@@ -108,23 +120,6 @@ export default function Home() {
           >
             <button className={styles['main-button']}>{t.buttonInstall}</button>
           </a>
-        ) : (
-          <div className={styles['button-group']}>
-            <button
-              className={styles['main-button']}
-              onClick={() =>
-                showFeedback('✅ Use the Webflow Designer Extension panel to insert the script.')
-              }
-            >
-              Add Embed
-            </button>
-            <button
-              className={styles['main-button']}
-              onClick={handleCopyScript}
-            >
-              Copy Script Tag
-            </button>
-          </div>
         )}
 
         <div

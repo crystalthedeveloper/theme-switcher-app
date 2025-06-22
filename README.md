@@ -1,21 +1,20 @@
-# 🎨 Theme Switcher App for Webflow
+# 🌓 Theme Switcher App for Webflow
 
-This Webflow OAuth app allows users to securely connect their Webflow account and inject a light/dark theme toggle script into their selected Webflow site using the Webflow Custom Code API.
+This Webflow OAuth app allows users to securely connect their Webflow account and install a dark/light theme toggle into their Webflow site.
 
-> 🛠️ Until Webflow approves this app, script injection will only work on hosted (paid) sites outside of Developer Workspace.
+> ⚠️ Webflow currently does **not allow automatic script injection** into Page or Site Settings via API for security reasons. Users must **manually paste** the script into the **Site Settings → Custom Code** panel.
 
 ---
 
 ## ✨ Features
 
-- 🔐 Webflow OAuth authentication
-- ⚙️ Script injection via Webflow Custom Code API (or manual fallback)
-- 🗂️ Site selection after OAuth
-- ✅ Success screen with install confirmation or manual script
-- 🧠 Built with Next.js and deploys to Vercel
-- 🧪 Test mode support with console logs
-- 📱 Responsive design for mobile users
-- 🧼 Clean, accessible UI and code
+- 🔐 Secure OAuth with Webflow
+- 🎨 One-click copy of the theme script for easy paste
+- 💡 Webflow Designer Extension panel to guide users
+- 🧼 Accessible, clean UI built with Next.js
+- 📱 Mobile-friendly interface
+- ✅ Detects successful installation via session tracking
+- 🧪 Developer test mode and console logging
 
 ---
 
@@ -23,43 +22,40 @@ This Webflow OAuth app allows users to securely connect their Webflow account an
 
 1. User clicks **Connect to Webflow**
 2. App completes OAuth and exchanges code for access token
-3. User selects which hosted site they want to use
-4. App injects the theme switcher script via API (or shows manual fallback)
-5. User sees a success screen
+3. User selects which hosted Webflow site they want to use
+4. App shows instructions and script to copy
+5. User pastes the script manually into Webflow settings
 
 ---
 
-## 🧩 Script Injected
+## 🧩 Script to Add
 
 ```html
 <script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>
 ```
 
-This will appear in the footer of the chosen Webflow site — or users can paste it manually into Webflow’s **Project Settings → Custom Code** section.
-
-The script is lightweight and runs only after the page has fully loaded, ensuring no impact on site performance.
+Add this into your **Webflow → Site Settings → Custom Code → Footer Code** for the theme toggle to work.
 
 ---
 
 ## 📁 Pages Overview
 
 - `/` – Home page with "Connect to Webflow" button
-- `/callback` – Handles Webflow OAuth and sends user to select-site
-- `/select-site` – Lets users choose a hosted Webflow site
-- `/confirm` – Injects the theme script into the selected site’s first page
-- `/success` – Confirmation screen (with `?manual=true` fallback)
+- `/callback` – Handles Webflow OAuth and redirects after token exchange
+- `/success?installed=true` – Confirms successful install and shows script
+- `/extension.js` – Webflow Designer panel with Add/Copy buttons
 
 ---
 
 ## ⚙️ Environment Variables
 
-Create a `.env.local` file or add to your Vercel Project Settings:
+Create a `.env.local` file or configure your Vercel environment:
 
 ```
-NEXT_PUBLIC_BASE_URL=https://theme-switcher-app.vercel.app
+NEXT_PUBLIC_BASE_URL=https://theme-toggle-webflow.vercel.app
 NEXT_PUBLIC_WEBFLOW_CLIENT_ID=your_webflow_client_id
 WEBFLOW_CLIENT_SECRET=your_webflow_client_secret
-WEBFLOW_REDIRECT_URI=https://theme-switcher-app.vercel.app/callback
+WEBFLOW_REDIRECT_URI=https://theme-toggle-webflow.vercel.app/callback
 ```
 
 ---
@@ -67,36 +63,35 @@ WEBFLOW_REDIRECT_URI=https://theme-switcher-app.vercel.app/callback
 ## 🧪 Testing Notes
 
 - Works only on hosted (paid) Webflow sites
-- Developer Workspace sites will return no IDs until the app is approved
-- If injection fails, users will be redirected to `/success?manual=true`
-- Add `?test=true` to URLs to see verbose logs in browser console
+- Developer Workspace or free sites won’t allow script injection
+- Designer extension fallback provides manual help panel
+- Append `?test=true` in URL for verbose console logs
 
 ---
 
 ## 🧾 Marketplace Notes
 
-This app:
-- Uses the `/rest/sites/:id/pages/:page_id/custom-code` endpoint for injection
-- Falls back to manual script copy if injection fails
-- Provides a clear user flow from OAuth to installation
-- Includes a “Try Again” button for retrying script injection
-- Includes a `/settings` page for users to check token status, uninstall, or re-inject scripts manually
+- Uses Webflow Designer API only for contextual UI
+- Does **not** auto-inject into Project Settings (not allowed by Webflow)
+- Clear fallback and support guidance included
+- Users can uninstall from Webflow settings at any time
 
 ---
 
 ## 🧼 Uninstall Instructions
 
-To remove the theme toggle script:
+To remove the theme switcher:
+
 1. Go to your Webflow site’s **Project Settings**
-2. Click the **Custom Code** tab
-3. Delete the injected script from the **Footer Code** section
+2. Click **Custom Code**
+3. Remove the `<script>` tag from the **Footer Code**
 4. Go to **Apps & Integrations** and click **Uninstall App**
 
 ---
 
 ## 🌐 Localization Ready
 
-All UI strings are wrapped in a translation layer (`locales/en.js`) for future i18n support.
+All UI text is stored in `locales/en.js` for future i18n support.
 
 ---
 

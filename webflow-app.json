@@ -22,7 +22,7 @@
     "name": "Crystal The Developer",
     "url": "https://www.crystalthedeveloper.ca"
   },
-  "support_url": "https://www.crystalthedeveloper.ca#contact",
-  "terms_url": "https://www.crystalthedeveloper.ca#terms",
-  "privacy_url": "https://www.crystalthedeveloper.ca#privacy"
+  "support_url": "https://www.crystalthedeveloper.ca/#contactForm",
+  "terms_url": "https://www.crystalthedeveloper.ca/legal/terms-of-service",
+  "privacy_url": "https://www.crystalthedeveloper.ca/legal/privacy-cookies"
 }
