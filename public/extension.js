@@ -64,15 +64,20 @@
             window.Webflow?.require?.('designer-extension') ||
             window.Webflow?.EditorExtension;
 
-          if (!extension?.actions?.addEmbedBlock) {
-            throw new Error('Designer Extension API not available.');
+          if (!extension) throw new Error('Extension API not found.');
+          log('✅ Webflow Extension object:', extension);
+
+          if (!extension.actions) throw new Error('Extension.actions is missing.');
+          log('✅ Extension.actions object found:', extension.actions);
+
+          if (!extension.actions.addEmbedBlock) {
+            throw new Error('❌ addEmbedBlock is undefined. You might be missing "custom_code:write" permission or not in a valid page context.');
           }
 
-          console.log('✅ Webflow Extension API detected:', extension);
-
+          log('➡️ Attempting to inject script via addEmbedBlock...');
           await extension.actions.addEmbedBlock({
             code: THEME_SCRIPT_TAG,
-            location: 'footer'
+            location: 'footer',
           });
 
           alert('✅ Script added to this page!');
@@ -81,8 +86,8 @@
           addBtn.style.backgroundColor = '#444';
           addBtn.style.cursor = 'default';
         } catch (err) {
-          error('Failed to inject script:', err);
-          alert(`⚠️ Failed to add script:\n${err.message}`);
+          error('🚫 Failed to add embed:', err);
+          alert(`⚠️ Failed to add embed:\n${err.message}`);
         }
       };
     }
@@ -116,7 +121,7 @@
   }
 
   function waitForDesignerAPI() {
-    log('Waiting for Designer Extension API...');
+    log('⌛ Waiting for Designer Extension API...');
     const interval = setInterval(() => {
       const extension =
         window.Webflow?.require?.('designer-extension') ||
@@ -124,7 +129,7 @@
 
       if (extension) {
         clearInterval(interval);
-        log('✅ API available');
+        log('✅ Designer Extension API loaded.');
         initThemeSwitcher();
       }
     }, 300);
