@@ -77,7 +77,9 @@ export default function Home() {
   return (
     <div>
       <Head>
-        <title>{t.title}</title>
+        <title>
+          {appInstalled ? '✅ Installed - ' : ''}{t.title}
+        </title>
         <meta name="description" content={t.description} />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -89,7 +91,10 @@ export default function Home() {
           className={styles.logo}
         />
 
-        <h1 className={styles['main-heading']}>Theme Switcher</h1>
+        <h1 className={styles['main-heading']}>
+          Theme Switcher {appInstalled && <span style={{ fontSize: '1rem', marginLeft: '0.5rem' }}>✅ Installed</span>}
+        </h1>
+
 
         <p className={styles['main-subheading']}>
           Let your visitors switch between dark and light mode — no coding required.
