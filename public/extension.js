@@ -68,6 +68,8 @@
             throw new Error('Designer Extension API not available.');
           }
 
+          console.log('✅ Webflow Extension API detected:', extension);
+
           await extension.actions.addEmbedBlock({
             code: THEME_SCRIPT_TAG,
             location: 'footer'
