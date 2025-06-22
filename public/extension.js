@@ -2,7 +2,7 @@
 
 (function () {
   const THEME_SCRIPT_URL = 'https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js';
-  const THEME_SCRIPT_TAG = `<script src="${THEME_SCRIPT_URL}"><\/script>`;
+  const THEME_SCRIPT_TAG = `<script src="${THEME_SCRIPT_URL}" defer></script>`;
 
   const log = (...args) => console.log('🌓 ThemeSwitcher:', ...args);
   const error = (...args) => console.error('❌ ThemeSwitcher:', ...args);
@@ -28,29 +28,38 @@
       border-radius: 8px;
       z-index: 999999;
       font-family: sans-serif;
-      max-width: 320px;
-      line-height: 1.4;
+      max-width: 340px;
+      line-height: 1.5;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
     `;
 
     panel.innerHTML = `
       <h2 id="theme-switcher-heading" style="font-size:16px; margin-bottom:12px;">🌓 Theme Switcher</h2>
-      <button id="add-script" style="margin-bottom:10px;width:100%;">➕ Add to This Page</button>
-      <button id="copy-script" style="width:100%;">📋 Copy Script for Footer</button>
-      <small style="display:block;margin-top:10px;font-size:11px;color:#ccc;">
-        Paste in Site Settings > Custom Code for global use
-      </small>
-      <button id="dismiss-panel" style="margin-top:10px;width:100%;">❌ Close</button>
+
+      <button id="add-embed-button" style="margin-bottom:10px;width:100%;padding:8px;font-size:14px;">➕ Add to This Page</button>
+      <button id="copy-script" style="width:100%;padding:8px;font-size:14px;">📋 Copy Script for Footer</button>
+
+      <div style="background:#111; padding:12px; border-radius:8px; margin-top:12px; color:#00ff88; font-size:13px;">
+        ✅ <strong>Installed!</strong><br />
+        Use this panel while inside the Webflow Designer to add the script.<br /><br />
+        If nothing happens when clicking "Add to This Page", try:
+        <ul style="margin:6px 0 0 1rem; padding:0; color:#ccc; font-size:12px;">
+          <li>Click once in the canvas</li>
+          <li>Wait a second after loading</li>
+          <li>Check console for permission errors</li>
+        </ul>
+      </div>
+
+      <button id="dismiss-panel" style="margin-top:12px;width:100%;padding:6px;font-size:13px;">❌ Close</button>
     `;
 
     document.body.appendChild(panel);
     log('Panel rendered.');
 
-    const addBtn = panel.querySelector('#add-script');
+    const addBtn = panel.querySelector('#add-embed-button');
     const copyBtn = panel.querySelector('#copy-script');
     const dismissBtn = panel.querySelector('#dismiss-panel');
 
-    // Disable Add button if script is already present
     const scriptAlreadyExists = [...document.scripts].some(s => s.src === THEME_SCRIPT_URL);
     if (scriptAlreadyExists) {
       addBtn.disabled = true;
@@ -65,15 +74,14 @@
           window.Webflow?.require?.('designer-extension') ||
           window.Webflow?.EditorExtension;
 
-        if (!extension) throw new Error('🛑 Webflow Extension API not found.');
+        if (!extension) throw new Error('🛑 Webflow Extension API not found');
 
-        log('✅ Extension loaded:', extension);
-
-        if (!extension.actions?.addEmbedBlock) {
-          throw new Error('⚠️ `addEmbedBlock` is missing — check `custom_code:write` permission or context.');
+        const addEmbed = extension.actions?.addEmbedBlock || extension.addEmbed;
+        if (!addEmbed) {
+          throw new Error('⚠️ Embed function missing — check your permissions (custom_code:write)');
         }
 
-        await extension.actions.addEmbedBlock({
+        await addEmbed({
           code: THEME_SCRIPT_TAG,
           location: 'footer'
         });
@@ -85,7 +93,7 @@
         addBtn.style.cursor = 'default';
       } catch (err) {
         error('Embed injection failed:', err);
-        alert(`⚠️ Script injection failed:\n${err.message}`);
+        alert(`⚠️ Failed to add script:\n${err.message}`);
       }
     });
 
@@ -101,13 +109,12 @@
     dismissBtn.addEventListener('click', () => {
       sessionStorage.setItem('theme-switcher-dismissed', 'true');
       panel.remove();
-      log('Panel closed by user.');
+      log('Panel dismissed.');
     });
   }
 
   function waitForWebflowAPI() {
-    log('⏳ Waiting for Webflow Designer Extension API...');
-
+    log('⏳ Waiting for Webflow Designer API...');
     const checkInterval = setInterval(() => {
       const extension =
         window.Webflow?.require?.('designer-extension') ||
@@ -115,7 +122,7 @@
 
       if (extension) {
         clearInterval(checkInterval);
-        log('✅ Webflow Designer API ready.');
+        log('✅ Webflow Designer API available');
         injectPanel();
       }
     }, 400);
