@@ -10,7 +10,7 @@
   margin: 0 auto;
   text-align: center;
   font-family: system-ui, sans-serif;
-  background: #fff;
+  background-color: #fff;
   border-radius: 12px;
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.05);
 }
@@ -24,21 +24,23 @@
 .message {
   font-size: 1.1rem;
   margin-bottom: 1.5rem;
-  color: #333;
+  color: #222;
   line-height: 1.6;
 }
 
 .note {
   font-size: 0.95rem;
-  color: #666;
+  color: #333;
   margin-bottom: 2rem;
-  background: #f8f8f8;
+  background-color: #f9f9f9;
   padding: 1rem 1.25rem;
   border-left: 4px solid #ffe600;
   border-radius: 6px;
+  text-align: left;
 }
 
-.button {
+.button,
+.main-button {
   font-size: 1rem;
   background-color: #111;
   color: #fff;
@@ -46,9 +48,30 @@
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
-.button:hover {
+.button:hover,
+.main-button:hover {
   background-color: #222;
+}
+
+.button:focus,
+.main-button:focus {
+  outline: 2px solid #ffe600;
+  outline-offset: 2px;
+}
+
+.button-group {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.feedback {
+  margin-top: 1rem;
+  color: #007400;
+  font-size: 0.95rem;
+  font-weight: 500;
 }
