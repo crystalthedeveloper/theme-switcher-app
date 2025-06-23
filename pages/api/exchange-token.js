@@ -1,7 +1,7 @@
 // pages/api/exchange-token.js
 
 import applyRateLimit from '../../lib/rateLimiter';
-import cookie from 'cookie'; // ✅ Make sure this is installed
+import cookie from 'cookie';
 
 async function fetchSites(accessToken) {
   try {
@@ -41,13 +41,18 @@ export default async function handler(req, res) {
   const { code } = req.body;
   if (!code) return res.status(400).json({ error: 'Missing authorization code' });
 
-  const { NEXT_PUBLIC_WEBFLOW_CLIENT_ID: clientId, NEXT_PUBLIC_BASE_URL: baseUrl, WEBFLOW_CLIENT_SECRET: clientSecret } = process.env;
+  const {
+    NEXT_PUBLIC_WEBFLOW_CLIENT_ID: clientId,
+    NEXT_PUBLIC_BASE_URL: baseUrl,
+    WEBFLOW_CLIENT_SECRET: clientSecret,
+  } = process.env;
+
   const redirectUri = `${baseUrl}/callback`;
 
   if (!clientId || !clientSecret || !baseUrl) {
     return res.status(500).json({
       error: 'Missing required environment variables',
-      details: { clientId: !clientId, clientSecret: !clientSecret, baseUrl: !baseUrl }
+      details: { clientId: !clientId, clientSecret: !clientSecret, baseUrl: !baseUrl },
     });
   }
 
@@ -69,14 +74,16 @@ export default async function handler(req, res) {
 
     try {
       tokenData = JSON.parse(raw);
-    } catch {
+    } catch (err) {
+      console.error('❌ Failed to parse Webflow token response:', raw.slice(0, 250));
       return res.status(500).json({
         error: 'Invalid JSON from Webflow',
-        hint: 'Check client credentials or redirect URI',
+        hint: raw.slice(0, 250),
       });
     }
 
     if (!tokenRes.ok || tokenData?.error || !tokenData?.access_token) {
+      console.error('⚠️ Webflow token error:', raw.slice(0, 250));
       return res.status(400).json({
         error: tokenData?.error_description || 'Token exchange failed',
         details: tokenData,
@@ -94,12 +101,11 @@ export default async function handler(req, res) {
     }
 
     const siteId = siteResult.sites[0]?._id || siteResult.sites[0]?.id;
-
     if (!siteId) {
       return res.status(400).json({ error: 'No valid hosted site found' });
     }
 
-    // ✅ Set cookie securely
+    // ✅ Securely set cookie
     res.setHeader('Set-Cookie', cookie.serialize('webflow_token', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
