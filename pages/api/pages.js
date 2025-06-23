@@ -13,11 +13,11 @@ export default async function handler(req, res) {
 
   let token = null;
   try {
-    const rawCookie = req.headers.cookie || '';
-    const cookies = cookie.parse(rawCookie || '');
-    token = cookies.webflow_token || req.headers.authorization?.split('Bearer ')[1];
+    const rawCookie = req.headers?.cookie || '';
+    const cookies = rawCookie ? cookie.parse(rawCookie) : {};
+    token = cookies.webflow_token || req.headers?.authorization?.split('Bearer ')[1];
   } catch (err) {
-    console.warn('⚠️ Failed to parse cookies:', err.message);
+    console.warn('⚠️ Failed to parse cookies:', err?.message || err);
   }
 
   if (!token) {
