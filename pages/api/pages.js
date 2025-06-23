@@ -12,8 +12,14 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing siteId' });
   }
 
-  const cookies = cookie.parse(req.headers.cookie || '');
-  const token = cookies.webflow_token || req.headers.authorization?.split('Bearer ')[1];
+  let token = null;
+
+  try {
+    const cookies = req.headers.cookie ? cookie.parse(req.headers.cookie) : {};
+    token = cookies.webflow_token || req.headers.authorization?.split('Bearer ')[1];
+  } catch (err) {
+    console.warn('⚠️ Failed to parse cookies:', err.message);
+  }
 
   if (!token) {
     return res.status(401).json({ error: 'Missing token' });
@@ -28,9 +34,8 @@ export default async function handler(req, res) {
       },
     });
 
-    const text = await response.text(); // Read raw response first
+    const text = await response.text();
 
-    // ✅ Safely try to parse JSON only if possible
     let data;
     try {
       data = JSON.parse(text);
