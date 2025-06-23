@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   let token = null;
   try {
     const rawCookie = req.headers.cookie || '';
-    const cookies = rawCookie ? cookie.parse(rawCookie) : {};
+    const cookies = cookie.parse(rawCookie || '');
     token = cookies.webflow_token || req.headers.authorization?.split('Bearer ')[1];
   } catch (err) {
     console.warn('⚠️ Failed to parse cookies:', err.message);
@@ -34,15 +34,22 @@ export default async function handler(req, res) {
     });
 
     const text = await response.text();
+
     let data;
     try {
       data = JSON.parse(text);
     } catch (err) {
-      return res.status(500).json({ error: 'Invalid JSON response', raw: text });
+      return res.status(500).json({
+        error: 'Invalid JSON response from Webflow',
+        raw: text,
+      });
     }
 
     if (!response.ok) {
-      return res.status(response.status).json({ error: data.message || 'Failed to fetch pages' });
+      return res.status(response.status).json({
+        error: data.message || 'Failed to fetch pages',
+        details: data,
+      });
     }
 
     return res.status(200).json({ pages: data.pages || [] });
