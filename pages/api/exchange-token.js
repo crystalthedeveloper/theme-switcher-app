@@ -1,6 +1,6 @@
 // pages/api/exchange-token.js
 
-import cookieLib from 'cookie'; // ✅ renamed to avoid conflicts
+import * as cookie from 'cookie';
 import { fetchWebflowSites } from '../../lib/webflow';
 
 export default async function handler(req, res) {
@@ -90,13 +90,17 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, error: 'No hosted site ID found' });
     }
 
-    res.setHeader('Set-Cookie', cookieLib.serialize('webflow_token', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 3600,
-      path: '/',
-      sameSite: 'Lax',
-    }));
+    res.setHeader(
+      'Set-Cookie',
+      cookie.serialize('webflow_token', accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 3600,
+        path: '/',
+        sameSite: 'Lax',
+      })
+    );
+
 
     return res.status(200).json({
       success: true,
