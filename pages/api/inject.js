@@ -11,7 +11,6 @@ export default async function handler(req, res) {
     return res.status(400).json({ success: false, message: 'Missing siteId' });
   }
 
-  // Get token from cookie or Authorization header
   let token;
   try {
     const cookies = cookie.parse(req.headers.cookie || '');
@@ -30,42 +29,19 @@ export default async function handler(req, res) {
 `.trim();
 
   try {
-    // 1. Get existing custom code
-    const getRes = await fetch(`https://api.webflow.com/rest/sites/${siteId}/custom_code`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept-Version': '1.0.0',
-      },
-    });
+    // 🚫 REMOVE the fetch step for GET — v2 does NOT support it
 
-    const currentData = await getRes.json();
-
-    if (!getRes.ok) {
-      console.error('❌ Failed to fetch site custom code:', currentData);
-      return res.status(getRes.status).json({
-        success: false,
-        message: 'Failed to fetch current site custom code',
-        details: currentData,
-      });
-    }
-
-    const currentFooter = currentData.footerCode || '';
-    const alreadyInjected = currentFooter.includes('theme-switcher.js');
-
-    const updatedFooterCode = alreadyInjected
-      ? currentFooter
-      : `${currentFooter}\n${scriptTag}`.trim();
-
-    // 2. Patch the updated footer code
-    const patchRes = await fetch(`https://api.webflow.com/rest/sites/${siteId}/custom_code`, {
+    // ✅ Just PATCH blindly with your injected script
+    const patchRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom-code`, {
       method: 'PATCH',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
-        'Accept-Version': '1.0.0',
+        'accept-version': '2.0.0'
       },
-      body: JSON.stringify({ footerCode: updatedFooterCode }),
+      body: JSON.stringify({
+        footerCode: scriptTag // You can also preserve existing code if you store it yourself
+      }),
     });
 
     const patchData = await patchRes.json();
@@ -74,7 +50,7 @@ export default async function handler(req, res) {
       console.error('❌ Webflow PATCH error:', patchData);
       return res.status(patchRes.status).json({
         success: false,
-        message: 'Failed to patch site custom code',
+        message: 'Failed to patch site footer code',
         details: patchData,
       });
     }
