@@ -6,7 +6,7 @@ export default function Logo() {
     return (
         <Image
             src="/logo.png"
-            alt="Crystal The Developer Logo"
+            alt="Crystal The Developer Inc. Logo"
             width={140}
             height={40}
             className={styles.logo}
