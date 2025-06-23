@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import styles from './css/success.module.css';
 import Logo from '../components/Logo';
+import Footer from '../components/Footer';
 
 const scriptTag = `
 <!-- Theme Switcher injected by app -->
@@ -93,6 +94,7 @@ export default function Success() {
       </div>
 
       {copyFeedback && <p className={styles.feedback} role="status">{copyFeedback}</p>}
+      <Footer />
     </main>
   );
 }

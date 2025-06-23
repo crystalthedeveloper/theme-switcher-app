@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import styles from './css/select-site.module.css';
 import Logo from '../components/Logo';
+import Footer from '../components/Footer';
 
 export default function SelectSite() {
     const router = useRouter();
@@ -128,6 +129,7 @@ export default function SelectSite() {
                     ))}
                 </ul>
             )}
+            <Footer />
         </main>
     );
 }

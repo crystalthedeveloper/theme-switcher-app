@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import en from '../locales/en';
 import styles from './css/index.module.css';
 import Logo from '../components/Logo';
+import Footer from '../components/Footer';
 
 export default function Home() {
   const t = en;
@@ -43,9 +44,7 @@ export default function Home() {
           <button className={styles['main-button']}>{t.buttonInstall}</button>
         </a>
 
-        <footer className={styles['main-footer']}>
-          <p>{t.footer}</p>
-        </footer>
+        <Footer />
       </main>
     </div>
   );
