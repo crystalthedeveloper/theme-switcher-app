@@ -5,6 +5,7 @@ import cookie from 'cookie';
 
 async function fetchSites(accessToken) {
   try {
+    console.log('🔍 Fetching sites with accessToken:', accessToken.slice(0, 5) + '...');
     const res = await fetch('https://api.webflow.com/v2/sites', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -20,6 +21,8 @@ async function fetchSites(accessToken) {
     }
 
     const data = JSON.parse(raw);
+    console.log('✅ Sites fetched:', data);
+
     const hostedSites = Array.isArray(data?.sites)
       ? data.sites.filter(site => site?.plan !== 'developer')
       : [];
@@ -28,6 +31,7 @@ async function fetchSites(accessToken) {
       ? { success: true, sites: hostedSites }
       : { success: false, reason: 'No hosted sites found' };
   } catch (err) {
+    console.error('❌ fetchSites error:', err);
     return { success: false, reason: err.message };
   }
 }
@@ -52,7 +56,14 @@ export default async function handler(req, res) {
     WEBFLOW_CLIENT_SECRET: clientSecret,
   } = process.env;
 
+  console.log('🔑 Environment Variables:', {
+    clientIdLoaded: !!clientId,
+    baseUrlLoaded: !!baseUrl,
+    clientSecretLoaded: !!clientSecret,
+  });
+
   const redirectUri = `${baseUrl}/callback`;
+  console.log('🔁 Redirect URI:', redirectUri);
 
   if (!clientId || !clientSecret || !baseUrl) {
     return res.status(500).json({
@@ -62,6 +73,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    console.log('🔄 Requesting access token from Webflow...');
     const tokenRes = await fetch('https://api.webflow.com/oauth/access_token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -87,6 +99,7 @@ export default async function handler(req, res) {
     let tokenData;
     try {
       tokenData = JSON.parse(raw);
+      console.log('✅ Token response from Webflow:', tokenData);
     } catch (err) {
       console.error('❌ Failed to parse token JSON:', raw.slice(0, 300));
       return res.status(500).json({
@@ -104,9 +117,12 @@ export default async function handler(req, res) {
     }
 
     const accessToken = tokenData.access_token;
+    console.log('🔐 Access token received:', accessToken.slice(0, 10) + '...');
+
     const siteResult = await fetchSites(accessToken);
 
     if (!siteResult.success) {
+      console.error('❌ Failed to fetch sites:', siteResult.reason);
       return res.status(400).json({
         error: 'Failed to fetch sites',
         details: siteResult.reason,
@@ -115,6 +131,7 @@ export default async function handler(req, res) {
 
     const siteId = siteResult.sites[0]?._id || siteResult.sites[0]?.id;
     if (!siteId) {
+      console.error('❌ No valid hosted site ID found');
       return res.status(400).json({ error: 'No valid hosted site found' });
     }
 
@@ -126,7 +143,7 @@ export default async function handler(req, res) {
       sameSite: 'Lax',
     }));
 
-    console.log('✅ Token received, hosted site:', siteId);
+    console.log('✅ Final token exchange complete. Site ID:', siteId);
 
     return res.status(200).json({
       access_token: accessToken,
@@ -137,7 +154,7 @@ export default async function handler(req, res) {
       expires_in: 3600,
     });
   } catch (err) {
-    console.error('❌ Exchange error:', err);
+    console.error('❌ Exchange error (outer catch):', err);
     return res.status(500).json({
       error: 'Unexpected error during token exchange',
       message: err?.message || 'Unknown error',
