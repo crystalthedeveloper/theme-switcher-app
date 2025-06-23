@@ -1,5 +1,5 @@
 // pages/callback.js
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import en from '../locales/en';
 
@@ -8,10 +8,12 @@ export default function Callback() {
   const [loading, setLoading] = useState(true);
   const [testMode, setTestMode] = useState(false);
   const [error, setError] = useState('');
+  const hasResponded = useRef(false); // ✅ prevent double state changes
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      if (loading) {
+      if (loading && !hasResponded.current) {
+        hasResponded.current = true;
         setLoading(false);
         setError('Request timed out. Please try again.');
       }
@@ -26,7 +28,7 @@ export default function Callback() {
     const isTest = test === 'true';
     setTestMode(isTest);
 
-    // Clean up before proceeding
+    // Clean up
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('webflow_token');
       sessionStorage.removeItem('webflow_site_id');
@@ -35,15 +37,21 @@ export default function Callback() {
 
     if (oauthError) {
       if (isTest) console.error('❌ OAuth Error:', error_description || oauthError);
-      setError('Authorization failed. Please try again.');
-      setLoading(false);
+      if (!hasResponded.current) {
+        hasResponded.current = true;
+        setError('Authorization failed. Please try again.');
+        setLoading(false);
+      }
       return;
     }
 
     if (!code || typeof code !== 'string') {
-      setError('Missing or invalid authorization code.');
-      setLoading(false);
       if (isTest) console.warn('⚠️ Missing or invalid code.');
+      if (!hasResponded.current) {
+        hasResponded.current = true;
+        setError('Missing or invalid authorization code.');
+        setLoading(false);
+      }
       return;
     }
 
@@ -57,7 +65,14 @@ export default function Callback() {
           body: JSON.stringify({ code }),
         });
 
-        const data = await res.json();
+        const raw = await res.text();
+        let data;
+
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          throw new Error('Unexpected response format from server.');
+        }
 
         if (!res.ok || !data.access_token || !data.site_id) {
           if (isTest) console.error('⚠️ Token exchange failed:', data);
@@ -66,7 +81,6 @@ export default function Callback() {
 
         const { access_token, site_id, warning } = data;
 
-        // Store only necessary session data
         if (typeof window !== 'undefined') {
           sessionStorage.setItem('webflow_token', access_token);
           sessionStorage.setItem('webflow_site_id', site_id);
@@ -76,11 +90,15 @@ export default function Callback() {
 
         if (isTest && warning) console.warn('⚠️ Warning:', warning);
 
+        hasResponded.current = true;
         router.replace(`/select-site${testMode ? '?test=true' : ''}`);
       } catch (err) {
         console.error('❌ Token exchange error:', err);
-        setLoading(false);
-        setError(err?.message || 'Token exchange failed. Please try again.');
+        if (!hasResponded.current) {
+          hasResponded.current = true;
+          setLoading(false);
+          setError(err?.message || 'Token exchange failed. Please try again.');
+        }
       }
     };
 

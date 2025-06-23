@@ -13,8 +13,13 @@ async function fetchSites(accessToken) {
     });
 
     const raw = await res.text();
-    const data = JSON.parse(raw);
 
+    if (raw.startsWith('<')) {
+      console.error('❌ HTML response from Webflow (likely invalid token):', raw.slice(0, 300));
+      return { success: false, reason: 'Received HTML instead of JSON when fetching sites.' };
+    }
+
+    const data = JSON.parse(raw);
     const hostedSites = Array.isArray(data?.sites)
       ? data.sites.filter(site => site?.plan !== 'developer')
       : [];
@@ -70,20 +75,28 @@ export default async function handler(req, res) {
     });
 
     const raw = await tokenRes.text();
-    let tokenData;
 
+    if (raw.startsWith('<')) {
+      console.error('❌ HTML error from Webflow (token exchange):', raw.slice(0, 300));
+      return res.status(500).json({
+        error: 'Received unexpected HTML response from Webflow',
+        html: raw.slice(0, 300),
+      });
+    }
+
+    let tokenData;
     try {
       tokenData = JSON.parse(raw);
     } catch (err) {
-      console.error('❌ Failed to parse Webflow token response:', raw.slice(0, 250));
+      console.error('❌ Failed to parse token JSON:', raw.slice(0, 300));
       return res.status(500).json({
-        error: 'Invalid JSON from Webflow',
-        hint: raw.slice(0, 250),
+        error: 'Invalid JSON from Webflow token endpoint',
+        raw: raw.slice(0, 300),
       });
     }
 
     if (!tokenRes.ok || tokenData?.error || !tokenData?.access_token) {
-      console.error('⚠️ Webflow token error:', raw.slice(0, 250));
+      console.error('⚠️ Webflow token error response:', tokenData);
       return res.status(400).json({
         error: tokenData?.error_description || 'Token exchange failed',
         details: tokenData,
@@ -105,7 +118,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'No valid hosted site found' });
     }
 
-    // ✅ Securely set cookie
     res.setHeader('Set-Cookie', cookie.serialize('webflow_token', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
