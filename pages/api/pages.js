@@ -1,5 +1,5 @@
 // pages/api/pages.js
-import cookie from 'cookie';
+import * as cookie from 'cookie';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
