@@ -105,7 +105,7 @@ export default function Home() {
           </>
         ) : (
           <a
-            href={`https://webflow.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.NEXT_PUBLIC_BASE_URL + '/callback')}&response_type=code&scope=sites:read pages:read custom_code:write`}
+            href={`https://webflow.com/oauth/authorize?client_id=${process.env.WEBFLOW_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.BASE_URL + '/callback')}&response_type=code&scope=sites:read pages:read custom_code:write`}
             aria-label="Connect Webflow app"
             rel="noopener noreferrer"
           >
