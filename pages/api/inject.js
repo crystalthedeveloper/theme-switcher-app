@@ -25,7 +25,7 @@ export default async function handler(req, res) {
 `;
 
   try {
-    // Step 1: Get existing custom code
+    // Step 1: Fetch existing custom code
     const getRes = await fetch(`https://api.webflow.com/rest/sites/${siteId}/pages/${pageId}/custom-code`, {
       method: 'GET',
       headers: {
@@ -37,6 +37,7 @@ export default async function handler(req, res) {
     const currentCode = await getRes.json();
 
     if (!getRes.ok || !currentCode) {
+      console.error('❌ Failed to fetch current custom code:', currentCode);
       return res.status(500).json({
         success: false,
         message: 'Failed to fetch current footer code',
@@ -44,13 +45,14 @@ export default async function handler(req, res) {
       });
     }
 
-    const alreadyInjected = currentCode.footerCode?.includes('theme-switcher.js');
+    const currentFooter = currentCode.footerCode || '';
+    const alreadyInjected = currentFooter.includes('theme-switcher.js');
 
     const mergedFooterCode = alreadyInjected
-      ? currentCode.footerCode
-      : (currentCode.footerCode || '') + '\n' + scriptTag;
+      ? currentFooter
+      : `${currentFooter}\n${scriptTag}`;
 
-    // Step 2: Inject new custom code
+    // Step 2: Inject updated footer code
     const patchRes = await fetch(`https://api.webflow.com/rest/sites/${siteId}/pages/${pageId}/custom-code`, {
       method: 'PATCH',
       headers: {
@@ -58,12 +60,17 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
         'Accept-Version': '1.0.0'
       },
-      body: JSON.stringify({ footerCode: mergedFooterCode })
+      body: JSON.stringify({ footerCode: mergedFooterCode || '' })
     });
 
     if (!patchRes.ok) {
       const errorData = await patchRes.json();
-      return res.status(500).json({ success: false, message: 'Webflow API error', details: errorData });
+      console.error('❌ Webflow PATCH error:', errorData);
+      return res.status(500).json({
+        success: false,
+        message: 'Webflow API error during PATCH',
+        details: errorData
+      });
     }
 
     return res.status(200).json({ success: true });

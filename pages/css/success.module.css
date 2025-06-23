@@ -75,3 +75,21 @@
   font-size: 0.95rem;
   font-weight: 500;
 }
+
+.copyContainer {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.codeBlock {
+  background: #f4f4f4;
+  padding: 1rem;
+  font-family: monospace;
+  font-size: 0.9rem;
+  border-radius: 5px;
+  margin-top: 1rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
