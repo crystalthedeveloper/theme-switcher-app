@@ -16,9 +16,7 @@ export default function SelectSite() {
     useEffect(() => {
         async function fetchSites() {
             try {
-                const res = await fetch('/api/sites', {
-                    credentials: 'include'
-                });
+                const res = await fetch('/api/sites', { credentials: 'include' });
                 const data = await res.json();
                 setSites(data.sites || []);
 
@@ -26,7 +24,7 @@ export default function SelectSite() {
                     setLoadingPages(prev => ({ ...prev, [site.id]: true }));
 
                     const pageRes = await fetch(`/api/pages?siteId=${site.id}`, {
-                        credentials: 'include'
+                        credentials: 'include',
                     });
                     const pageData = await pageRes.json();
 
@@ -57,12 +55,7 @@ export default function SelectSite() {
             });
 
             const result = await res.json();
-
-            if (result.success) {
-                router.push('/success?installed=true');
-            } else {
-                router.push('/success?manual=true');
-            }
+            router.push(result.success ? '/success?installed=true' : '/success?manual=true');
         } catch (err) {
             console.error('Injection error:', err);
             router.push('/success?manual=true');
@@ -80,47 +73,57 @@ export default function SelectSite() {
             {loading ? (
                 <p>Loading sites...</p>
             ) : error ? (
-                <p className={styles.error}>{error}</p>
+                <p className={styles.error} role="alert">{error}</p>
             ) : sites.length === 0 ? (
-                <p className={styles.error}>No Webflow sites found. Make sure you're logged in and authorized.</p>
+                <p className={styles.error} role="alert">
+                    No Webflow sites found. Make sure you're logged in and authorized.
+                </p>
             ) : (
                 <ul className={styles.siteList}>
                     {sites.map((site) => (
                         <li key={site.id} className={styles.siteItem}>
-                            <strong>{site.name}</strong>
+                            <fieldset>
+                                <legend><strong>{site.name}</strong></legend>
 
-                            {loadingPages[site.id] ? (
-                                <p>Loading pages...</p>
-                            ) : (
-                                <>
-                                    <select
-                                        onChange={(e) =>
-                                            setSelectedPages((prev) => ({
-                                                ...prev,
-                                                [site.id]: e.target.value,
-                                            }))
-                                        }
-                                        value={selectedPages[site.id] || ''}
-                                    >
-                                        <option value="">Select a page</option>
-                                        {(pagesBySite[site.id] || []).map((page) => (
-                                            <option key={page.id} value={page.id}>
-                                                {page.name || page.slug}
-                                            </option>
-                                        ))}
-                                    </select>
+                                {loadingPages[site.id] ? (
+                                    <p>Loading pages...</p>
+                                ) : (
+                                    <>
+                                        <label htmlFor={`select-${site.id}`}>
+                                            Choose a page to inject:
+                                        </label>
+                                        <select
+                                            id={`select-${site.id}`}
+                                            aria-label={`Page selection for ${site.name}`}
+                                            onChange={(e) =>
+                                                setSelectedPages((prev) => ({
+                                                    ...prev,
+                                                    [site.id]: e.target.value,
+                                                }))
+                                            }
+                                            value={selectedPages[site.id] || ''}
+                                        >
+                                            <option value="">Select a page</option>
+                                            {(pagesBySite[site.id] || []).map((page) => (
+                                                <option key={page.id} value={page.id}>
+                                                    {page.name || page.slug}
+                                                </option>
+                                            ))}
+                                        </select>
 
-                                    <button
-                                        className={styles.selectButton}
-                                        disabled={!selectedPages[site.id]}
-                                        onClick={() =>
-                                            handleInject(site.id, selectedPages[site.id])
-                                        }
-                                    >
-                                        Inject Script to Selected Page
-                                    </button>
-                                </>
-                            )}
+                                        <button
+                                            className={styles.selectButton}
+                                            aria-label={`Inject script into selected page for ${site.name}`}
+                                            disabled={!selectedPages[site.id]}
+                                            onClick={() =>
+                                                handleInject(site.id, selectedPages[site.id])
+                                            }
+                                        >
+                                            Inject Script to Selected Page
+                                        </button>
+                                    </>
+                                )}
+                            </fieldset>
                         </li>
                     ))}
                 </ul>
