@@ -6,14 +6,14 @@ import { fetchWebflowSites } from '../../lib/webflow';
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
 
   if (req.method === 'OPTIONS') return res.status(204).end();
-  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
+  if (req.method !== 'GET') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
-  const { code } = req.body;
+  const { code } = req.query;
   if (!code) return res.status(400).json({ success: false, error: 'Missing authorization code' });
 
   const {
@@ -47,17 +47,7 @@ export default async function handler(req, res) {
       }),
     });
 
-    const raw = await tokenRes.text();
-    if (raw.startsWith('<')) {
-      return res.status(500).json({ success: false, error: 'HTML instead of JSON from token endpoint', html: raw });
-    }
-
-    let tokenData;
-    try {
-      tokenData = JSON.parse(raw);
-    } catch {
-      return res.status(500).json({ success: false, error: 'Invalid JSON in token response', raw });
-    }
+    const tokenData = await tokenRes.json();
 
     if (!tokenRes.ok || !tokenData.access_token) {
       return res.status(400).json({
@@ -68,8 +58,8 @@ export default async function handler(req, res) {
     }
 
     const accessToken = tokenData.access_token;
-
     const siteResult = await fetchWebflowSites(accessToken);
+
     if (!siteResult.success) {
       return res.status(400).json({
         success: false,
