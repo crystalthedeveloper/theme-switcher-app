@@ -49,7 +49,7 @@ export default function SelectSite() {
 
   return (
     <main className={styles.container}>
-      <h1>Select a Webflow Site</h1>
+      <h1 className={styles.heading}>Select a Webflow Site</h1>
 
       {loading ? (
         <p>Loading sites...</p>

@@ -8,11 +8,12 @@
   font-family: system-ui, sans-serif;
 }
 
-h1 {
+.heading {
   font-size: 2rem;
   margin-bottom: 2rem;
   color: #111;
 }
+
 
 .error {
   color: #d32f2f;
