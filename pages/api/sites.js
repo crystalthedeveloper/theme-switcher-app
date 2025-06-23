@@ -1,15 +1,16 @@
 // pages/api/sites.js
 
-import cookie from 'cookie';
+import * as cookie from 'cookie';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // ✅ Parse cookies manually for better reliability
   const cookies = cookie.parse(req.headers.cookie || '');
-  const token = cookies.webflow_token || req.headers.authorization?.split('Bearer ')[1];
+  const token =
+    cookies.webflow_token ||
+    (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.split('Bearer ')[1] : null);
 
   if (!token) {
     return res.status(401).json({ error: 'Missing token' });
@@ -24,7 +25,15 @@ export default async function handler(req, res) {
       },
     });
 
-    const data = await apiRes.json();
+    const raw = await apiRes.text();
+
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch (err) {
+      console.error('❌ Invalid JSON from Webflow API:', raw);
+      return res.status(500).json({ error: 'Webflow API returned invalid JSON', raw });
+    }
 
     if (!apiRes.ok) {
       return res.status(apiRes.status).json({ error: data.message || 'Failed to fetch sites' });
@@ -32,7 +41,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ sites: data.sites });
   } catch (err) {
-    console.error('API /sites error:', err);
+    console.error('❌ API /sites error:', err);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 }
