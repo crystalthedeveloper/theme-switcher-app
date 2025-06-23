@@ -100,6 +100,7 @@ export default function Callback() {
 
   return (
     <main style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }} aria-busy={loading}>
+      <Logo />
       <h1>{en.connecting || 'Connecting to Webflow...'}</h1>
       <p aria-live="polite">
         {loading

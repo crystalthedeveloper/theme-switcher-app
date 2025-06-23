@@ -3,6 +3,8 @@ import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import en from '../locales/en';
 import styles from './css/index.module.css';
+import Logo from '../components/Logo';
+
 
 const scriptTag = '<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>';
 
@@ -80,7 +82,7 @@ export default function Home() {
       </Head>
 
       <main role="main" className={styles['main-content']}>
-        <img src="/logo.png" alt="Crystal The Developer Logo" className={styles.logo} />
+        <Logo />
 
         <h1 className={styles['main-heading']}>
           Theme Switcher

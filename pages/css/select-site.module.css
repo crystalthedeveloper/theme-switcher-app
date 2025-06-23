@@ -14,7 +14,6 @@
   color: #111;
 }
 
-
 .error {
   color: #d32f2f;
   background: #fff3f3;
@@ -32,37 +31,67 @@
 
 .siteItem {
   background: #fafafa;
-  padding: 1.25rem;
-  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
   border: 1px solid #eee;
-  border-radius: 10px;
+  border-radius: 12px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
   text-align: left;
+  transition: box-shadow 0.2s ease;
+}
+
+.siteItem:hover {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
 }
 
 .siteItem strong {
   display: block;
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   color: #000;
+  margin-bottom: 0.5rem;
 }
 
 .siteItem p {
   font-size: 0.95rem;
   color: #666;
-  margin: 0.25rem 0 1rem;
+  margin-bottom: 1rem;
+}
+
+.siteItem select {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-bottom: 1rem;
+  background-color: #fff;
+  transition: border-color 0.2s ease;
+}
+
+.siteItem select:focus {
+  border-color: #111;
+  outline: none;
 }
 
 .selectButton {
   background-color: #111;
   color: #fff;
   font-size: 0.95rem;
-  padding: 0.6rem 1.25rem;
+  padding: 0.65rem 1.5rem;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, transform 0.1s ease;
 }
 
 .selectButton:hover {
   background-color: #222;
+}
+
+.selectButton:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
