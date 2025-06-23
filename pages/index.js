@@ -1,8 +1,8 @@
 // pages/index.js
 import Head from 'next/head';
+import { useEffect, useState } from 'react';
 import en from '../locales/en';
 import styles from './css/index.module.css';
-import { useEffect, useState } from 'react';
 
 const scriptTag = '<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>';
 
@@ -15,7 +15,7 @@ export default function Home() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const installedFromURL = urlParams.get('installed') === 'true';
-    const isInDesigner = window.self !== window.top;
+    const isInDesigner = window?.self !== window?.top;
 
     sessionStorage.removeItem('webflow_test_mode');
 
@@ -23,7 +23,7 @@ export default function Home() {
       sessionStorage.setItem('webflow_app_installed', 'true');
       setTimeout(() => {
         sessionStorage.removeItem('webflow_app_installed');
-      }, 5 * 60 * 1000);
+      }, 5 * 60 * 1000); // 5 mins
     }
 
     const savedInstalled = sessionStorage.getItem('webflow_app_installed') === 'true';
@@ -109,11 +109,7 @@ export default function Home() {
             </p>
           </>
         ) : (
-          <a
-            href={authURL}
-            aria-label="Connect Webflow app"
-            rel="noopener noreferrer"
-          >
+          <a href={authURL} aria-label="Connect Webflow app" rel="noopener noreferrer">
             <button className={styles['main-button']}>{t.buttonInstall}</button>
           </a>
         )}
