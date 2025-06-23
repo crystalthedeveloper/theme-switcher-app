@@ -4,7 +4,7 @@ import en from '../locales/en';
 import styles from './css/index.module.css';
 import { useEffect, useState } from 'react';
 
-const scriptTag = '<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js"></script>';
+const scriptTag = '<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>';
 
 export default function Home() {
   const t = en;
@@ -72,19 +72,13 @@ export default function Home() {
   return (
     <div>
       <Head>
-        <title>
-          {appInstalled ? '✅ Installed - ' : ''}{t.title}
-        </title>
+        <title>{appInstalled ? '✅ Installed - ' : ''}{t.title}</title>
         <meta name="description" content={t.description} />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <main role="main" className={styles['main-content']}>
-        <img
-          src="/logo.png"
-          alt="Crystal The Developer Logo"
-          className={styles.logo}
-        />
+        <img src="/logo.png" alt="Crystal The Developer Logo" className={styles.logo} />
 
         <h1 className={styles['main-heading']}>
           Theme Switcher {appInstalled && <span style={{ fontSize: '1rem', marginLeft: '0.5rem' }}>✅ Installed</span>}
@@ -94,25 +88,22 @@ export default function Home() {
           Let your visitors switch between dark and light mode — no coding required.
         </p>
 
-        {appInstalled && (
+        {appInstalled ? (
           <>
             <div className={styles['button-group']}>
-              <button
-                className={styles['main-button']}
-                onClick={handleCopyScript}
-              >
+              <button className={styles['main-button']} onClick={handleCopyScript}>
                 📋 Copy Script Tag
               </button>
             </div>
 
             <p className={styles['main-subheading']} style={{ marginTop: '1rem' }}>
-              ⚠️ Due to Webflow’s security rules, script injection into Site or Page Settings must be done manually.<br />
-              Please paste the copied code into <strong>Site Settings → Global Custom Code</strong> or any page where you want Theme Switcher to work.
+              ⚠️ Due to Webflow platform restrictions, script injection via this app is only supported on hosted (paid) sites using the{' '}
+              <strong>PATCH /sites/:site_id/pages/:page_id/custom-code</strong> endpoint.<br />
+              If your site doesn’t support this or injection fails, please manually paste the copied code into{' '}
+              <strong>Site Settings → Global Custom Code</strong> or any page’s Footer Code where you want Theme Switcher to work.
             </p>
           </>
-        )}
-
-        {!appInstalled && (
+        ) : (
           <a
             href={`https://webflow.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.NEXT_PUBLIC_BASE_URL + '/callback')}&response_type=code&scope=sites:read pages:read custom_code:write`}
             aria-label="Connect Webflow app"
