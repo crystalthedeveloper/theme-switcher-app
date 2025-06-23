@@ -6,7 +6,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const siteId = req.query.siteId;
+  const { siteId } = req.query;
+
   if (!siteId) {
     return res.status(400).json({ error: 'Missing siteId' });
   }
@@ -15,28 +16,41 @@ export default async function handler(req, res) {
   const token = cookies.webflow_token || req.headers.authorization?.split('Bearer ')[1];
 
   if (!token) {
-    return res.status(401).json({ error: 'Unauthorized: No token found' });
+    return res.status(401).json({ error: 'Missing token' });
   }
 
   try {
-    const apiRes = await fetch(`https://api.webflow.com/rest/sites/${siteId}/pages`, {
-      method: 'GET',
+    const response = await fetch(`https://api.webflow.com/v2/sites/${siteId}/pages`, {
       headers: {
         Authorization: `Bearer ${token}`,
-        'Accept-Version': '1.0.0',
+        'accept-version': '2.0.0',
         'Content-Type': 'application/json',
       },
     });
 
-    const data = await apiRes.json();
+    const text = await response.text(); // Read raw response first
 
-    if (!apiRes.ok) {
-      return res.status(apiRes.status).json({ error: data.message || 'Failed to fetch pages' });
+    // ✅ Safely try to parse JSON only if possible
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (err) {
+      return res.status(500).json({
+        error: 'Invalid response from Webflow API',
+        raw: text,
+      });
     }
 
-    res.status(200).json({ pages: data.pages });
+    if (!response.ok) {
+      return res.status(response.status).json({
+        error: data.message || 'Failed to fetch pages',
+        details: data,
+      });
+    }
+
+    return res.status(200).json({ pages: data.pages || [] });
   } catch (err) {
     console.error('API /pages error:', err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error', message: err.message });
   }
 }
