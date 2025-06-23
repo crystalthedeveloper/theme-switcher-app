@@ -51,7 +51,20 @@ export default async function handler(req, res) {
       }),
     });
 
-    const tokenData = await tokenRes.json();
+    const rawText = await tokenRes.text();
+    console.log('🔁 Webflow raw token response:', rawText);
+
+    let tokenData;
+    try {
+      tokenData = JSON.parse(rawText);
+    } catch (parseError) {
+      console.error('❌ Failed to parse token response JSON:', parseError.message);
+      return res.status(500).json({
+        success: false,
+        error: 'Invalid JSON response from Webflow token endpoint',
+        raw: rawText,
+      });
+    }
 
     if (!tokenRes.ok || !tokenData.access_token) {
       return res.status(400).json({
@@ -95,6 +108,7 @@ export default async function handler(req, res) {
       expires_in: 3600,
     });
   } catch (err) {
+    console.error('❌ Unexpected server error during token exchange:', err);
     return res.status(500).json({
       success: false,
       error: 'Unexpected error during token exchange',
