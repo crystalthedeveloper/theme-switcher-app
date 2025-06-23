@@ -29,12 +29,11 @@ export default function Callback() {
     const isTest = test === 'true';
     setTestMode(isTest);
 
-    // Clear previous session
+    // Clear sessionStorage
     if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('webflow_token');
-      sessionStorage.removeItem('webflow_site_id');
-      sessionStorage.removeItem('webflow_app_installed');
-      sessionStorage.removeItem('webflow_test_mode');
+      ['webflow_token', 'webflow_site_id', 'webflow_app_installed', 'webflow_test_mode'].forEach(key =>
+        sessionStorage.removeItem(key)
+      );
     }
 
     if (oauthError) {
@@ -67,14 +66,7 @@ export default function Callback() {
           body: JSON.stringify({ code }),
         });
 
-        const raw = await res.text();
-        let data;
-
-        try {
-          data = JSON.parse(raw);
-        } catch {
-          throw new Error('Unexpected response format from server.');
-        }
+        const data = await res.json();
 
         if (!res.ok || !data.access_token || !data.site_id) {
           if (isTest) console.error('⚠️ Token exchange failed:', data);
@@ -93,7 +85,13 @@ export default function Callback() {
         if (isTest && warning) console.warn('⚠️ Warning:', warning);
 
         hasResponded.current = true;
-        router.replace(`/select-site${testMode ? '?test=true' : ''}`);
+        try {
+          await router.replace(`/select-site${testMode ? '?test=true' : ''}`);
+        } catch (navErr) {
+          console.error('Navigation error:', navErr);
+          setError('Redirect failed. Please try again.');
+          setLoading(false);
+        }
       } catch (err) {
         console.error('❌ Token exchange error:', err);
         if (!hasResponded.current) {
@@ -109,17 +107,23 @@ export default function Callback() {
 
   return (
     <main style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }} aria-busy={loading}>
-      <h1>{en.connecting}</h1>
-      <p aria-live="polite">{loading ? en.exchanging : error || en.tryAgainFallback}</p>
+      <h1>{en.connecting || 'Connecting to Webflow...'}</h1>
+      <p aria-live="polite">
+        {loading ? (en.exchanging || 'Exchanging code...') : (error || en.tryAgainFallback || 'Something went wrong.')}
+      </p>
 
-      {error && <p style={{ color: 'red', marginTop: '1rem' }} aria-live="assertive">{error}</p>}
+      {error && (
+        <p style={{ color: 'red', marginTop: '1rem' }} aria-live="assertive">
+          {error}
+        </p>
+      )}
       {loading && <div style={{ fontSize: '2rem', marginTop: '1.5rem' }}>⏳</div>}
 
       {!loading && (
         <div style={{ marginTop: '2rem' }}>
           <a href="/" aria-label="Try again from the start">
             <button type="button" style={{ padding: '10px 20px', fontSize: '1rem', cursor: 'pointer' }}>
-              ← {en.tryAgain}
+              ← {en.tryAgain || 'Try Again'}
             </button>
           </a>
         </div>
@@ -127,7 +131,7 @@ export default function Callback() {
 
       {testMode && (
         <p style={{ marginTop: '2rem', fontSize: '0.9rem', color: '#999' }}>
-          {en.testModeNotice}
+          {en.testModeNotice || 'Test mode is enabled. Debug messages are shown in the console.'}
         </p>
       )}
     </main>

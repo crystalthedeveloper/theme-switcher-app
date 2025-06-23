@@ -1,11 +1,15 @@
 // pages/api/exchange-token.js
 
-import applyRateLimit from '../../lib/rateLimiter';
 import cookie from 'cookie';
 
 async function fetchSites(accessToken) {
+  if (!accessToken) {
+    console.error('❌ Missing access token for fetchSites');
+    return { success: false, reason: 'Missing access token' };
+  }
+
   try {
-    console.log('🔍 Fetching sites with accessToken:', accessToken.slice(0, 5) + '...');
+    console.log('🔍 Fetching sites with token:', accessToken.slice(0, 6) + '...');
     const res = await fetch('https://api.webflow.com/v2/sites', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -14,23 +18,22 @@ async function fetchSites(accessToken) {
     });
 
     const raw = await res.text();
+
     if (raw.startsWith('<')) {
-      console.error('❌ HTML response from Webflow (likely invalid token):', raw.slice(0, 300));
-      return { success: false, reason: 'Received HTML instead of JSON when fetching sites.' };
+      console.error('❌ HTML response from Webflow (invalid token?):', raw.slice(0, 300));
+      return { success: false, reason: 'Received HTML instead of JSON' };
     }
 
     const data = JSON.parse(raw);
-    console.log('✅ Sites fetched:', data);
+    console.log('✅ Sites fetched:', data?.sites?.length ?? 0);
 
-    const hostedSites = Array.isArray(data?.sites)
-      ? data.sites.filter(site => site?.plan !== 'developer')
-      : [];
+    const hostedSites = (data?.sites || []).filter(site => site.plan !== 'developer');
 
     return hostedSites.length
       ? { success: true, sites: hostedSites }
       : { success: false, reason: 'No hosted sites found' };
   } catch (err) {
-    console.error('❌ fetchSites error:', err);
+    console.error('❌ Error fetching sites:', err);
     return { success: false, reason: err.message };
   }
 }
@@ -55,11 +58,10 @@ export default async function handler(req, res) {
 
   const redirectUri = `${baseUrl}/callback`;
 
-  // Logging for troubleshooting
-  console.log('🔑 Env check:', {
-    clientIdLoaded: !!clientId,
-    clientSecretLoaded: !!clientSecret,
-    baseUrlLoaded: !!baseUrl,
+  console.log('🌐 Env check:', {
+    clientId: !!clientId,
+    clientSecret: !!clientSecret,
+    baseUrl: !!baseUrl,
     redirectUri,
   });
 
@@ -67,20 +69,15 @@ export default async function handler(req, res) {
     return res.status(500).json({
       error: 'Missing required environment variables',
       details: {
-        clientId: !clientId,
-        clientSecret: !clientSecret,
-        baseUrl: !baseUrl,
+        WEBFLOW_CLIENT_ID: !!clientId,
+        WEBFLOW_CLIENT_SECRET: !!clientSecret,
+        BASE_URL: !!baseUrl,
       },
     });
   }
 
   try {
-    console.log('🔄 Requesting access token from Webflow...', {
-      clientId,
-      redirectUri,
-      shortCode: code?.slice(0, 6),
-    });
-
+    console.log('🔄 Requesting Webflow access token...');
     const tokenRes = await fetch('https://api.webflow.com/oauth/access_token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -94,29 +91,21 @@ export default async function handler(req, res) {
     });
 
     const raw = await tokenRes.text();
-
     if (raw.startsWith('<')) {
-      console.error('❌ HTML error from Webflow (token exchange):', raw.slice(0, 300));
-      return res.status(500).json({
-        error: 'Received unexpected HTML response from Webflow',
-        html: raw.slice(0, 300),
-      });
+      console.error('❌ Unexpected HTML from token endpoint:', raw.slice(0, 300));
+      return res.status(500).json({ error: 'HTML instead of JSON from token endpoint', html: raw });
     }
 
     let tokenData;
     try {
       tokenData = JSON.parse(raw);
-      console.log('✅ Token response from Webflow:', tokenData);
-    } catch (err) {
-      console.error('❌ Failed to parse token JSON:', raw.slice(0, 300));
-      return res.status(500).json({
-        error: 'Invalid JSON from Webflow token endpoint',
-        raw: raw.slice(0, 300),
-      });
+    } catch (parseErr) {
+      console.error('❌ Failed to parse JSON from Webflow:', raw.slice(0, 300));
+      return res.status(500).json({ error: 'Invalid JSON in token response', raw });
     }
 
-    if (!tokenRes.ok || tokenData?.error || !tokenData?.access_token) {
-      console.error('⚠️ Webflow token error response:', tokenData);
+    if (!tokenRes.ok || !tokenData.access_token) {
+      console.error('❌ Token error:', tokenData);
       return res.status(400).json({
         error: tokenData?.error_description || 'Token exchange failed',
         details: tokenData,
@@ -127,19 +116,18 @@ export default async function handler(req, res) {
     console.log('🔐 Access token received:', accessToken.slice(0, 10) + '...');
 
     const siteResult = await fetchSites(accessToken);
-
     if (!siteResult.success) {
-      console.error('❌ Failed to fetch sites:', siteResult.reason);
+      console.error('❌ Site fetch failed:', siteResult.reason);
       return res.status(400).json({
-        error: 'Failed to fetch sites',
+        error: 'Failed to fetch Webflow sites',
         details: siteResult.reason,
       });
     }
 
     const siteId = siteResult.sites[0]?._id || siteResult.sites[0]?.id;
     if (!siteId) {
-      console.error('❌ No valid hosted site ID found');
-      return res.status(400).json({ error: 'No valid hosted site found' });
+      console.error('❌ No valid site ID found');
+      return res.status(400).json({ error: 'No hosted site ID found' });
     }
 
     res.setHeader('Set-Cookie', cookie.serialize('webflow_token', accessToken, {
@@ -161,7 +149,7 @@ export default async function handler(req, res) {
       expires_in: 3600,
     });
   } catch (err) {
-    console.error('❌ Exchange error (outer catch):', err);
+    console.error('❌ Unexpected error during token exchange:', err);
     return res.status(500).json({
       error: 'Unexpected error during token exchange',
       message: err?.message || 'Unknown error',
