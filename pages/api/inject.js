@@ -29,18 +29,16 @@ export default async function handler(req, res) {
 `.trim();
 
   try {
-    // 🚫 REMOVE the fetch step for GET — v2 does NOT support it
-
-    // ✅ Just PATCH blindly with your injected script
-    const patchRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom-code`, {
+    // PATCH to the correct REST endpoint
+    const patchRes = await fetch(`https://api.webflow.com/rest/sites/${siteId}/custom_code`, {
       method: 'PATCH',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
-        'accept-version': '2.0.0'
+        'accept-version': '1.0.0',
       },
       body: JSON.stringify({
-        footerCode: scriptTag // You can also preserve existing code if you store it yourself
+        footerCode: scriptTag,
       }),
     });
 

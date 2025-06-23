@@ -10,6 +10,7 @@ export default function SelectSite() {
     const [sites, setSites] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [injecting, setInjecting] = useState(null); // track which site is injecting
 
     useEffect(() => {
         async function fetchSites() {
@@ -29,12 +30,13 @@ export default function SelectSite() {
     }, []);
 
     const handleInject = async (siteId) => {
+        setInjecting(siteId);
         try {
             const res = await fetch('/api/inject', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ siteId }) // no pageId needed anymore
+                body: JSON.stringify({ siteId })
             });
 
             const result = await res.json();
@@ -42,6 +44,8 @@ export default function SelectSite() {
         } catch (err) {
             console.error('Injection error:', err);
             router.push('/success?manual=true');
+        } finally {
+            setInjecting(null);
         }
     };
 
@@ -62,25 +66,23 @@ export default function SelectSite() {
                     No Webflow sites found. Make sure you're logged in and authorized.
                 </p>
             ) : (
-                <ul className={styles.siteList}>
+                <ul className={styles.siteList} role="list">
                     {sites.map((site) => (
-                        <li key={site.id} className={styles.siteItem}>
-                            <fieldset>
-                                <legend><strong>{site.name}</strong></legend>
+                        <li key={site.id} className={styles.siteItem} role="listitem">
+                            <h2 className={styles.siteTitle}>{site.name}</h2>
 
-                                <button
-                                    className={styles.selectButton}
-                                    aria-label={`Inject script into ${site.name}`}
-                                    onClick={() => handleInject(site.id)}
-                                >
-                                    Inject Script to Site
-                                </button>
+                            <button
+                                className={styles.selectButton}
+                                aria-label={`Inject script into ${site.name}`}
+                                onClick={() => handleInject(site.id)}
+                                disabled={injecting === site.id}
+                            >
+                                {injecting === site.id ? 'Injecting...' : 'Inject Script to Site'}
+                            </button>
 
-                                <p style={{ fontSize: '0.85rem', marginTop: '0.5rem', color: '#555' }}>
-                                    Script will be injected globally into the site’s <code>&lt;/body&gt;</code> tag.
-                                </p>
-
-                            </fieldset>
+                            <p className={styles.siteNote}>
+                                Script will be injected globally into the site’s <code>&lt;/body&gt;</code> tag.
+                            </p>
                         </li>
                     ))}
                 </ul>
