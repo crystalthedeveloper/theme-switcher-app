@@ -10,7 +10,7 @@ export default function Callback() {
   const [error, setError] = useState('');
   const hasResponded = useRef(false);
 
-  // Timeout fallback
+  // Timeout fallback after 15 seconds
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (loading && !hasResponded.current) {
@@ -29,11 +29,14 @@ export default function Callback() {
     const isTest = test === 'true';
     setTestMode(isTest);
 
-    // Clear sessionStorage
+    // Clear previous sessionStorage values
     if (typeof window !== 'undefined') {
-      ['webflow_token', 'webflow_site_id', 'webflow_app_installed', 'webflow_test_mode'].forEach(key =>
-        sessionStorage.removeItem(key)
-      );
+      [
+        'webflow_token',
+        'webflow_site_id',
+        'webflow_app_installed',
+        'webflow_test_mode'
+      ].forEach(key => sessionStorage.removeItem(key));
     }
 
     if (oauthError) {
@@ -85,13 +88,8 @@ export default function Callback() {
         if (isTest && warning) console.warn('⚠️ Warning:', warning);
 
         hasResponded.current = true;
-        try {
-          await router.replace(`/select-site${testMode ? '?test=true' : ''}`);
-        } catch (navErr) {
-          console.error('Navigation error:', navErr);
-          setError('Redirect failed. Please try again.');
-          setLoading(false);
-        }
+
+        await router.replace(`/select-site${testMode ? '?test=true' : ''}`);
       } catch (err) {
         console.error('❌ Token exchange error:', err);
         if (!hasResponded.current) {
@@ -109,7 +107,9 @@ export default function Callback() {
     <main style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }} aria-busy={loading}>
       <h1>{en.connecting || 'Connecting to Webflow...'}</h1>
       <p aria-live="polite">
-        {loading ? (en.exchanging || 'Exchanging code...') : (error || en.tryAgainFallback || 'Something went wrong.')}
+        {loading
+          ? (en.exchanging || 'Exchanging code...')
+          : (error || en.tryAgainFallback || 'Something went wrong.')}
       </p>
 
       {error && (
@@ -117,7 +117,10 @@ export default function Callback() {
           {error}
         </p>
       )}
-      {loading && <div style={{ fontSize: '2rem', marginTop: '1.5rem' }}>⏳</div>}
+
+      {loading && (
+        <div style={{ fontSize: '2rem', marginTop: '1.5rem' }}>⏳</div>
+      )}
 
       {!loading && (
         <div style={{ marginTop: '2rem' }}>

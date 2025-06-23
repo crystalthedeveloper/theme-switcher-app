@@ -47,7 +47,7 @@ export default function Home() {
     try {
       const success = document.execCommand('copy');
       showFeedback(success
-        ? '📋 Script copied! Paste it into Site Settings > Footer.'
+        ? '📋 Script copied! Paste it into Site Settings → Footer.'
         : '⚠️ Fallback failed. Copy manually.');
     } catch (err) {
       console.error('❌ Fallback copy failed:', err);
@@ -59,7 +59,7 @@ export default function Home() {
   const handleCopyScript = () => {
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(scriptTag)
-        .then(() => showFeedback('📋 Script copied! Paste it into Site Settings > Footer.'))
+        .then(() => showFeedback('📋 Script copied! Paste it into Site Settings → Footer.'))
         .catch((err) => {
           console.error('❌ Clipboard API error:', err);
           fallbackCopy(scriptTag);
@@ -68,6 +68,8 @@ export default function Home() {
       fallbackCopy(scriptTag);
     }
   };
+
+  const authURL = `https://webflow.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.NEXT_PUBLIC_BASE_URL + '/callback')}&response_type=code&scope=sites:read pages:read custom_code:write`;
 
   return (
     <div>
@@ -81,7 +83,10 @@ export default function Home() {
         <img src="/logo.png" alt="Crystal The Developer Logo" className={styles.logo} />
 
         <h1 className={styles['main-heading']}>
-          Theme Switcher {appInstalled && <span style={{ fontSize: '1rem', marginLeft: '0.5rem' }}>✅ Installed</span>}
+          Theme Switcher
+          {appInstalled && (
+            <span style={{ fontSize: '1rem', marginLeft: '0.5rem' }}>✅ Installed</span>
+          )}
         </h1>
 
         <p className={styles['main-subheading']}>
@@ -97,15 +102,15 @@ export default function Home() {
             </div>
 
             <p className={styles['main-subheading']} style={{ marginTop: '1rem' }}>
-              ⚠️ Due to Webflow platform restrictions, script injection via this app is only supported on hosted (paid) sites using the{' '}
-              <strong>PATCH /sites/:site_id/pages/:page_id/custom-code</strong> endpoint.<br />
-              If your site doesn’t support this or injection fails, please manually paste the copied code into{' '}
-              <strong>Site Settings → Global Custom Code</strong> or any page’s Footer Code where you want Theme Switcher to work.
+              ⚠️ Webflow’s platform only supports script injection on hosted (paid) sites using
+              <strong> PATCH /sites/:site_id/pages/:page_id/custom-code</strong>.<br />
+              If this fails, manually paste the script into{' '}
+              <strong>Site Settings → Global Custom Code</strong> or the footer of any page.
             </p>
           </>
         ) : (
           <a
-            href={`https://webflow.com/oauth/authorize?client_id=${process.env.WEBFLOW_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.BASE_URL + '/callback')}&response_type=code&scope=sites:read pages:read custom_code:write`}
+            href={authURL}
             aria-label="Connect Webflow app"
             rel="noopener noreferrer"
           >

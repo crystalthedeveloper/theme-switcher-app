@@ -18,7 +18,6 @@ async function fetchSites(accessToken) {
     });
 
     const raw = await res.text();
-
     if (raw.startsWith('<')) {
       console.error('❌ HTML response from Webflow (invalid token?):', raw.slice(0, 300));
       return { success: false, reason: 'Received HTML instead of JSON' };
@@ -53,25 +52,22 @@ export default async function handler(req, res) {
   const {
     WEBFLOW_CLIENT_ID: clientId,
     WEBFLOW_CLIENT_SECRET: clientSecret,
-    BASE_URL: baseUrl,
+    WEBFLOW_REDIRECT_URI: redirectUri,
   } = process.env;
-
-  const redirectUri = `${baseUrl}/callback`;
 
   console.log('🌐 Env check:', {
     clientId: !!clientId,
     clientSecret: !!clientSecret,
-    baseUrl: !!baseUrl,
     redirectUri,
   });
 
-  if (!clientId || !clientSecret || !baseUrl) {
+  if (!clientId || !clientSecret || !redirectUri) {
     return res.status(500).json({
       error: 'Missing required environment variables',
       details: {
         WEBFLOW_CLIENT_ID: !!clientId,
         WEBFLOW_CLIENT_SECRET: !!clientSecret,
-        BASE_URL: !!baseUrl,
+        WEBFLOW_REDIRECT_URI: !!redirectUri,
       },
     });
   }
@@ -153,6 +149,7 @@ export default async function handler(req, res) {
     return res.status(500).json({
       error: 'Unexpected error during token exchange',
       message: err?.message || 'Unknown error',
+      stack: err?.stack,
     });
   }
 }
