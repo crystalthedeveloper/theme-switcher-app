@@ -6,8 +6,9 @@ import styles from './css/select-site.module.css';
 export default function SelectSite() {
   const router = useRouter();
   const [sites, setSites] = useState([]);
+  const [pagesBySite, setPagesBySite] = useState({}); // ✅ Store pages per site
+  const [selectedPages, setSelectedPages] = useState({}); // ✅ Track selected page per site
   const [loading, setLoading] = useState(true);
-  const [selectedPage, setSelectedPage] = useState({});
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -16,6 +17,14 @@ export default function SelectSite() {
         const res = await fetch('/api/sites');
         const data = await res.json();
         setSites(data.sites || []);
+        for (const site of data.sites) {
+          const pageRes = await fetch(`/api/pages?siteId=${site.id}`);
+          const pageData = await pageRes.json();
+          setPagesBySite((prev) => ({
+            ...prev,
+            [site.id]: pageData.pages || [],
+          }));
+        }
       } catch (err) {
         console.error('Error fetching sites:', err);
         setError('Failed to load sites');
@@ -60,23 +69,34 @@ export default function SelectSite() {
           {sites.map((site) => (
             <li key={site.id} className={styles.siteItem}>
               <strong>{site.name}</strong>
-              <p>{site.shortName}</p>
 
+              {/* ✅ Show a dropdown of pages */}
+              <select
+                onChange={(e) =>
+                  setSelectedPages((prev) => ({
+                    ...prev,
+                    [site.id]: e.target.value,
+                  }))
+                }
+                value={selectedPages[site.id] || ''}
+              >
+                <option value="">Select a page</option>
+                {(pagesBySite[site.id] || []).map((page) => (
+                  <option key={page.id} value={page.id}>
+                    {page.name || page.slug}
+                  </option>
+                ))}
+              </select>
+
+              {/* ✅ Inject script only if a page is selected */}
               <button
                 className={styles.selectButton}
-                onClick={async () => {
-                  const pageRes = await fetch(`/api/pages?siteId=${site.id}`);
-                  const pageData = await pageRes.json();
-                  const firstPage = pageData.pages?.[0];
-                  if (firstPage) {
-                    setSelectedPage({ siteId: site.id, pageId: firstPage.id });
-                    await handleInject(site.id, firstPage.id);
-                  } else {
-                    router.push('/success?manual=true');
-                  }
-                }}
+                disabled={!selectedPages[site.id]}
+                onClick={() =>
+                  handleInject(site.id, selectedPages[site.id])
+                }
               >
-                Inject Script to Home Page
+                Inject Script to Selected Page
               </button>
             </li>
           ))}
