@@ -10,7 +10,6 @@ export default function Callback() {
   const [error, setError] = useState('');
   const hasResponded = useRef(false);
 
-  // Timeout fallback after 15 seconds
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (loading && !hasResponded.current) {
@@ -29,14 +28,10 @@ export default function Callback() {
     const isTest = test === 'true';
     setTestMode(isTest);
 
-    // Clear previous sessionStorage values
+    // Clear previous session data
     if (typeof window !== 'undefined') {
-      [
-        'webflow_token',
-        'webflow_site_id',
-        'webflow_app_installed',
-        'webflow_test_mode'
-      ].forEach(key => sessionStorage.removeItem(key));
+      ['webflow_token', 'webflow_site_id', 'webflow_app_installed', 'webflow_test_mode']
+        .forEach(key => sessionStorage.removeItem(key));
     }
 
     if (oauthError) {
