@@ -1,5 +1,5 @@
 // pages/api/inject.js
-import { getTokenFromCookies } from '../../utils/auth';
+import cookie from 'cookie';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -12,7 +12,8 @@ export default async function handler(req, res) {
     return res.status(400).json({ success: false, message: 'Missing siteId or pageId' });
   }
 
-  const token = getTokenFromCookies(req);
+  const cookies = cookie.parse(req.headers.cookie || '');
+  const token = cookies.webflow_token || req.headers.authorization?.split('Bearer ')[1];
 
   if (!token) {
     return res.status(401).json({ success: false, message: 'Unauthorized: No token found' });
@@ -24,7 +25,7 @@ export default async function handler(req, res) {
 `;
 
   try {
-    // Step 1: GET existing custom code
+    // Step 1: Get existing custom code
     const getRes = await fetch(`https://api.webflow.com/rest/sites/${siteId}/pages/${pageId}/custom-code`, {
       method: 'GET',
       headers: {
@@ -36,17 +37,20 @@ export default async function handler(req, res) {
     const currentCode = await getRes.json();
 
     if (!getRes.ok || !currentCode) {
-      return res.status(500).json({ success: false, message: 'Failed to fetch current footer code', details: currentCode });
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch current footer code',
+        details: currentCode
+      });
     }
 
     const alreadyInjected = currentCode.footerCode?.includes('theme-switcher.js');
 
-    // Avoid duplicate script injection
     const mergedFooterCode = alreadyInjected
       ? currentCode.footerCode
       : (currentCode.footerCode || '') + '\n' + scriptTag;
 
-    // Step 2: PATCH with updated footerCode
+    // Step 2: Inject new custom code
     const patchRes = await fetch(`https://api.webflow.com/rest/sites/${siteId}/pages/${pageId}/custom-code`, {
       method: 'PATCH',
       headers: {
@@ -62,9 +66,9 @@ export default async function handler(req, res) {
       return res.status(500).json({ success: false, message: 'Webflow API error', details: errorData });
     }
 
-    res.status(200).json({ success: true });
+    return res.status(200).json({ success: true });
   } catch (err) {
     console.error('❌ Inject failed:', err);
-    res.status(500).json({ success: false, message: 'Server error', error: err.message });
+    return res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
 }
