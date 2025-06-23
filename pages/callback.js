@@ -8,8 +8,9 @@ export default function Callback() {
   const [loading, setLoading] = useState(true);
   const [testMode, setTestMode] = useState(false);
   const [error, setError] = useState('');
-  const hasResponded = useRef(false); // ✅ prevent double state changes
+  const hasResponded = useRef(false);
 
+  // Timeout fallback
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (loading && !hasResponded.current) {
@@ -28,11 +29,12 @@ export default function Callback() {
     const isTest = test === 'true';
     setTestMode(isTest);
 
-    // Clean up
+    // Clear previous session
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('webflow_token');
       sessionStorage.removeItem('webflow_site_id');
       sessionStorage.removeItem('webflow_app_installed');
+      sessionStorage.removeItem('webflow_test_mode');
     }
 
     if (oauthError) {
@@ -96,8 +98,8 @@ export default function Callback() {
         console.error('❌ Token exchange error:', err);
         if (!hasResponded.current) {
           hasResponded.current = true;
-          setLoading(false);
           setError(err?.message || 'Token exchange failed. Please try again.');
+          setLoading(false);
         }
       }
     };
