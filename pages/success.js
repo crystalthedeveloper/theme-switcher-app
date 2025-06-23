@@ -2,6 +2,7 @@
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import styles from './css/success.module.css';
+import Logo from '../components/Logo';
 
 export default function Success() {
     const router = useRouter();
