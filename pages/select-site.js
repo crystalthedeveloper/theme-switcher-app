@@ -5,12 +5,18 @@ import styles from './css/select-site.module.css';
 import Logo from '../components/Logo';
 import Footer from '../components/Footer';
 
+const scriptTag = `
+<!-- Theme Switcher injected by app -->
+<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>
+`;
+
 export default function SelectSite() {
     const router = useRouter();
     const [sites, setSites] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [injecting, setInjecting] = useState(null); // track which site is injecting
+    const [injecting, setInjecting] = useState(null);
+    const [copyFeedback, setCopyFeedback] = useState('');
 
     useEffect(() => {
         async function fetchSites() {
@@ -29,23 +35,33 @@ export default function SelectSite() {
         fetchSites();
     }, []);
 
-    const handleInject = async (siteId) => {
-        setInjecting(siteId);
+    const fallbackCopy = (text) => {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'absolute';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
         try {
-            const res = await fetch('/api/inject', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ siteId })
-            });
-
-            const result = await res.json();
-            router.push(result.success ? '/success?installed=true' : '/success?manual=true');
+            document.execCommand('copy');
+            setCopyFeedback('📋 Script copied manually!');
         } catch (err) {
-            console.error('Injection error:', err);
-            router.push('/success?manual=true');
-        } finally {
-            setInjecting(null);
+            setCopyFeedback('❌ Copy failed');
+        }
+        document.body.removeChild(textarea);
+    };
+
+    const handleCopyScript = () => {
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(scriptTag.trim())
+                .then(() => setCopyFeedback('📋 Script copied! Paste it into Site Settings → Footer.'))
+                .catch((err) => {
+                    console.error('❌ Clipboard API error:', err);
+                    fallbackCopy(scriptTag);
+                });
+        } else {
+            fallbackCopy(scriptTag);
         }
     };
 
@@ -56,6 +72,28 @@ export default function SelectSite() {
             </div>
 
             <h1 className={styles.heading}>Select a Webflow Site</h1>
+
+            {/* Copy section at top */}
+            <p className={styles.note}>
+                💡 For full-site coverage, manually paste the script into your Webflow <strong>Site Settings → Global Custom Code</strong>.
+            </p>
+            <div className={styles.copyContainer}>
+                <pre className={styles.codeBlock}>
+                    {scriptTag.trim()}
+                </pre>
+                <button
+                    className={styles.selectButton}
+                    onClick={handleCopyScript}
+                    aria-label="Copy script tag to clipboard"
+                >
+                    📋 Copy Script Tag
+                </button>
+                {copyFeedback && (
+                    <p style={{ fontSize: '0.85rem', marginTop: '0.5rem', color: '#555' }}>
+                        {copyFeedback}
+                    </p>
+                )}
+            </div>
 
             {loading ? (
                 <p>Loading sites...</p>
@@ -74,19 +112,19 @@ export default function SelectSite() {
                             <button
                                 className={styles.selectButton}
                                 aria-label={`Inject script into ${site.name}`}
-                                onClick={() => handleInject(site.id)}
-                                disabled={injecting === site.id}
+                                disabled
                             >
-                                {injecting === site.id ? 'Injecting...' : 'Inject Script to Site'}
+                                🚧 Inject Script to Site (coming soon)
                             </button>
 
                             <p className={styles.siteNote}>
-                                Script will be injected globally into the site’s <code>&lt;/body&gt;</code> tag.
+                                Webflow does not currently allow script injection via API. Please copy the script above manually.
                             </p>
                         </li>
                     ))}
                 </ul>
             )}
+
             <Footer />
         </main>
     );
