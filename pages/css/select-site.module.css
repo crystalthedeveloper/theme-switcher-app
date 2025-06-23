@@ -1,15 +1,15 @@
 /* pages/css/select-site.module.css */
 
 .container {
-  padding: 3rem 1.5rem;
+  padding: 2.5rem 1rem;
   max-width: 720px;
   margin: 0 auto;
-  text-align: center;
   font-family: system-ui, sans-serif;
+  text-align: center;
 }
 
 .heading {
-  font-size: 2rem;
+  font-size: 1.85rem;
   margin-bottom: 2rem;
   color: #111;
 }
@@ -23,7 +23,37 @@
   margin-bottom: 2rem;
 }
 
-/* Site List */
+.note {
+  font-size: 0.95rem;
+  background: #f0f8ff;
+  border-left: 4px solid #0077cc;
+  padding: 1rem;
+  margin: 2rem 0 1.25rem;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.copyContainer {
+  background: #f9f9f9;
+  padding: 1rem;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  margin-bottom: 2.5rem;
+  text-align: left;
+  overflow-x: auto;
+}
+
+.codeBlock {
+  background: #272727;
+  color: #fff;
+  font-size: 0.85rem;
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+  word-break: break-all;
+}
+
 .siteList {
   list-style: none;
   padding: 0;
@@ -37,7 +67,6 @@
   border: 1px solid #eee;
   border-radius: 12px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-  text-align: center;
   transition: box-shadow 0.2s ease;
   display: flex;
   flex-direction: column;
@@ -49,36 +78,17 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
 }
 
-.siteItem strong,
 .siteTitle {
   font-size: 1.2rem;
   color: #000;
   margin-bottom: 0.5rem;
 }
 
-.siteItem p,
 .siteNote {
   font-size: 0.95rem;
   color: #666;
-  margin-bottom: 1rem;
-}
-
-.siteItem select {
-  display: block;
-  width: 100%;
-  max-width: 300px;
-  padding: 0.5rem;
-  font-size: 1rem;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  background-color: #fff;
-  margin-bottom: 1rem;
-  transition: border-color 0.2s ease;
-}
-
-.siteItem select:focus {
-  border-color: #111;
-  outline: none;
+  margin-top: 0.75rem;
+  text-align: center;
 }
 
 /* Buttons */
@@ -105,10 +115,6 @@
 
 /* === Responsive === */
 @media (max-width: 768px) {
-  .container {
-    padding: 2rem 1rem;
-  }
-
   .heading {
     font-size: 1.5rem;
   }
@@ -129,7 +135,7 @@
 
 @media (max-width: 480px) {
   .container {
-    padding: 1.5rem 0.75rem;
+    padding: 1.25rem 0.75rem;
   }
 
   .heading {
@@ -142,5 +148,12 @@
 
   .selectButton {
     width: 100%;
+  }
+
+  .note,
+  .codeBlock,
+  .copyContainer {
+    font-size: 0.85rem;
+    padding: 0.75rem;
   }
 }
