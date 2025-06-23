@@ -30,18 +30,17 @@ export default async function handler(req, res) {
 
     try {
         // PATCH to the correct REST endpoint
-        const patchRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom-code`, {
+        const patchRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
             method: 'PATCH',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
-                'accept-version': '2.0.0'
+                'accept-version': '2.0.0',
             },
             body: JSON.stringify({
-                footerCode: scriptTag
+                footerCode: scriptTag,
             }),
         });
-
 
         const patchData = await patchRes.json();
 
