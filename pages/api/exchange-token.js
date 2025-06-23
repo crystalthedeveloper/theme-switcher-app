@@ -51,16 +51,18 @@ export default async function handler(req, res) {
   if (!code) return res.status(400).json({ error: 'Missing authorization code' });
 
   const {
-    NEXT_PUBLIC_WEBFLOW_CLIENT_ID: clientId,
-    NEXT_PUBLIC_BASE_URL: baseUrl,
+    WEBFLOW_CLIENT_ID: clientId,
+    BASE_URL: baseUrl,
     WEBFLOW_CLIENT_SECRET: clientSecret,
   } = process.env;
+
 
   console.log('🔑 Environment Variables:', {
     clientIdLoaded: !!clientId,
     baseUrlLoaded: !!baseUrl,
     clientSecretLoaded: !!clientSecret,
   });
+
 
   const redirectUri = `${baseUrl}/callback`;
   console.log('🔁 Redirect URI:', redirectUri);
