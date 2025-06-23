@@ -6,10 +6,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, message: 'Method Not Allowed' });
   }
 
-  const { siteId, pageId } = req.body;
+  const { siteId } = req.body;
 
-  if (!siteId || !pageId) {
-    return res.status(400).json({ success: false, message: 'Missing siteId or pageId' });
+  if (!siteId) {
+    return res.status(400).json({ success: false, message: 'Missing siteId' });
   }
 
   const cookies = cookie.parse(req.headers.cookie || '');
@@ -25,8 +25,8 @@ export default async function handler(req, res) {
 `;
 
   try {
-    // Step 1: Fetch existing custom code
-    const getRes = await fetch(`https://api.webflow.com/rest/sites/${siteId}/pages/${pageId}/custom-code`, {
+    // Step 1: Fetch current site-level custom code
+    const getRes = await fetch(`https://api.webflow.com/rest/sites/${siteId}/custom_code`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -52,15 +52,15 @@ export default async function handler(req, res) {
       ? currentFooter
       : `${currentFooter}\n${scriptTag}`;
 
-    // Step 2: Inject updated footer code
-    const patchRes = await fetch(`https://api.webflow.com/rest/sites/${siteId}/pages/${pageId}/custom-code`, {
+    // Step 2: Update site-level custom code
+    const patchRes = await fetch(`https://api.webflow.com/rest/sites/${siteId}/custom_code`, {
       method: 'PATCH',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
         'Accept-Version': '1.0.0'
       },
-      body: JSON.stringify({ footerCode: mergedFooterCode || '' })
+      body: JSON.stringify({ footerCode: mergedFooterCode })
     });
 
     if (!patchRes.ok) {
