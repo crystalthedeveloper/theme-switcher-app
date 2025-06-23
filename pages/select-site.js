@@ -17,6 +17,7 @@ export default function SelectSite() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [copyFeedback, setCopyFeedback] = useState('');
+  const [scriptCopied, setScriptCopied] = useState(false);
 
   useEffect(() => {
     async function fetchSites() {
@@ -46,6 +47,7 @@ export default function SelectSite() {
     try {
       document.execCommand('copy');
       setCopyFeedback('📋 Script copied manually.');
+      setScriptCopied(true);
     } catch {
       setCopyFeedback('❌ Copy failed.');
     }
@@ -55,7 +57,10 @@ export default function SelectSite() {
   const handleCopyScript = () => {
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(scriptTag.trim())
-        .then(() => setCopyFeedback('📋 Script copied! Paste it into Webflow → Site Settings → Footer.'))
+        .then(() => {
+          setCopyFeedback('📋 Script copied! Paste it into Webflow → Site Settings → Footer.');
+          setScriptCopied(true);
+        })
         .catch((err) => {
           console.error('Clipboard API error:', err);
           fallbackCopy(scriptTag);
@@ -63,6 +68,10 @@ export default function SelectSite() {
     } else {
       fallbackCopy(scriptTag);
     }
+  };
+
+  const handleGoToWebflow = () => {
+    window.open('https://webflow.com/dashboard', '_blank');
   };
 
   return (
@@ -86,10 +95,30 @@ export default function SelectSite() {
         >
           📋 Copy Script Tag (Manual)
         </button>
+
         {copyFeedback && (
           <p style={{ fontSize: '0.85rem', marginTop: '0.5rem', color: '#555' }}>
             {copyFeedback}
           </p>
+        )}
+
+        {scriptCopied && (
+          <button
+            className={styles.nextButton}
+            onClick={handleGoToWebflow}
+            style={{
+              marginTop: '0.75rem',
+              background: '#0073e6',
+              color: '#fff',
+              padding: '10px 16px',
+              fontSize: '15px',
+              borderRadius: '6px',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            🔗 Go to Webflow Settings
+          </button>
         )}
       </div>
 
@@ -112,7 +141,7 @@ export default function SelectSite() {
                 aria-label={`Script injection unavailable for ${site.name}`}
                 disabled
               >
-                🚧 Auto-inject coming soon
+                🚧 Auto-inject planned — pending Webflow API support
               </button>
 
               <p className={styles.siteNote}>
