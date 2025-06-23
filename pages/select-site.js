@@ -6,7 +6,7 @@ import Logo from '../components/Logo';
 import Footer from '../components/Footer';
 
 const scriptTag = `
-<!-- Theme Switcher injected by app -->
+<!-- Theme Switcher script (manually copy into Webflow) -->
 <script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>
 `;
 
