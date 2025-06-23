@@ -26,7 +26,7 @@ export default function Callback() {
     const isTest = test === 'true';
     setTestMode(isTest);
 
-    // Clean up unused/expired session keys before proceeding
+    // Clean up before proceeding
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('webflow_token');
       sessionStorage.removeItem('webflow_site_id');
@@ -53,7 +53,7 @@ export default function Callback() {
 
         const res = await fetch('/api/exchange-token', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'accept-version': '2.0.0' },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code }),
         });
 
@@ -76,8 +76,7 @@ export default function Callback() {
 
         if (isTest && warning) console.warn('⚠️ Warning:', warning);
 
-        const redirectUrl = `/?installed=true&site_id=${site_id}&token=${access_token}${testMode ? '&test=true' : ''}`;
-        router.replace(redirectUrl);
+        router.replace(`/select-site${testMode ? '?test=true' : ''}`);
       } catch (err) {
         console.error('❌ Token exchange error:', err);
         setLoading(false);
