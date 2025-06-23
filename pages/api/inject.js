@@ -7,13 +7,18 @@ export default async function handler(req, res) {
   }
 
   const { siteId } = req.body;
-
   if (!siteId) {
     return res.status(400).json({ success: false, message: 'Missing siteId' });
   }
 
-  const cookies = cookie.parse(req.headers.cookie || '');
-  const token = cookies.webflow_token || req.headers.authorization?.split('Bearer ')[1];
+  // Get token from cookie or Authorization header
+  let token;
+  try {
+    const cookies = cookie.parse(req.headers.cookie || '');
+    token = cookies.webflow_token || req.headers.authorization?.split('Bearer ')[1];
+  } catch (err) {
+    console.warn('⚠️ Failed to parse cookies:', err?.message || err);
+  }
 
   if (!token) {
     return res.status(401).json({ success: false, message: 'Unauthorized: No token found' });
@@ -22,60 +27,61 @@ export default async function handler(req, res) {
   const scriptTag = `
 <!-- Theme Switcher injected by app -->
 <script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>
-`;
+`.trim();
 
   try {
-    // Step 1: Fetch current site-level custom code
+    // 1. Get existing custom code
     const getRes = await fetch(`https://api.webflow.com/rest/sites/${siteId}/custom_code`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
-        'Accept-Version': '1.0.0'
-      }
+        'Accept-Version': '1.0.0',
+      },
     });
 
-    const currentCode = await getRes.json();
+    const currentData = await getRes.json();
 
-    if (!getRes.ok || !currentCode) {
-      console.error('❌ Failed to fetch current custom code:', currentCode);
-      return res.status(500).json({
+    if (!getRes.ok) {
+      console.error('❌ Failed to fetch site custom code:', currentData);
+      return res.status(getRes.status).json({
         success: false,
-        message: 'Failed to fetch current footer code',
-        details: currentCode
+        message: 'Failed to fetch current site custom code',
+        details: currentData,
       });
     }
 
-    const currentFooter = currentCode.footerCode || '';
+    const currentFooter = currentData.footerCode || '';
     const alreadyInjected = currentFooter.includes('theme-switcher.js');
 
-    const mergedFooterCode = alreadyInjected
+    const updatedFooterCode = alreadyInjected
       ? currentFooter
-      : `${currentFooter}\n${scriptTag}`;
+      : `${currentFooter}\n${scriptTag}`.trim();
 
-    // Step 2: Update site-level custom code
+    // 2. Patch the updated footer code
     const patchRes = await fetch(`https://api.webflow.com/rest/sites/${siteId}/custom_code`, {
       method: 'PATCH',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
-        'Accept-Version': '1.0.0'
+        'Accept-Version': '1.0.0',
       },
-      body: JSON.stringify({ footerCode: mergedFooterCode })
+      body: JSON.stringify({ footerCode: updatedFooterCode }),
     });
 
+    const patchData = await patchRes.json();
+
     if (!patchRes.ok) {
-      const errorData = await patchRes.json();
-      console.error('❌ Webflow PATCH error:', errorData);
-      return res.status(500).json({
+      console.error('❌ Webflow PATCH error:', patchData);
+      return res.status(patchRes.status).json({
         success: false,
-        message: 'Webflow API error during PATCH',
-        details: errorData
+        message: 'Failed to patch site custom code',
+        details: patchData,
       });
     }
 
     return res.status(200).json({ success: true });
   } catch (err) {
-    console.error('❌ Inject failed:', err);
+    console.error('❌ Server error:', err);
     return res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
 }
