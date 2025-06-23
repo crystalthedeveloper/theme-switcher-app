@@ -1,6 +1,7 @@
 // pages/api/exchange-token.js
 
 import applyRateLimit from '../../lib/rateLimiter';
+import cookie from 'cookie'; // ✅ Make sure this is installed
 
 async function fetchSites(accessToken) {
   try {
@@ -97,6 +98,15 @@ export default async function handler(req, res) {
     if (!siteId) {
       return res.status(400).json({ error: 'No valid hosted site found' });
     }
+
+    // ✅ Set cookie securely
+    res.setHeader('Set-Cookie', cookie.serialize('webflow_token', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 3600,
+      path: '/',
+      sameSite: 'Lax',
+    }));
 
     console.log('✅ Token received, hosted site:', siteId);
 
