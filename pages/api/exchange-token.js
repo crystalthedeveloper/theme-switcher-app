@@ -14,7 +14,6 @@ async function fetchSites(accessToken) {
     });
 
     const raw = await res.text();
-
     if (raw.startsWith('<')) {
       console.error('❌ HTML response from Webflow (likely invalid token):', raw.slice(0, 300));
       return { success: false, reason: 'Received HTML instead of JSON when fetching sites.' };
@@ -37,8 +36,6 @@ async function fetchSites(accessToken) {
 }
 
 export default async function handler(req, res) {
-  // await applyRateLimit(req, res);
-
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -52,30 +49,38 @@ export default async function handler(req, res) {
 
   const {
     WEBFLOW_CLIENT_ID: clientId,
-    BASE_URL: baseUrl,
     WEBFLOW_CLIENT_SECRET: clientSecret,
+    BASE_URL: baseUrl,
   } = process.env;
 
-
-  console.log('🔑 Environment Variables:', {
-    clientIdLoaded: !!clientId,
-    baseUrlLoaded: !!baseUrl,
-    clientSecretLoaded: !!clientSecret,
-  });
-
-
   const redirectUri = `${baseUrl}/callback`;
-  console.log('🔁 Redirect URI:', redirectUri);
+
+  // Logging for troubleshooting
+  console.log('🔑 Env check:', {
+    clientIdLoaded: !!clientId,
+    clientSecretLoaded: !!clientSecret,
+    baseUrlLoaded: !!baseUrl,
+    redirectUri,
+  });
 
   if (!clientId || !clientSecret || !baseUrl) {
     return res.status(500).json({
       error: 'Missing required environment variables',
-      details: { clientId: !clientId, clientSecret: !clientSecret, baseUrl: !baseUrl },
+      details: {
+        clientId: !clientId,
+        clientSecret: !clientSecret,
+        baseUrl: !baseUrl,
+      },
     });
   }
 
   try {
-    console.log('🔄 Requesting access token from Webflow...');
+    console.log('🔄 Requesting access token from Webflow...', {
+      clientId,
+      redirectUri,
+      shortCode: code?.slice(0, 6),
+    });
+
     const tokenRes = await fetch('https://api.webflow.com/oauth/access_token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -145,7 +150,7 @@ export default async function handler(req, res) {
       sameSite: 'Lax',
     }));
 
-    console.log('✅ Final token exchange complete. Site ID:', siteId);
+    console.log('✅ Token exchange complete. Site ID:', siteId);
 
     return res.status(200).json({
       access_token: accessToken,
