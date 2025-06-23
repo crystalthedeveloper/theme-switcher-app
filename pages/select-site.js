@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import styles from './css/select-site.module.css';
+import Logo from '../components/Logo';
 
 export default function SelectSite() {
     const router = useRouter();

@@ -2,6 +2,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import en from '../locales/en';
+import Logo from '../components/Logo';
+
 
 export default function Callback() {
   const router = useRouter();
