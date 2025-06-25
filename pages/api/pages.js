@@ -12,7 +12,9 @@ export default async function handler(req, res) {
   }
 
   const cookies = cookie.parse(req.headers.cookie || '');
-  const token = cookies.webflow_token || req.headers.authorization?.split('Bearer ')[1];
+  const token =
+    cookies.webflow_token ||
+    (req.headers.authorization || '').replace('Bearer ', '');
 
   if (!token) {
     return res.status(401).json({ error: 'Missing access token' });
@@ -35,9 +37,8 @@ export default async function handler(req, res) {
       });
     }
 
-    const pages = Array.isArray(data) ? data : data.pages || [];
+    const pages = Array.isArray(data.pages) ? data.pages : [];
 
-    // Normalize for frontend: only return what we need
     const cleanedPages = pages.map(p => ({
       _id: p._id,
       name: p.name,

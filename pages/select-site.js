@@ -30,16 +30,18 @@ export default function SelectSite() {
           });
           const pageData = await pageRes.json();
 
-          allPages[site.id] = (pageData.pages || []).filter(p => p.slug && typeof p.slug === 'string').map(p => ({
-            _id: p._id,  // ✅ Page ID
-            name: p.name,
-            slug: p.slug,
-          }));
+          allPages[site.id] = (pageData.pages || [])
+            .filter(p => p._id && p.slug && typeof p.slug === 'string')
+            .map(p => ({
+              _id: p._id,
+              name: p.name,
+              slug: p.slug,
+            }));
         }
 
         setPages(allPages);
       } catch (err) {
-        console.error('Error loading sites/pages:', err);
+        console.error('❌ Error loading sites/pages:', err);
         setError('Failed to load Webflow sites and pages.');
       } finally {
         setLoading(false);
@@ -50,7 +52,9 @@ export default function SelectSite() {
   }, []);
 
   const handleInject = async (siteId, pageId) => {
-    console.log('🧪 Injecting with page ID:', pageId); // ✅ debug ID
+    console.log('🧪 Injecting with site ID:', siteId);
+    console.log('🧪 Injecting with page ID:', pageId);
+
     setInjecting(true);
     setMessage('');
 
@@ -58,19 +62,20 @@ export default function SelectSite() {
       const res = await fetch('/api/inject', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ siteId, pageId }), // ✅ Sending page ID
+        body: JSON.stringify({ siteId, pageId }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
+        console.log('✅ Inject success:', data);
         setMessage(data.message || '✅ Script successfully injected!');
       } else {
-        console.error('Inject error:', data);
+        console.error('❌ Inject error:', data);
         setMessage(`❌ Injection failed: ${data.message || 'Unknown error'}`);
       }
     } catch (err) {
-      console.error('Unexpected injection error:', err);
+      console.error('❌ Unexpected injection error:', err);
       setMessage('❌ Injection error. Please try again.');
     } finally {
       setInjecting(false);
