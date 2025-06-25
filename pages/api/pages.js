@@ -1,4 +1,5 @@
 // pages/api/pages.js
+
 import * as cookie from 'cookie';
 
 export default async function handler(req, res) {
@@ -17,6 +18,7 @@ export default async function handler(req, res) {
     (req.headers.authorization || '').replace('Bearer ', '');
 
   if (!token) {
+    console.log('❌ Missing access token');
     return res.status(401).json({ error: 'Missing access token' });
   }
 
@@ -30,20 +32,29 @@ export default async function handler(req, res) {
     });
 
     const data = await apiRes.json();
+    console.log('📦 Raw pages response:', data); // ✅ Debug log
 
     if (!apiRes.ok) {
+      console.log('❌ Webflow API error:', data);
       return res.status(apiRes.status).json({
         error: data.message || 'Failed to fetch pages',
       });
     }
 
-    const pages = Array.isArray(data.pages) ? data.pages : [];
+    // ✅ Handle both forms: { pages: [] } or just []
+    const pages = Array.isArray(data.pages)
+      ? data.pages
+      : Array.isArray(data)
+      ? data
+      : [];
 
     const cleanedPages = pages.map(p => ({
       _id: p._id,
       name: p.name,
       slug: p.slug,
     }));
+
+    console.log(`✅ Loaded ${cleanedPages.length} pages for siteId ${siteId}`);
 
     return res.status(200).json({ pages: cleanedPages });
   } catch (err) {
