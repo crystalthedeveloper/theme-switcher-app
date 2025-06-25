@@ -19,19 +19,24 @@ export default async function handler(req, res) {
   }
 
   try {
-    const apiRes = await fetch(`https://api.webflow.com/sites/${siteId}/pages`, {
+    const apiRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/pages`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
-        'accept-version': '1.0.0',
+        'Content-Type': 'application/json',
       },
     });
 
-    const { pages = [] } = await apiRes.json();
+    const data = await apiRes.json();
 
     if (!apiRes.ok) {
-      return res.status(apiRes.status).json({ error: 'Failed to fetch pages' });
+      return res.status(apiRes.status).json({
+        error: data.message || 'Failed to fetch pages',
+      });
     }
+
+    // v2 API usually returns a direct array, not { pages: [] }
+    const pages = Array.isArray(data) ? data : data.pages || [];
 
     return res.status(200).json({ pages });
   } catch (err) {
