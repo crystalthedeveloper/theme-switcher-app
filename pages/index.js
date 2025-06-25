@@ -11,12 +11,17 @@ export default function Home() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [injecting, setInjecting] = useState(false);
   const [message, setMessage] = useState('');
+  const [token, setToken] = useState('');
+  const [siteId, setSiteId] = useState('');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const hasToken = sessionStorage.getItem('webflow_token');
-      const hasSiteId = sessionStorage.getItem('webflow_site_id');
-      setIsAuthorized(Boolean(hasToken && hasSiteId));
+      const savedToken = sessionStorage.getItem('webflow_token');
+      const savedSiteId = sessionStorage.getItem('webflow_site_id');
+
+      setToken(savedToken || '');
+      setSiteId(savedSiteId || '');
+      setIsAuthorized(Boolean(savedToken && savedSiteId));
     }
   }, []);
 
@@ -29,7 +34,11 @@ export default function Home() {
     try {
       const res = await fetch('/api/inject', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ siteId }),
       });
 
       const data = await res.json();
@@ -46,7 +55,6 @@ export default function Home() {
       setInjecting(false);
     }
   };
-
 
   return (
     <div>

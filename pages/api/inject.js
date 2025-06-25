@@ -9,15 +9,22 @@ export default async function handler(req, res) {
   }
 
   const cookies = cookie.parse(req.headers.cookie || '');
+
+  // Support either cookie OR Authorization header
   const token =
     cookies.webflow_token ||
     (req.headers.authorization?.startsWith('Bearer ')
       ? req.headers.authorization.split('Bearer ')[1]
       : null);
-  const siteId = cookies.webflow_site_id;
+
+  // Support either cookie or POST body for siteId
+  const siteId = cookies.webflow_site_id || req.body.siteId;
 
   if (!token || !siteId) {
-    return res.status(401).json({ success: false, message: 'Unauthorized: Missing token or siteId' });
+    return res.status(401).json({
+      success: false,
+      message: 'Unauthorized: Missing token or siteId',
+    });
   }
 
   try {
@@ -49,7 +56,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // Step 3: Inject script into homepage custom code
+    // Step 3: Inject script
     const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
     const injectUrl = `https://api.webflow.com/v2/sites/${siteId}/pages/${homepage._id}/custom_code`;
 
