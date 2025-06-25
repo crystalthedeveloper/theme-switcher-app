@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, message: 'Method Not Allowed' });
   }
 
-  const { siteId, debug } = req.body;
+  const { siteId } = req.body;
   if (!siteId) {
     return res.status(400).json({ success: false, message: 'Missing siteId' });
   }
@@ -28,7 +28,6 @@ export default async function handler(req, res) {
   const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
 
   try {
-    // Get existing custom code
     const getRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
       method: 'GET',
       headers: {
@@ -42,10 +41,10 @@ export default async function handler(req, res) {
 
     const footerBlock = scripts.find((s) => s.location === 'footer');
 
-    if (!footerBlock) {
+    if (!footerBlock || !footerBlock.id || !footerBlock.version) {
       return res.status(400).json({
         success: false,
-        message: 'No editable footer script found. Please add any dummy script in Webflow → Custom Code → Footer first.',
+        message: 'No editable footer block found. Add any dummy script manually in Webflow footer first.',
       });
     }
 
@@ -58,9 +57,8 @@ export default async function handler(req, res) {
       });
     }
 
-    // Add script safely at the end
     const updatedScripts = scripts.map((s) =>
-      s.location === 'footer'
+      s.id === footerBlock.id
         ? {
             ...s,
             content: `${s.content.trim()}\n${scriptTag}`,

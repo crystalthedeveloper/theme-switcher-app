@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   }
 
   const cookies = cookie.parse(req.headers.cookie || '');
-  const token = cookies.webflow_token;
+  const token = cookies.webflow_token || req.headers.authorization?.split('Bearer ')[1];
 
   if (!token) {
     return res.status(401).json({ error: 'Missing access token' });
@@ -27,13 +27,13 @@ export default async function handler(req, res) {
       },
     });
 
-    const data = await apiRes.json();
+    const { pages = [] } = await apiRes.json();
 
     if (!apiRes.ok) {
-      return res.status(apiRes.status).json({ error: data.message || 'Failed to fetch pages' });
+      return res.status(apiRes.status).json({ error: 'Failed to fetch pages' });
     }
 
-    return res.status(200).json({ pages: data.pages });
+    return res.status(200).json({ pages });
   } catch (err) {
     console.error('❌ /api/pages error:', err);
     return res.status(500).json({ error: 'Internal Server Error' });
