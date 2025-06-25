@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, message: 'Method Not Allowed' });
   }
 
-  const { siteId } = req.body;
+  const { siteId, debug } = req.body;
   if (!siteId) {
     console.warn('⚠️ Missing siteId');
     return res.status(400).json({ success: false, message: 'Missing siteId' });
@@ -46,6 +46,16 @@ export default async function handler(req, res) {
     const existingScripts = existing.scripts || [];
 
     console.log('🧩 Existing scripts:', existingScripts);
+
+    // 🔍 Optional: Return early if in debug mode
+    if (debug === true) {
+      return res.status(200).json({
+        success: true,
+        debug: true,
+        message: 'Returning raw custom_code data for inspection.',
+        raw: existing,
+      });
+    }
 
     const footerScript = existingScripts.find((s) => s.location === 'footer');
     if (!footerScript || !footerScript.id || !footerScript.version) {
