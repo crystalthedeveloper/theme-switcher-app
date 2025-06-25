@@ -1,5 +1,4 @@
 // pages/api/inject.js
-
 import * as cookie from 'cookie';
 
 export default async function handler(req, res) {
@@ -7,12 +6,12 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, message: 'Method Not Allowed' });
   }
 
-  const { siteId, pageId } = req.body;
+  const { siteId } = req.body;
 
-  if (!siteId || !pageId) {
+  if (!siteId) {
     return res.status(400).json({
       success: false,
-      message: 'Missing siteId or pageId',
+      message: 'Missing siteId',
     });
   }
 
@@ -31,13 +30,12 @@ export default async function handler(req, res) {
   const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
 
   try {
-    // 🔍 Step 1: Check existing custom code on this page
-    const getRes = await fetch(`https://api.webflow.com/sites/${siteId}/pages/${pageId}/customcode`, {
+    // 🧾 Fetch existing site-wide custom code
+    const getRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'accept-version': '1.0.0',
+        'accept-version': '2.0.0',
       },
     });
 
@@ -46,45 +44,44 @@ export default async function handler(req, res) {
     }
 
     const existingData = await getRes.json();
-    const existingFooter = existingData.footer || '';
+    const existingFooter = existingData.footer_code || '';
 
-    // 🚫 Skip if already injected
+    // ⛔ Avoid duplicate injection
     if (existingFooter.includes('theme-switcher.js')) {
       return res.status(200).json({
         success: true,
-        message: 'Script already injected. No action needed.',
+        message: 'Script already injected globally.',
         alreadyInjected: true,
       });
     }
 
-    // 🧩 Step 2: Merge and inject
-    const mergedFooter = `${existingFooter}\n${scriptTag}`;
+    const updatedFooter = `${existingFooter}\n${scriptTag}`.trim();
 
-    const putRes = await fetch(`https://api.webflow.com/sites/${siteId}/pages/${pageId}/customcode`, {
-      method: 'PUT',
+    // 🛠️ Inject script globally
+    const patchRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
+      method: 'PATCH',
       headers: {
         Authorization: `Bearer ${token}`,
+        'accept-version': '2.0.0',
         'Content-Type': 'application/json',
-        'accept-version': '1.0.0',
       },
       body: JSON.stringify({
-        head: existingData.head || '',
-        footer: mergedFooter,
+        footer_code: updatedFooter,
       }),
     });
 
-    const data = await putRes.json();
+    const result = await patchRes.json();
 
-    if (!putRes.ok) {
-      console.error('❌ Failed to inject code:', data);
-      return res.status(putRes.status).json({
+    if (!patchRes.ok) {
+      console.error('❌ Failed to inject global code:', result);
+      return res.status(patchRes.status).json({
         success: false,
-        message: 'Failed to inject script into page',
-        data,
+        message: 'Failed to inject site-wide script',
+        data: result,
       });
     }
 
-    return res.status(200).json({ success: true, data });
+    return res.status(200).json({ success: true, message: 'Script successfully injected globally.', data: result });
   } catch (err) {
     console.error('❌ Server error:', err);
     return res.status(500).json({

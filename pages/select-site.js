@@ -1,15 +1,12 @@
 // pages/select-site.js
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
 import styles from './css/select-site.module.css';
 import Logo from '../components/Logo';
 import Footer from '../components/Footer';
 
 export default function SelectSite() {
   const [sites, setSites] = useState([]);
-  const [pages, setPages] = useState({});
-  const [selectedPage, setSelectedPage] = useState({});
   const [injecting, setInjecting] = useState(false);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -32,35 +29,7 @@ export default function SelectSite() {
     fetchSites();
   }, []);
 
-  const fetchPagesForSite = async (siteId) => {
-    try {
-      const res = await fetch('/api/pages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ siteId }),
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        setPages((prev) => ({ ...prev, [siteId]: data.pages }));
-      } else {
-        console.error(`Failed to fetch pages for site ${siteId}:`, data);
-      }
-    } catch (err) {
-      console.error(`Failed to fetch pages for site ${siteId}`, err);
-    }
-  };
-
-  const handleSelectSite = async (siteId) => {
-    await fetchPagesForSite(siteId);
-    setSelectedPage((prev) => ({ ...prev, [siteId]: null }));
-  };
-
-  const handlePageChange = (siteId, pageId) => {
-    setSelectedPage((prev) => ({ ...prev, [siteId]: pageId }));
-  };
-
-  const handleInject = async (siteId, pageId) => {
+  const handleInject = async (siteId) => {
     setInjecting(true);
     setMessage('');
 
@@ -68,12 +37,12 @@ export default function SelectSite() {
       const res = await fetch('/api/inject', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ siteId, pageId }),
+        body: JSON.stringify({ siteId }),
       });
 
       const data = await res.json();
       if (res.ok) {
-        setMessage('✅ Script successfully injected!');
+        setMessage(data.message || '✅ Script successfully injected!');
       } else {
         console.error('Inject error:', data);
         setMessage(`❌ Injection failed: ${data.message || 'Unknown error'}`);
@@ -94,7 +63,9 @@ export default function SelectSite() {
 
       <h1 className={styles.heading}>Select a Webflow Site & Inject Script</h1>
 
-      {message && <p style={{ color: message.startsWith('✅') ? 'green' : 'red' }}>{message}</p>}
+      {message && (
+        <p style={{ color: message.startsWith('✅') ? 'green' : 'red' }}>{message}</p>
+      )}
 
       {loading ? (
         <p>Loading sites...</p>
@@ -112,37 +83,11 @@ export default function SelectSite() {
 
               <button
                 className={styles.selectButton}
-                onClick={() => handleSelectSite(site.id)}
+                disabled={injecting}
+                onClick={() => handleInject(site.id)}
               >
-                🔍 Load Pages
+                🚀 Inject Theme Switcher Globally
               </button>
-
-              {pages[site.id] && (
-                <>
-                  <label htmlFor={`page-select-${site.id}`}>Select Page:</label>
-                  <select
-                    id={`page-select-${site.id}`}
-                    value={selectedPage[site.id] || ''}
-                    onChange={(e) => handlePageChange(site.id, e.target.value)}
-                    className={styles.dropdown}
-                  >
-                    <option value="">-- Select a page --</option>
-                    {pages[site.id].map((page) => (
-                      <option key={page.id} value={page.id}>
-                        {page.name || page.slug || page.id}
-                      </option>
-                    ))}
-                  </select>
-
-                  <button
-                    disabled={!selectedPage[site.id] || injecting}
-                    className={styles.selectButton}
-                    onClick={() => handleInject(site.id, selectedPage[site.id])}
-                  >
-                    🚀 Inject Theme Switcher
-                  </button>
-                </>
-              )}
             </li>
           ))}
         </ul>
