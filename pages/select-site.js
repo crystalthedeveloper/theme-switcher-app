@@ -31,15 +31,27 @@ export default function SelectSite() {
           });
 
           const pageData = await pageRes.json();
-          console.log(`📄 Pages for ${site.name} (${site.id}):`, pageData);
+          console.log(`📄 Raw Pages for ${site.name} (${site.id}):`, pageData.pages);
 
-          allPages[site.id] = (pageData.pages || [])
-            .filter(p => p._id && p.slug)
-            .map(p => ({
-              _id: p._id,
-              name: p.name,
-              slug: p.slug,
-            }));
+          const filteredPages = (pageData.pages || []).filter(p => {
+            const isValid = p._id && p.slug && !['utility-404', 'utility-password'].includes(p.slug);
+            if (!isValid) {
+              console.log('⛔ Skipped page:', {
+                name: p.name,
+                slug: p.slug,
+                _id: p._id,
+              });
+            }
+            return isValid;
+          });
+
+          allPages[site.id] = filteredPages.map(p => ({
+            _id: p._id,
+            name: p.name,
+            slug: p.slug,
+          }));
+
+          console.log(`✅ Filtered ${allPages[site.id].length} eligible pages for site ${site.name}`);
         }
 
         setPages(allPages);

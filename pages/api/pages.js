@@ -32,7 +32,7 @@ export default async function handler(req, res) {
     });
 
     const data = await apiRes.json();
-    console.log('📦 Raw pages response:', data); // ✅ Debug log
+    console.log('📦 Raw pages response:', data);
 
     if (!apiRes.ok) {
       console.log('❌ Webflow API error:', data);
@@ -41,20 +41,31 @@ export default async function handler(req, res) {
       });
     }
 
-    // ✅ Handle both forms: { pages: [] } or just []
     const pages = Array.isArray(data.pages)
       ? data.pages
       : Array.isArray(data)
       ? data
       : [];
 
-    const cleanedPages = pages.map(p => ({
-      _id: p._id,
-      name: p.name,
-      slug: p.slug,
-    }));
+    const cleanedPages = pages
+      .filter((p) => {
+        const valid = !!p._id && p.slug !== 'utility-404' && p.slug !== 'utility-password';
+        if (!valid) {
+          console.log('⛔ Skipping page:', {
+            name: p.name,
+            slug: p.slug,
+            _id: p._id,
+          });
+        }
+        return valid;
+      })
+      .map((p) => ({
+        _id: p._id,
+        name: p.name,
+        slug: p.slug,
+      }));
 
-    console.log(`✅ Loaded ${cleanedPages.length} pages for siteId ${siteId}`);
+    console.log(`✅ Loaded ${cleanedPages.length} eligible pages for siteId ${siteId}`);
 
     return res.status(200).json({ pages: cleanedPages });
   } catch (err) {
