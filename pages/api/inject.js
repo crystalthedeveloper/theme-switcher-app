@@ -5,13 +5,11 @@ export default async function handler(req, res) {
   console.log('🌐 [API] Inject handler called');
 
   if (req.method !== 'POST') {
-    console.warn('⛔ Invalid method:', req.method);
     return res.status(405).json({ success: false, message: 'Method Not Allowed' });
   }
 
   const { siteId, debug } = req.body;
   if (!siteId) {
-    console.warn('⚠️ Missing siteId');
     return res.status(400).json({ success: false, message: 'Missing siteId' });
   }
 
@@ -19,21 +17,18 @@ export default async function handler(req, res) {
   try {
     const cookies = cookie.parse(req.headers.cookie || '');
     token = cookies.webflow_token || req.headers.authorization?.split('Bearer ')[1];
-    console.log('🔑 Token found:', !!token);
   } catch (err) {
-    console.warn('⚠️ Failed to parse cookies:', err?.message || err);
+    console.warn('⚠️ Failed to parse token:', err);
   }
 
   if (!token) {
-    console.error('❌ No token found');
     return res.status(401).json({ success: false, message: 'Unauthorized: No token found' });
   }
 
   const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
-  console.log('📦 Script to inject:', scriptTag);
 
   try {
-    console.log(`📥 Fetching existing custom code for site ${siteId}`);
+    // Get existing custom code
     const getRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
       method: 'GET',
       headers: {
@@ -43,55 +38,36 @@ export default async function handler(req, res) {
     });
 
     const existing = await getRes.json();
-    const existingScripts = existing.scripts || [];
+    const scripts = existing.scripts || [];
 
-    console.log('🧩 Existing scripts:', existingScripts);
+    const footerBlock = scripts.find((s) => s.location === 'footer');
 
-    // ✅ Optional debug view
-    if (debug === true) {
-      return res.status(200).json({
-        success: true,
-        debug: true,
-        message: 'Returning raw custom_code data for inspection.',
-        raw: existing,
-      });
-    }
-
-    // ✅ Look for any valid footer script block with id + version
-    const footerScript = existingScripts.find(
-      (s) => s.location === 'footer' && s.id && s.version
-    );
-
-    if (!footerScript) {
-      console.error('⚠️ No valid footer script block found with required id + version');
+    if (!footerBlock) {
       return res.status(400).json({
         success: false,
-        message: 'Please add any dummy code to the Webflow footer in the dashboard first, then try again.',
+        message: 'No editable footer script found. Please add any dummy script in Webflow → Custom Code → Footer first.',
       });
     }
 
-    const hasScript = footerScript.content.includes('theme-switcher.js');
-    if (hasScript) {
-      console.log('✅ Script already present in footer. Skipping injection.');
+    const alreadyInjected = footerBlock.content.includes('theme-switcher.js');
+    if (alreadyInjected) {
       return res.status(200).json({
         success: true,
-        message: 'Script already injected. No action needed.',
+        message: 'Script already injected.',
         alreadyInjected: true,
       });
     }
 
-    console.log('➕ Injecting script into existing footer block...');
-    const updatedScripts = existingScripts.map((s) => {
-      if (s.id === footerScript.id) {
-        return {
-          ...s,
-          content: `${s.content.trim()}\n${scriptTag}`,
-        };
-      }
-      return s;
-    });
+    // Add script safely at the end
+    const updatedScripts = scripts.map((s) =>
+      s.location === 'footer'
+        ? {
+            ...s,
+            content: `${s.content.trim()}\n${scriptTag}`,
+          }
+        : s
+    );
 
-    console.log('🚀 Sending PUT to Webflow with updated scripts...');
     const putRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
       method: 'PUT',
       headers: {
@@ -102,21 +78,17 @@ export default async function handler(req, res) {
     });
 
     const result = await putRes.json();
-    console.log('📤 Webflow response:', result);
 
     if (!putRes.ok) {
-      console.error('❌ Failed to inject global code:', result);
       return res.status(putRes.status).json({
         success: false,
-        message: 'Failed to inject global script',
+        message: 'Failed to inject script',
         error: result,
       });
     }
 
-    console.log('✅ Script successfully injected!');
     return res.status(200).json({ success: true, message: '✅ Script injected into footer!' });
   } catch (err) {
-    console.error('❌ Server error:', err);
     return res.status(500).json({
       success: false,
       message: 'Server error',
