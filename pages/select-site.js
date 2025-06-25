@@ -76,6 +76,8 @@ export default function SelectSite() {
     }
   };
 
+  const cleanSlug = (slug = '') => slug.replace(/^[-–\s]+|[-–\s]+$/g, '');
+
   return (
     <main className={styles.container}>
       <div style={{ marginBottom: '1rem' }}>
@@ -115,7 +117,7 @@ export default function SelectSite() {
                 </option>
                 {pages[site.id]?.map((page) => (
                   <option key={page._id} value={page._id}>
-                    {page.name} – {page.slug}
+                    {cleanSlug(page.slug)}
                   </option>
                 ))}
               </select>
