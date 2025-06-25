@@ -30,12 +30,11 @@ export default function SelectSite() {
           });
           const pageData = await pageRes.json();
 
-          // Only include pages with valid slugs
-          allPages[site.id] = pageData.pages?.filter(p => p.slug && typeof p.slug === 'string').map(p => ({
-            _id: p._id,
+          allPages[site.id] = (pageData.pages || []).filter(p => p.slug && typeof p.slug === 'string').map(p => ({
+            _id: p._id,  // ✅ Page ID
             name: p.name,
             slug: p.slug,
-          })) || [];
+          }));
         }
 
         setPages(allPages);
@@ -51,7 +50,7 @@ export default function SelectSite() {
   }, []);
 
   const handleInject = async (siteId, pageId) => {
-    console.log('Injecting script into page ID:', pageId);
+    console.log('🧪 Injecting with page ID:', pageId); // ✅ debug ID
     setInjecting(true);
     setMessage('');
 
@@ -59,7 +58,7 @@ export default function SelectSite() {
       const res = await fetch('/api/inject', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ siteId, pageId }),
+        body: JSON.stringify({ siteId, pageId }), // ✅ Sending page ID
       });
 
       const data = await res.json();
@@ -122,7 +121,7 @@ export default function SelectSite() {
                 </option>
                 {pages[site.id]?.map((page) => (
                   <option key={page._id} value={page._id}>
-                    {cleanSlug(page.slug)}
+                    {page.name} ({cleanSlug(page.slug)})
                   </option>
                 ))}
               </select>
