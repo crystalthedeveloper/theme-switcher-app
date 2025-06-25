@@ -49,7 +49,7 @@ export default function SelectSite() {
     setMessage('');
 
     try {
-      const res = await fetch('/api/inject-page', {
+      const res = await fetch('/api/inject', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ siteId, pageId }),
