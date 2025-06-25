@@ -115,7 +115,7 @@ export default function SelectSite() {
                 </option>
                 {pages[site.id]?.map((page) => (
                   <option key={page._id} value={page._id}>
-                    {page.name} ({page.slug})
+                    {page.name} – {page.slug}
                   </option>
                 ))}
               </select>
