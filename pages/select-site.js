@@ -19,6 +19,7 @@ export default function SelectSite() {
         const siteRes = await fetch('/api/sites', { credentials: 'include' });
         const siteData = await siteRes.json();
         const siteList = siteData.sites || [];
+        console.log('🌐 Loaded sites:', siteList);
         setSites(siteList);
 
         const allPages = {};
@@ -28,10 +29,12 @@ export default function SelectSite() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ siteId: site.id }),
           });
+
           const pageData = await pageRes.json();
+          console.log(`📄 Pages for ${site.name} (${site.id}):`, pageData);
 
           allPages[site.id] = (pageData.pages || [])
-            .filter(p => p._id && p.slug && typeof p.slug === 'string')
+            .filter(p => p._id && p.slug)
             .map(p => ({
               _id: p._id,
               name: p.name,
@@ -54,7 +57,6 @@ export default function SelectSite() {
   const handleInject = async (siteId, pageId) => {
     console.log('🧪 Injecting with site ID:', siteId);
     console.log('🧪 Injecting with page ID:', pageId);
-
     setInjecting(true);
     setMessage('');
 
@@ -66,12 +68,11 @@ export default function SelectSite() {
       });
 
       const data = await res.json();
+      console.log('🚀 Injection response:', data);
 
       if (res.ok) {
-        console.log('✅ Inject success:', data);
         setMessage(data.message || '✅ Script successfully injected!');
       } else {
-        console.error('❌ Inject error:', data);
         setMessage(`❌ Injection failed: ${data.message || 'Unknown error'}`);
       }
     } catch (err) {
@@ -104,32 +105,35 @@ export default function SelectSite() {
       ) : error ? (
         <p className={styles.error} role="alert">{error}</p>
       ) : sites.length === 0 ? (
-        <p className={styles.error} role="alert">
-          No connected Webflow sites found.
-        </p>
+        <p className={styles.error} role="alert">No connected Webflow sites found.</p>
       ) : (
         <div className={styles.dropdownContainer}>
           {sites.map((site) => (
             <div key={site.id} className={styles.siteItem}>
               <h2 className={styles.siteTitle}>{site.name}</h2>
-              <select
-                className={styles.dropdown}
-                onChange={(e) => {
-                  const pageId = e.target.value;
-                  if (pageId) handleInject(site.id, pageId);
-                }}
-                disabled={injecting}
-                defaultValue=""
-              >
-                <option value="" disabled>
-                  — Select a page to inject —
-                </option>
-                {pages[site.id]?.map((page) => (
-                  <option key={page._id} value={page._id}>
-                    {page.name} ({cleanSlug(page.slug)})
+
+              {pages[site.id]?.length > 0 ? (
+                <select
+                  className={styles.dropdown}
+                  onChange={(e) => {
+                    const pageId = e.target.value;
+                    if (pageId) handleInject(site.id, pageId);
+                  }}
+                  disabled={injecting}
+                  defaultValue=""
+                >
+                  <option value="" disabled>
+                    — Select a page to inject —
                   </option>
-                ))}
-              </select>
+                  {pages[site.id].map((page) => (
+                    <option key={page._id} value={page._id}>
+                      {page.name} ({cleanSlug(page.slug)})
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <p>No eligible pages found for this site.</p>
+              )}
             </div>
           ))}
         </div>
