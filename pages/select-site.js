@@ -29,7 +29,11 @@ export default function SelectSite() {
             body: JSON.stringify({ siteId: site.id }),
           });
           const pageData = await pageRes.json();
-          allPages[site.id] = pageData.pages || [];
+          allPages[site.id] = pageData.pages?.map(p => ({
+            _id: p._id,
+            name: p.name,
+            slug: p.slug,
+          })) || [];
         }
 
         setPages(allPages);
@@ -56,13 +60,7 @@ export default function SelectSite() {
         body: JSON.stringify({ siteId, pageId }),
       });
 
-      let data;
-      try {
-        data = await res.json();
-      } catch (jsonErr) {
-        console.error('Invalid JSON:', jsonErr);
-        return setMessage('❌ Unexpected server response. Please try again.');
-      }
+      const data = await res.json();
 
       if (res.ok) {
         setMessage(data.message || '✅ Script successfully injected!');
