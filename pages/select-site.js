@@ -55,7 +55,14 @@ export default function SelectSite() {
         body: JSON.stringify({ siteId, pageId }),
       });
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        console.error('Invalid JSON:', jsonErr);
+        return setMessage('❌ Unexpected server response. Please try again.');
+      }
+
       if (res.ok) {
         setMessage(data.message || '✅ Script successfully injected!');
       } else {

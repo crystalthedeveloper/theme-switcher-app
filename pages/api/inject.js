@@ -1,4 +1,5 @@
 // pages/api/inject.js
+
 import * as cookie from 'cookie';
 
 export default async function handler(req, res) {
@@ -28,7 +29,7 @@ export default async function handler(req, res) {
   const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
 
   try {
-    // Step 1: Fetch existing global custom_code
+    // Step 1: Fetch current footer scripts
     const getRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
       method: 'GET',
       headers: {
@@ -45,12 +46,13 @@ export default async function handler(req, res) {
     if (!footerBlock?.id || !footerBlock?.version || typeof footerBlock.content !== 'string') {
       return res.status(400).json({
         success: false,
-        message: 'No editable footer block found. Please add any dummy script manually in Webflow → Settings → Custom Code → Footer.',
+        message:
+          'No editable footer block found. Please add any dummy script manually in Webflow → Site Settings → Custom Code → Footer.',
       });
     }
 
-    const alreadyInjected = footerBlock.content.includes('theme-switcher.js');
-    if (alreadyInjected) {
+    // Check if script already injected
+    if (footerBlock.content.includes('theme-switcher.js')) {
       return res.status(200).json({
         success: true,
         message: 'Script already injected.',
@@ -58,10 +60,13 @@ export default async function handler(req, res) {
       });
     }
 
-    // Step 2: Update footer script block with new script appended
+    // Step 2: Inject script into footer content
     const updatedScripts = scripts.map((s) =>
       s.id === footerBlock.id
-        ? { ...s, content: `${s.content.trim()}\n${scriptTag}` }
+        ? {
+            ...s,
+            content: `${s.content.trim()}\n${scriptTag}`,
+          }
         : s
     );
 
@@ -77,19 +82,22 @@ export default async function handler(req, res) {
     let result;
     try {
       result = await putRes.json();
-    } catch (jsonErr) {
-      result = { error: 'Failed to parse Webflow error response.' };
+    } catch {
+      result = { error: 'Webflow response was not valid JSON.' };
     }
 
     if (!putRes.ok) {
       return res.status(putRes.status).json({
         success: false,
-        message: 'Failed to inject script into custom_code',
+        message: 'Failed to update footer custom_code.',
         error: result,
       });
     }
 
-    return res.status(200).json({ success: true, message: '✅ Script injected into footer via custom_code!' });
+    return res.status(200).json({
+      success: true,
+      message: '✅ Script injected into footer via custom_code!',
+    });
   } catch (err) {
     return res.status(500).json({
       success: false,
