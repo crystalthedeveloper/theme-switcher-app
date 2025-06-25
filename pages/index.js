@@ -27,13 +27,18 @@ export default function Home() {
     setMessage('');
 
     try {
-      const res = await fetch('/api/inject-homepage', {
+      const res = await fetch('/api/inject', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
 
       const data = await res.json();
-      setMessage(data.message || '✅ Script injected!');
+
+      if (data.success) {
+        window.location.href = '/success';
+      } else {
+        setMessage(data.message || '❌ Injection failed');
+      }
     } catch (err) {
       console.error('❌ Injection error:', err);
       setMessage('❌ Injection failed');
@@ -41,6 +46,7 @@ export default function Home() {
       setInjecting(false);
     }
   };
+
 
   return (
     <div>
