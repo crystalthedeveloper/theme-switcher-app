@@ -36,11 +36,7 @@ export default function SelectSite() {
           const filteredPages = (pageData.pages || []).filter(p => {
             const isValid = p._id && p.slug && !['utility-404', 'utility-password'].includes(p.slug);
             if (!isValid) {
-              console.log('⛔ Skipped page:', {
-                name: p.name,
-                slug: p.slug,
-                _id: p._id,
-              });
+              console.log('⛔ Skipped page:', { name: p.name, slug: p.slug, _id: p._id });
             }
             return isValid;
           });

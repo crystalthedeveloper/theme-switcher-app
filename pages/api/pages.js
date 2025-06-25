@@ -14,8 +14,7 @@ export default async function handler(req, res) {
 
   const cookies = cookie.parse(req.headers.cookie || '');
   const token =
-    cookies.webflow_token ||
-    (req.headers.authorization || '').replace('Bearer ', '');
+    cookies.webflow_token || (req.headers.authorization || '').replace('Bearer ', '');
 
   if (!token) {
     console.log('❌ Missing access token');
@@ -35,7 +34,6 @@ export default async function handler(req, res) {
     console.log('📦 Raw pages response:', data);
 
     if (!apiRes.ok) {
-      console.log('❌ Webflow API error:', data);
       return res.status(apiRes.status).json({
         error: data.message || 'Failed to fetch pages',
       });
@@ -51,11 +49,7 @@ export default async function handler(req, res) {
       .filter((p) => {
         const valid = !!p._id && p.slug !== 'utility-404' && p.slug !== 'utility-password';
         if (!valid) {
-          console.log('⛔ Skipping page:', {
-            name: p.name,
-            slug: p.slug,
-            _id: p._id,
-          });
+          console.log('⛔ Skipping page:', { name: p.name, slug: p.slug, _id: p._id });
         }
         return valid;
       })
@@ -66,7 +60,6 @@ export default async function handler(req, res) {
       }));
 
     console.log(`✅ Loaded ${cleanedPages.length} eligible pages for siteId ${siteId}`);
-
     return res.status(200).json({ pages: cleanedPages });
   } catch (err) {
     console.error('❌ /api/pages error:', err);
