@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import en from '../locales/en';
 import Logo from '../components/Logo';
-
+import styles from './css/callback.module.css'; // ✅ Fixed missing import
 
 export default function Callback() {
   const router = useRouter();
@@ -30,7 +30,6 @@ export default function Callback() {
     const isTest = test === 'true';
     setTestMode(isTest);
 
-    // Clear previous session data
     if (typeof window !== 'undefined') {
       ['webflow_token', 'webflow_site_id', 'webflow_app_installed', 'webflow_test_mode']
         .forEach(key => sessionStorage.removeItem(key));
@@ -100,14 +99,16 @@ export default function Callback() {
     exchangeToken();
   }, [router.isReady]);
 
+  const t = en; // ✅ Fix for undefined "t"
+
   return (
     <main style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }} aria-busy={loading}>
       <Logo />
-      <h1>{en.connecting || 'Connecting to Webflow...'}</h1>
+      <h1>{t.connecting || 'Connecting to Webflow...'}</h1>
       <p aria-live="polite">
         {loading
-          ? (en.exchanging || 'Exchanging code...')
-          : (error || en.tryAgainFallback || 'Something went wrong.')}
+          ? (t.exchanging || 'Exchanging code...')
+          : (error || t.tryAgainFallback || 'Something went wrong.')}
       </p>
 
       {error && (
@@ -124,7 +125,7 @@ export default function Callback() {
         <div style={{ marginTop: '2rem' }}>
           <a href="/" aria-label="Try again from the start">
             <button type="button" style={{ padding: '10px 20px', fontSize: '1rem', cursor: 'pointer' }}>
-              ← {en.tryAgain || 'Try Again'}
+              ← {t.tryAgain || 'Try Again'}
             </button>
           </a>
         </div>
@@ -132,12 +133,13 @@ export default function Callback() {
 
       {testMode && (
         <p style={{ marginTop: '2rem', fontSize: '0.9rem', color: '#999' }}>
-          {en.testModeNotice || 'Test mode is enabled. Debug messages are shown in the console.'}
+          {t.testModeNotice || 'Test mode is enabled. Debug messages are shown in the console.'}
         </p>
       )}
+
       <footer className={styles['main-footer']}>
-          <p>{t.footer}</p>
-        </footer>
+        <p>{t.footer || 'Theme Switcher by Crystal'}</p>
+      </footer>
     </main>
   );
 }
