@@ -31,7 +31,7 @@ export default async function handler(req, res) {
   const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
 
   try {
-    // ✅ Get existing global code (API v2)
+    // ✅ Step 1: Get existing global custom code
     const getRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
       method: 'GET',
       headers: {
@@ -41,8 +41,10 @@ export default async function handler(req, res) {
     });
 
     const existing = await getRes.json();
-    const existingFooter = existing.footer_code || '';
+    const existingFooter = existing.scripts?.footer || '';
+    const existingHead = existing.scripts?.head || '';
 
+    // 🚫 Already injected?
     if (existingFooter.includes('theme-switcher.js')) {
       return res.status(200).json({
         success: true,
@@ -51,6 +53,7 @@ export default async function handler(req, res) {
       });
     }
 
+    // 🧩 Step 2: Inject updated code
     const updatedFooter = `${existingFooter}\n${scriptTag}`;
 
     const putRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
@@ -60,8 +63,10 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        head_code: existing.head_code || '',
-        footer_code: updatedFooter,
+        scripts: {
+          head: existingHead,
+          footer: updatedFooter,
+        },
       }),
     });
 
@@ -76,7 +81,10 @@ export default async function handler(req, res) {
       });
     }
 
-    return res.status(200).json({ success: true, message: '✅ Script injected globally!' });
+    return res.status(200).json({
+      success: true,
+      message: '✅ Script injected globally!',
+    });
   } catch (err) {
     console.error('❌ Server error:', err);
     return res.status(500).json({
