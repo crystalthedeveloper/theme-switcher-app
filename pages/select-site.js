@@ -29,7 +29,9 @@ export default function SelectSite() {
             body: JSON.stringify({ siteId: site.id }),
           });
           const pageData = await pageRes.json();
-          allPages[site.id] = pageData.pages?.map(p => ({
+
+          // Only include pages with valid slugs
+          allPages[site.id] = pageData.pages?.filter(p => p.slug && typeof p.slug === 'string').map(p => ({
             _id: p._id,
             name: p.name,
             slug: p.slug,
@@ -76,7 +78,10 @@ export default function SelectSite() {
     }
   };
 
-  const cleanSlug = (slug = '') => slug.replace(/^[-–\s]+|[-–\s]+$/g, '');
+  const cleanSlug = (slug) => {
+    if (!slug || typeof slug !== 'string') return '';
+    return slug.replace(/^[-–\s]+|[-–\s]+$/g, '');
+  };
 
   return (
     <main className={styles.container}>
