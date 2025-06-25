@@ -10,10 +10,7 @@ export default async function handler(req, res) {
   const { siteId } = req.body;
 
   if (!siteId) {
-    return res.status(400).json({
-      success: false,
-      message: 'Missing siteId',
-    });
+    return res.status(400).json({ success: false, message: 'Missing siteId' });
   }
 
   let token;
@@ -31,7 +28,7 @@ export default async function handler(req, res) {
   const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
 
   try {
-    // ✅ Step 1: Get existing global custom code
+    // ✅ Get current global custom code
     const getRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
       method: 'GET',
       headers: {
@@ -41,11 +38,13 @@ export default async function handler(req, res) {
     });
 
     const existing = await getRes.json();
-    const existingFooter = existing.scripts?.footer || '';
-    const existingHead = existing.scripts?.head || '';
+    const existingScripts = existing.scripts || [];
 
-    // 🚫 Already injected?
-    if (existingFooter.includes('theme-switcher.js')) {
+    // Check for existing footer script
+    const footerScript = existingScripts.find((s) => s.location === 'footer')?.content || '';
+    const headScript = existingScripts.find((s) => s.location === 'head')?.content || '';
+
+    if (footerScript.includes('theme-switcher.js')) {
       return res.status(200).json({
         success: true,
         message: 'Script already injected. No action needed.',
@@ -53,8 +52,16 @@ export default async function handler(req, res) {
       });
     }
 
-    // 🧩 Step 2: Inject updated code
-    const updatedFooter = `${existingFooter}\n${scriptTag}`;
+    const updatedScripts = [
+      {
+        location: 'head',
+        content: headScript,
+      },
+      {
+        location: 'footer',
+        content: `${footerScript}\n${scriptTag}`,
+      },
+    ];
 
     const putRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
       method: 'PUT',
@@ -62,12 +69,7 @@ export default async function handler(req, res) {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        scripts: {
-          head: existingHead,
-          footer: updatedFooter,
-        },
-      }),
+      body: JSON.stringify({ scripts: updatedScripts }),
     });
 
     const result = await putRes.json();
