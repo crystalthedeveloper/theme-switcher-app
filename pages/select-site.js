@@ -97,7 +97,10 @@ export default function SelectSite() {
               <h2 className={styles.siteTitle}>{site.name}</h2>
               {pages[site.id]?.map((page) => (
                 <div key={page._id} className={styles.pageItem}>
-                  <p>{page.name}</p>
+                  <p>
+                    {page.name}{' '}
+                    <span className={styles.pageSlug}>({page.slug})</span>
+                  </p>
                   <button
                     className={styles.selectButton}
                     disabled={injecting}
