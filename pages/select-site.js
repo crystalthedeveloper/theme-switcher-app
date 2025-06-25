@@ -6,18 +6,14 @@ import styles from './css/select-site.module.css';
 import Logo from '../components/Logo';
 import Footer from '../components/Footer';
 
-const scriptTag = `
-<!-- Theme Switcher script (manually copy into Webflow) -->
-<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>
-`;
-
 export default function SelectSite() {
-  const router = useRouter();
   const [sites, setSites] = useState([]);
+  const [pages, setPages] = useState({});
+  const [selectedPage, setSelectedPage] = useState({});
+  const [injecting, setInjecting] = useState(false);
+  const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [copyFeedback, setCopyFeedback] = useState('');
-  const [scriptCopied, setScriptCopied] = useState(false);
 
   useEffect(() => {
     async function fetchSites() {
@@ -36,42 +32,54 @@ export default function SelectSite() {
     fetchSites();
   }, []);
 
-  const fallbackCopy = (text) => {
-    const textarea = document.createElement('textarea');
-    textarea.value = text;
-    textarea.setAttribute('readonly', '');
-    textarea.style.position = 'absolute';
-    textarea.style.left = '-9999px';
-    document.body.appendChild(textarea);
-    textarea.select();
+  const fetchPagesForSite = async (siteId) => {
     try {
-      document.execCommand('copy');
-      setCopyFeedback('📋 Script copied manually.');
-      setScriptCopied(true);
-    } catch {
-      setCopyFeedback('❌ Copy failed.');
-    }
-    document.body.removeChild(textarea);
-  };
-
-  const handleCopyScript = () => {
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(scriptTag.trim())
-        .then(() => {
-          setCopyFeedback('📋 Script copied! Paste it into Webflow → Site Settings → Footer.');
-          setScriptCopied(true);
-        })
-        .catch((err) => {
-          console.error('Clipboard API error:', err);
-          fallbackCopy(scriptTag);
-        });
-    } else {
-      fallbackCopy(scriptTag);
+      const res = await fetch(`https://api.webflow.com/sites/${siteId}/pages`, {
+        headers: {
+          'accept-version': '1.0.0',
+        },
+        credentials: 'include',
+      });
+      const data = await res.json();
+      setPages((prev) => ({ ...prev, [siteId]: data.pages }));
+    } catch (err) {
+      console.error(`Failed to fetch pages for site ${siteId}`, err);
     }
   };
 
-  const handleGoToWebflow = () => {
-    window.open('https://webflow.com/dashboard', '_blank');
+  const handleSelectSite = async (siteId) => {
+    await fetchPagesForSite(siteId);
+    setSelectedPage((prev) => ({ ...prev, [siteId]: null }));
+  };
+
+  const handlePageChange = (siteId, pageId) => {
+    setSelectedPage((prev) => ({ ...prev, [siteId]: pageId }));
+  };
+
+  const handleInject = async (siteId, pageId) => {
+    setInjecting(true);
+    setMessage('');
+
+    try {
+      const res = await fetch('/api/inject', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ siteId, pageId }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setMessage('✅ Script successfully injected!');
+      } else {
+        console.error('Inject error:', data);
+        setMessage(`❌ Injection failed: ${data.message || 'Unknown error'}`);
+      }
+    } catch (err) {
+      console.error('Unexpected error during injection:', err);
+      setMessage('❌ Injection error. Please try again.');
+    } finally {
+      setInjecting(false);
+    }
   };
 
   return (
@@ -80,47 +88,9 @@ export default function SelectSite() {
         <Logo />
       </div>
 
-      <h1 className={styles.heading}>Select a Webflow Site</h1>
+      <h1 className={styles.heading}>Select a Webflow Site & Inject Script</h1>
 
-      <p className={styles.note}>
-        💡 To enable dark/light mode, manually add the script below to your Webflow <strong>Site Settings → Footer</strong>.
-      </p>
-
-      <div className={styles.copyContainer}>
-        <pre className={styles.codeBlock}>{scriptTag.trim()}</pre>
-        <button
-          className={styles.selectButton}
-          onClick={handleCopyScript}
-          aria-label="Copy theme switcher script to clipboard"
-        >
-          📋 Copy Script Tag (Manual)
-        </button>
-
-        {copyFeedback && (
-          <p style={{ fontSize: '0.85rem', marginTop: '0.5rem', color: '#555' }}>
-            {copyFeedback}
-          </p>
-        )}
-
-        {scriptCopied && (
-          <button
-            className={styles.nextButton}
-            onClick={handleGoToWebflow}
-            style={{
-              marginTop: '0.75rem',
-              background: '#0073e6',
-              color: '#fff',
-              padding: '10px 16px',
-              fontSize: '15px',
-              borderRadius: '6px',
-              border: 'none',
-              cursor: 'pointer'
-            }}
-          >
-            🔗 Go to Webflow Settings
-          </button>
-        )}
-      </div>
+      {message && <p style={{ color: message.startsWith('✅') ? 'green' : 'red' }}>{message}</p>}
 
       {loading ? (
         <p>Loading sites...</p>
@@ -138,15 +108,37 @@ export default function SelectSite() {
 
               <button
                 className={styles.selectButton}
-                aria-label={`Script injection unavailable for ${site.name}`}
-                disabled
+                onClick={() => handleSelectSite(site.id)}
               >
-                🚧 Auto-inject planned — pending Webflow API support
+                🔍 Load Pages
               </button>
 
-              <p className={styles.siteNote}>
-                Webflow’s current API does not support script injection. Please use the manual copy method above.
-              </p>
+              {pages[site.id] && (
+                <>
+                  <label htmlFor={`page-select-${site.id}`}>Select Page:</label>
+                  <select
+                    id={`page-select-${site.id}`}
+                    value={selectedPage[site.id] || ''}
+                    onChange={(e) => handlePageChange(site.id, e.target.value)}
+                    className={styles.dropdown}
+                  >
+                    <option value="">-- Select a page --</option>
+                    {pages[site.id].map((page) => (
+                      <option key={page.id} value={page.id}>
+                        {page.name || page.slug || page.id}
+                      </option>
+                    ))}
+                  </select>
+
+                  <button
+                    disabled={!selectedPage[site.id] || injecting}
+                    className={styles.selectButton}
+                    onClick={() => handleInject(site.id, selectedPage[site.id])}
+                  >
+                    🚀 Inject Theme Switcher
+                  </button>
+                </>
+              )}
             </li>
           ))}
         </ul>

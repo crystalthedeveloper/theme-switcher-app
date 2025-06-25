@@ -1,4 +1,5 @@
 // pages/api/inject.js
+
 import * as cookie from 'cookie';
 
 export default async function handler(req, res) {
@@ -6,9 +7,13 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, message: 'Method Not Allowed' });
   }
 
-  const { siteId } = req.body;
-  if (!siteId) {
-    return res.status(400).json({ success: false, message: 'Missing siteId' });
+  const { siteId, pageId } = req.body;
+
+  if (!siteId || !pageId) {
+    return res.status(400).json({
+      success: false,
+      message: 'Missing siteId or pageId',
+    });
   }
 
   let token;
@@ -23,58 +28,69 @@ export default async function handler(req, res) {
     return res.status(401).json({ success: false, message: 'Unauthorized: No token found' });
   }
 
-  const scriptTag = `<!-- Theme Switcher injected by app -->
-<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
+  const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
 
   try {
-    // Get existing custom_code settings first
-    const getRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}`, {
+    // 🔍 Step 1: Check existing custom code on this page
+    const getRes = await fetch(`https://api.webflow.com/sites/${siteId}/pages/${pageId}/customcode`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
-        'accept-version': '2.0.0',
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+        'accept-version': '1.0.0',
+      },
     });
 
-    const siteData = await getRes.json();
-
-    if (!getRes.ok) {
-      console.error('❌ Failed to fetch existing custom code:', siteData);
-      return res.status(getRes.status).json({ success: false, message: 'Failed to read existing code', details: siteData });
+    if (getRes.status === 401) {
+      return res.status(401).json({ success: false, message: 'Token expired or invalid. Please reauthenticate.' });
     }
 
-    const existingFooter = siteData.customCode?.footer || '';
-    const alreadyInjected = existingFooter.includes('theme-switcher.js');
-    const mergedFooter = alreadyInjected ? existingFooter : `${existingFooter}\n${scriptTag}`;
+    const existingData = await getRes.json();
+    const existingFooter = existingData.footer || '';
 
-    // Now PATCH merged footer back
-    const patchRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
-      method: 'PATCH',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'accept-version': '2.0.0'
-      },
-      body: JSON.stringify({
-        footerCode: mergedFooter
-      }),
-    });
-
-    const patchData = await patchRes.json();
-
-    if (!patchRes.ok) {
-      console.error('❌ PATCH failed:', patchData);
-      return res.status(patchRes.status).json({
-        success: false,
-        message: 'Failed to update footer code',
-        details: patchData,
+    // 🚫 Skip if already injected
+    if (existingFooter.includes('theme-switcher.js')) {
+      return res.status(200).json({
+        success: true,
+        message: 'Script already injected. No action needed.',
+        alreadyInjected: true,
       });
     }
 
-    return res.status(200).json({ success: true });
+    // 🧩 Step 2: Merge and inject
+    const mergedFooter = `${existingFooter}\n${scriptTag}`;
+
+    const putRes = await fetch(`https://api.webflow.com/sites/${siteId}/pages/${pageId}/customcode`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'accept-version': '1.0.0',
+      },
+      body: JSON.stringify({
+        head: existingData.head || '',
+        footer: mergedFooter,
+      }),
+    });
+
+    const data = await putRes.json();
+
+    if (!putRes.ok) {
+      console.error('❌ Failed to inject code:', data);
+      return res.status(putRes.status).json({
+        success: false,
+        message: 'Failed to inject script into page',
+        data,
+      });
+    }
+
+    return res.status(200).json({ success: true, data });
   } catch (err) {
     console.error('❌ Server error:', err);
-    return res.status(500).json({ success: false, message: 'Server error', error: err.message });
+    return res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: err.message,
+    });
   }
 }

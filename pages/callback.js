@@ -135,6 +135,9 @@ export default function Callback() {
           {en.testModeNotice || 'Test mode is enabled. Debug messages are shown in the console.'}
         </p>
       )}
+      <footer className={styles['main-footer']}>
+          <p>{t.footer}</p>
+        </footer>
     </main>
   );
 }
