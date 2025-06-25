@@ -34,14 +34,18 @@ export default function SelectSite() {
 
   const fetchPagesForSite = async (siteId) => {
     try {
-      const res = await fetch(`https://api.webflow.com/sites/${siteId}/pages`, {
-        headers: {
-          'accept-version': '1.0.0',
-        },
-        credentials: 'include',
+      const res = await fetch('/api/pages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ siteId }),
       });
+
       const data = await res.json();
-      setPages((prev) => ({ ...prev, [siteId]: data.pages }));
+      if (res.ok) {
+        setPages((prev) => ({ ...prev, [siteId]: data.pages }));
+      } else {
+        console.error(`Failed to fetch pages for site ${siteId}:`, data);
+      }
     } catch (err) {
       console.error(`Failed to fetch pages for site ${siteId}`, err);
     }
