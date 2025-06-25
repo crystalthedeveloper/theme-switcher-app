@@ -28,7 +28,6 @@ export default async function handler(req, res) {
   const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
 
   try {
-    // Get existing custom code
     const getRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
       method: 'GET',
       headers: {
@@ -41,42 +40,38 @@ export default async function handler(req, res) {
     const scripts = existing.scripts || [];
 
     const footerScript = scripts.find((s) => s.location === 'footer');
-    const headScript = scripts.find((s) => s.location === 'head');
 
-    const updatedScripts = [];
-
-    if (headScript) {
-      updatedScripts.push({
-        id: headScript.id,
-        version: headScript.version,
-        location: 'head',
-        content: headScript.content,
+    if (!footerScript) {
+      return res.status(400).json({
+        success: false,
+        message: 'Footer script not found. Please manually add any footer script first via Webflow dashboard.',
       });
     }
 
-    if (footerScript) {
-      // If already injected, skip
-      if (footerScript.content.includes('theme-switcher.js')) {
-        return res.status(200).json({
-          success: true,
-          message: 'Script already injected. No action needed.',
-          alreadyInjected: true,
-        });
+    if (footerScript.content.includes('theme-switcher.js')) {
+      return res.status(200).json({
+        success: true,
+        message: 'Script already injected. No action needed.',
+        alreadyInjected: true,
+      });
+    }
+
+    const updatedScripts = scripts.map((script) => {
+      if (script.location === 'footer') {
+        return {
+          id: script.id,
+          version: script.version,
+          location: 'footer',
+          content: `${script.content}\n${scriptTag}`,
+        };
       }
-
-      updatedScripts.push({
-        id: footerScript.id,
-        version: footerScript.version,
-        location: 'footer',
-        content: `${footerScript.content}\n${scriptTag}`.trim(),
-      });
-    } else {
-      // New footer block
-      updatedScripts.push({
-        location: 'footer',
-        content: scriptTag,
-      });
-    }
+      return {
+        id: script.id,
+        version: script.version,
+        location: script.location,
+        content: script.content,
+      };
+    });
 
     const putRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
       method: 'PUT',
@@ -98,7 +93,7 @@ export default async function handler(req, res) {
       });
     }
 
-    return res.status(200).json({ success: true, message: '✅ Script injected via scripts[]!' });
+    return res.status(200).json({ success: true, message: '✅ Script injected into footer!' });
   } catch (err) {
     console.error('❌ Server error:', err);
     return res.status(500).json({
