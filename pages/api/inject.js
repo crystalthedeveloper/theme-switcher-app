@@ -1,4 +1,5 @@
 // pages/api/inject.js
+
 import * as cookie from 'cookie';
 
 export default async function handler(req, res) {
@@ -30,58 +31,52 @@ export default async function handler(req, res) {
   const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
 
   try {
-    // 🧾 Fetch existing site-wide custom code
+    // ✅ Get existing global code (API v2)
     const getRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
-        'accept-version': '2.0.0',
+        'Content-Type': 'application/json',
       },
     });
 
-    if (getRes.status === 401) {
-      return res.status(401).json({ success: false, message: 'Token expired or invalid. Please reauthenticate.' });
-    }
+    const existing = await getRes.json();
+    const existingFooter = existing.footer_code || '';
 
-    const existingData = await getRes.json();
-    const existingFooter = existingData.footer_code || '';
-
-    // ⛔ Avoid duplicate injection
     if (existingFooter.includes('theme-switcher.js')) {
       return res.status(200).json({
         success: true,
-        message: 'Script already injected globally.',
+        message: 'Script already injected. No action needed.',
         alreadyInjected: true,
       });
     }
 
-    const updatedFooter = `${existingFooter}\n${scriptTag}`.trim();
+    const updatedFooter = `${existingFooter}\n${scriptTag}`;
 
-    // 🛠️ Inject script globally
-    const patchRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
-      method: 'PATCH',
+    const putRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
+      method: 'PUT',
       headers: {
         Authorization: `Bearer ${token}`,
-        'accept-version': '2.0.0',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        head_code: existing.head_code || '',
         footer_code: updatedFooter,
       }),
     });
 
-    const result = await patchRes.json();
+    const result = await putRes.json();
 
-    if (!patchRes.ok) {
+    if (!putRes.ok) {
       console.error('❌ Failed to inject global code:', result);
-      return res.status(patchRes.status).json({
+      return res.status(putRes.status).json({
         success: false,
-        message: 'Failed to inject site-wide script',
-        data: result,
+        message: 'Failed to inject global script',
+        error: result,
       });
     }
 
-    return res.status(200).json({ success: true, message: 'Script successfully injected globally.', data: result });
+    return res.status(200).json({ success: true, message: '✅ Script injected globally!' });
   } catch (err) {
     console.error('❌ Server error:', err);
     return res.status(500).json({
