@@ -29,11 +29,7 @@ export default function SelectSite() {
             body: JSON.stringify({ siteId: site.id }),
           });
           const pageData = await pageRes.json();
-          allPages[site.id] = pageData.pages?.map(p => ({
-            _id: p._id,
-            name: p.name,
-            slug: p.slug,
-          })) || [];
+          allPages[site.id] = pageData.pages || [];
         }
 
         setPages(allPages);
