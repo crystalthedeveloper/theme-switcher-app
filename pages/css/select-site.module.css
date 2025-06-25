@@ -81,7 +81,7 @@
 .siteTitle {
   font-size: 1.2rem;
   color: #000;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .siteNote {
@@ -91,7 +91,39 @@
   text-align: center;
 }
 
-/* Buttons */
+.pageSlug {
+  font-size: 0.9rem;
+  color: #999;
+}
+
+/* === Dropdown Enhancement === */
+.dropdownContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.dropdown {
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #ccc;
+  background: #fff;
+  width: 100%;
+  max-width: 100%;
+  margin-top: 0.5rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.dropdown:hover {
+  border-color: #888;
+}
+
+/* === Buttons === */
 .selectButton {
   background-color: #111;
   color: #fff;
@@ -131,6 +163,10 @@
     font-size: 0.9rem;
     padding: 0.6rem 1.25rem;
   }
+
+  .dropdown {
+    font-size: 0.95rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -146,7 +182,8 @@
     font-size: 1rem;
   }
 
-  .selectButton {
+  .selectButton,
+  .dropdown {
     width: 100%;
   }
 

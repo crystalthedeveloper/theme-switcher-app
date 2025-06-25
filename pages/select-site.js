@@ -91,28 +91,31 @@ export default function SelectSite() {
           No connected Webflow sites found.
         </p>
       ) : (
-        <ul className={styles.siteList} role="list">
+        <div className={styles.dropdownContainer}>
           {sites.map((site) => (
-            <li key={site.id} className={styles.siteItem} role="listitem">
+            <div key={site.id} className={styles.siteItem}>
               <h2 className={styles.siteTitle}>{site.name}</h2>
-              {pages[site.id]?.map((page) => (
-                <div key={page._id} className={styles.pageItem}>
-                  <p>
-                    {page.name}{' '}
-                    <span className={styles.pageSlug}>({page.slug})</span>
-                  </p>
-                  <button
-                    className={styles.selectButton}
-                    disabled={injecting}
-                    onClick={() => handleInject(site.id, page._id)}
-                  >
-                    💉 Inject into "{page.name}"
-                  </button>
-                </div>
-              ))}
-            </li>
+              <select
+                className={styles.dropdown}
+                onChange={(e) => {
+                  const pageId = e.target.value;
+                  if (pageId) handleInject(site.id, pageId);
+                }}
+                disabled={injecting}
+                defaultValue=""
+              >
+                <option value="" disabled>
+                  — Select a page to inject —
+                </option>
+                {pages[site.id]?.map((page) => (
+                  <option key={page._id} value={page._id}>
+                    {page.name} ({page.slug})
+                  </option>
+                ))}
+              </select>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
 
       <Footer />
