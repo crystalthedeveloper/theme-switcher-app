@@ -47,7 +47,7 @@ export default async function handler(req, res) {
 
     console.log('🧩 Existing scripts:', existingScripts);
 
-    // 🔍 Optional: Return early if in debug mode
+    // ✅ Optional debug view
     if (debug === true) {
       return res.status(200).json({
         success: true,
@@ -57,8 +57,12 @@ export default async function handler(req, res) {
       });
     }
 
-    const footerScript = existingScripts.find((s) => s.location === 'footer');
-    if (!footerScript || !footerScript.id || !footerScript.version) {
+    // ✅ Look for any valid footer script block with id + version
+    const footerScript = existingScripts.find(
+      (s) => s.location === 'footer' && s.id && s.version
+    );
+
+    if (!footerScript) {
       console.error('⚠️ No valid footer script block found with required id + version');
       return res.status(400).json({
         success: false,
@@ -78,20 +82,13 @@ export default async function handler(req, res) {
 
     console.log('➕ Injecting script into existing footer block...');
     const updatedScripts = existingScripts.map((s) => {
-      if (s.location === 'footer') {
+      if (s.id === footerScript.id) {
         return {
-          id: s.id,
-          version: s.version,
-          location: s.location,
+          ...s,
           content: `${s.content.trim()}\n${scriptTag}`,
         };
       }
-      return {
-        id: s.id,
-        version: s.version,
-        location: s.location,
-        content: s.content,
-      };
+      return s;
     });
 
     console.log('🚀 Sending PUT to Webflow with updated scripts...');
