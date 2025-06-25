@@ -7,37 +7,52 @@ import Footer from '../components/Footer';
 
 export default function SelectSite() {
   const [sites, setSites] = useState([]);
+  const [pages, setPages] = useState({});
   const [injecting, setInjecting] = useState(false);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    async function fetchSites() {
+    async function fetchSitesAndPages() {
       try {
-        const res = await fetch('/api/sites', { credentials: 'include' });
-        const data = await res.json();
-        setSites(data.sites || []);
+        const siteRes = await fetch('/api/sites', { credentials: 'include' });
+        const siteData = await siteRes.json();
+        const siteList = siteData.sites || [];
+        setSites(siteList);
+
+        const allPages = {};
+        for (const site of siteList) {
+          const pageRes = await fetch('/api/pages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ siteId: site.id }),
+          });
+          const pageData = await pageRes.json();
+          allPages[site.id] = pageData.pages || [];
+        }
+
+        setPages(allPages);
       } catch (err) {
-        console.error('Error fetching sites:', err);
-        setError('Unable to load Webflow sites.');
+        console.error('Error loading sites/pages:', err);
+        setError('Failed to load Webflow sites and pages.');
       } finally {
         setLoading(false);
       }
     }
 
-    fetchSites();
+    fetchSitesAndPages();
   }, []);
 
-  const handleInject = async (siteId) => {
+  const handleInject = async (siteId, pageId) => {
     setInjecting(true);
     setMessage('');
 
     try {
-      const res = await fetch('/api/inject', {
+      const res = await fetch('/api/inject-page', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ siteId }),
+        body: JSON.stringify({ siteId, pageId }),
       });
 
       const data = await res.json();
@@ -48,7 +63,7 @@ export default function SelectSite() {
         setMessage(`❌ Injection failed: ${data.message || 'Unknown error'}`);
       }
     } catch (err) {
-      console.error('Unexpected error during injection:', err);
+      console.error('Unexpected injection error:', err);
       setMessage('❌ Injection error. Please try again.');
     } finally {
       setInjecting(false);
@@ -61,7 +76,7 @@ export default function SelectSite() {
         <Logo />
       </div>
 
-      <h1 className={styles.heading}>Select a Webflow Site & Inject Script</h1>
+      <h1 className={styles.heading}>Select a Webflow Page to Inject Script</h1>
 
       {message && (
         <p style={{ color: message.startsWith('✅') ? 'green' : 'red' }}>{message}</p>
@@ -73,21 +88,25 @@ export default function SelectSite() {
         <p className={styles.error} role="alert">{error}</p>
       ) : sites.length === 0 ? (
         <p className={styles.error} role="alert">
-          No connected Webflow sites found. Please make sure you're logged in and authorized.
+          No connected Webflow sites found.
         </p>
       ) : (
         <ul className={styles.siteList} role="list">
           {sites.map((site) => (
             <li key={site.id} className={styles.siteItem} role="listitem">
               <h2 className={styles.siteTitle}>{site.name}</h2>
-
-              <button
-                className={styles.selectButton}
-                disabled={injecting}
-                onClick={() => handleInject(site.id)}
-              >
-                🚀 Inject Theme Switcher Globally
-              </button>
+              {pages[site.id]?.map((page) => (
+                <div key={page._id} className={styles.pageItem}>
+                  <p>{page.name}</p>
+                  <button
+                    className={styles.selectButton}
+                    disabled={injecting}
+                    onClick={() => handleInject(site.id, page._id)}
+                  >
+                    💉 Inject into "{page.name}"
+                  </button>
+                </div>
+              ))}
             </li>
           ))}
         </ul>

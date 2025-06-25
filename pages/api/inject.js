@@ -28,6 +28,7 @@ export default async function handler(req, res) {
   const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
 
   try {
+    // Step 1: Fetch existing global custom_code
     const getRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
       method: 'GET',
       headers: {
@@ -37,14 +38,14 @@ export default async function handler(req, res) {
     });
 
     const existing = await getRes.json();
-    const scripts = existing.scripts || [];
+    const scripts = Array.isArray(existing.scripts) ? existing.scripts : [];
 
     const footerBlock = scripts.find((s) => s.location === 'footer');
 
-    if (!footerBlock || !footerBlock.id || !footerBlock.version) {
+    if (!footerBlock?.id || !footerBlock?.version || typeof footerBlock.content !== 'string') {
       return res.status(400).json({
         success: false,
-        message: 'No editable footer block found. Add any dummy script manually in Webflow footer first.',
+        message: 'No editable footer block found. Please add any dummy script manually in Webflow → Settings → Custom Code → Footer.',
       });
     }
 
@@ -57,12 +58,10 @@ export default async function handler(req, res) {
       });
     }
 
+    // Step 2: Update footer script block with new script appended
     const updatedScripts = scripts.map((s) =>
       s.id === footerBlock.id
-        ? {
-            ...s,
-            content: `${s.content.trim()}\n${scriptTag}`,
-          }
+        ? { ...s, content: `${s.content.trim()}\n${scriptTag}` }
         : s
     );
 
@@ -75,21 +74,26 @@ export default async function handler(req, res) {
       body: JSON.stringify({ scripts: updatedScripts }),
     });
 
-    const result = await putRes.json();
+    let result;
+    try {
+      result = await putRes.json();
+    } catch (jsonErr) {
+      result = { error: 'Failed to parse Webflow error response.' };
+    }
 
     if (!putRes.ok) {
       return res.status(putRes.status).json({
         success: false,
-        message: 'Failed to inject script',
+        message: 'Failed to inject script into custom_code',
         error: result,
       });
     }
 
-    return res.status(200).json({ success: true, message: '✅ Script injected into footer!' });
+    return res.status(200).json({ success: true, message: '✅ Script injected into footer via custom_code!' });
   } catch (err) {
     return res.status(500).json({
       success: false,
-      message: 'Server error',
+      message: 'Server error during custom_code injection',
       error: err.message,
     });
   }
