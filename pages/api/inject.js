@@ -9,15 +9,11 @@ export default async function handler(req, res) {
   }
 
   const cookies = cookie.parse(req.headers.cookie || '');
-
-  // Support either cookie OR Authorization header
   const token =
     cookies.webflow_token ||
     (req.headers.authorization?.startsWith('Bearer ')
       ? req.headers.authorization.split('Bearer ')[1]
       : null);
-
-  // Support either cookie or POST body for siteId
   const siteId = cookies.webflow_site_id || req.body.siteId;
 
   if (!token || !siteId) {
@@ -28,7 +24,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Step 1: Get all pages for the site
     const pagesRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/pages`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -37,8 +32,9 @@ export default async function handler(req, res) {
     });
 
     const pagesData = await pagesRes.json();
+    console.log('📄 Webflow Pages:', pagesData.pages?.map(p => ({ slug: p.slug, isHomepage: p.isHomepage, _id: p._id })));
 
-    if (!pagesRes.ok || !pagesData.pages) {
+    if (!pagesRes.ok || !Array.isArray(pagesData.pages)) {
       return res.status(pagesRes.status).json({
         success: false,
         message: pagesData.message || '❌ Failed to fetch pages',
@@ -46,17 +42,22 @@ export default async function handler(req, res) {
       });
     }
 
-    // Step 2: Find the homepage
-    const homepage = pagesData.pages.find(p => p.slug === 'index' || p.isHomepage);
+    // Try to find homepage
+    let homepage = pagesData.pages.find(p => p.isHomepage || p.slug === 'index');
+
+    // Fallback: pick first static page
+    if (!homepage) {
+      homepage = pagesData.pages.find(p => p.type === 'static' || p.slug); // fallback
+      console.warn('⚠️ Homepage not explicitly marked. Using fallback page:', homepage?.slug);
+    }
 
     if (!homepage) {
       return res.status(404).json({
         success: false,
-        message: '❌ Homepage not found',
+        message: '❌ No homepage or fallback page found.',
       });
     }
 
-    // Step 3: Inject script
     const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
     const injectUrl = `https://api.webflow.com/v2/sites/${siteId}/pages/${homepage._id}/custom_code`;
 
@@ -81,7 +82,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: '✅ Script successfully injected into homepage!',
+      message: `✅ Script successfully injected into ${homepage.slug || 'homepage'}!`,
     });
   } catch (err) {
     console.error('❌ Server error during injection:', err);
