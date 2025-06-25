@@ -28,7 +28,6 @@ export default async function handler(req, res) {
   const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
 
   try {
-    // Get current site-level custom code (footer)
     const getRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
       method: 'GET',
       headers: {
@@ -40,10 +39,27 @@ export default async function handler(req, res) {
     const existing = await getRes.json();
     const existingScripts = existing.scripts || [];
 
-    const footerScript = existingScripts.find(s => s.location === 'footer');
+    const updatedScripts = existingScripts.map((script) => {
+      if (
+        script.location === 'footer' &&
+        !script.content.includes('theme-switcher.js')
+      ) {
+        return {
+          id: script.id,
+          version: script.version,
+          location: script.location,
+          content: `${script.content}\n${scriptTag}`,
+        };
+      }
+      return script;
+    });
 
-    // If script already injected, do nothing
-    if (footerScript?.content?.includes('theme-switcher.js')) {
+    // ✅ If already injected
+    const alreadyInjected = existingScripts.some(
+      (s) => s.location === 'footer' && s.content.includes('theme-switcher.js')
+    );
+
+    if (alreadyInjected) {
       return res.status(200).json({
         success: true,
         message: 'Script already injected. No action needed.',
@@ -51,21 +67,13 @@ export default async function handler(req, res) {
       });
     }
 
-    // Add new script to the end of existing footer content
-    const updatedFooterScript = {
-      id: footerScript?.id,
-      version: footerScript?.version,
-      location: 'footer',
-      content: `${footerScript?.content || ''}\n${scriptTag}`.trim(),
-    };
-
     const putRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ scripts: [updatedFooterScript] }),
+      body: JSON.stringify({ scripts: updatedScripts }),
     });
 
     const result = await putRes.json();
@@ -79,7 +87,7 @@ export default async function handler(req, res) {
       });
     }
 
-    return res.status(200).json({ success: true, message: '✅ Script injected into footer!' });
+    return res.status(200).json({ success: true, message: '✅ Script injected globally!' });
   } catch (err) {
     console.error('❌ Server error:', err);
     return res.status(500).json({
