@@ -28,7 +28,7 @@ export default async function handler(req, res) {
   const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
 
   try {
-    // Get existing custom code (API v2)
+    // Get current site-level custom code (footer)
     const getRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
       method: 'GET',
       headers: {
@@ -40,21 +40,10 @@ export default async function handler(req, res) {
     const existing = await getRes.json();
     const existingScripts = existing.scripts || [];
 
-    // Extract head & footer
-    const headScript = existingScripts.find((s) => s.location === 'head') || {
-      id: '',
-      version: '',
-      location: 'head',
-      content: '',
-    };
-    const footerScript = existingScripts.find((s) => s.location === 'footer') || {
-      id: '',
-      version: '',
-      location: 'footer',
-      content: '',
-    };
+    const footerScript = existingScripts.find(s => s.location === 'footer');
 
-    if (footerScript.content.includes('theme-switcher.js')) {
+    // If script already injected, do nothing
+    if (footerScript?.content?.includes('theme-switcher.js')) {
       return res.status(200).json({
         success: true,
         message: 'Script already injected. No action needed.',
@@ -62,20 +51,13 @@ export default async function handler(req, res) {
       });
     }
 
-    const updatedScripts = [
-      {
-        id: headScript.id,
-        version: headScript.version,
-        location: 'head',
-        content: headScript.content,
-      },
-      {
-        id: footerScript.id,
-        version: footerScript.version,
-        location: 'footer',
-        content: `${footerScript.content}\n${scriptTag}`,
-      },
-    ];
+    // Add new script to the end of existing footer content
+    const updatedFooterScript = {
+      id: footerScript?.id,
+      version: footerScript?.version,
+      location: 'footer',
+      content: `${footerScript?.content || ''}\n${scriptTag}`.trim(),
+    };
 
     const putRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
       method: 'PUT',
@@ -83,7 +65,7 @@ export default async function handler(req, res) {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ scripts: updatedScripts }),
+      body: JSON.stringify({ scripts: [updatedFooterScript] }),
     });
 
     const result = await putRes.json();
@@ -97,7 +79,7 @@ export default async function handler(req, res) {
       });
     }
 
-    return res.status(200).json({ success: true, message: '✅ Script injected globally!' });
+    return res.status(200).json({ success: true, message: '✅ Script injected into footer!' });
   } catch (err) {
     console.error('❌ Server error:', err);
     return res.status(500).json({
