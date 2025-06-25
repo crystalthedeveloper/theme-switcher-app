@@ -29,7 +29,11 @@ export default function SelectSite() {
             body: JSON.stringify({ siteId: site.id }),
           });
           const pageData = await pageRes.json();
-          allPages[site.id] = pageData.pages || [];
+          allPages[site.id] = pageData.pages?.map(p => ({
+            _id: p._id,
+            name: p.name,
+            slug: p.slug,
+          })) || [];
         }
 
         setPages(allPages);
@@ -45,6 +49,7 @@ export default function SelectSite() {
   }, []);
 
   const handleInject = async (siteId, pageId) => {
+    console.log('Injecting script into page ID:', pageId);
     setInjecting(true);
     setMessage('');
 

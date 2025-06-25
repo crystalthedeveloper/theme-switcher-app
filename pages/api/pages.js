@@ -35,10 +35,16 @@ export default async function handler(req, res) {
       });
     }
 
-    // v2 API usually returns a direct array, not { pages: [] }
     const pages = Array.isArray(data) ? data : data.pages || [];
 
-    return res.status(200).json({ pages });
+    // Normalize for frontend: only return what we need
+    const cleanedPages = pages.map(p => ({
+      _id: p._id,
+      name: p.name,
+      slug: p.slug,
+    }));
+
+    return res.status(200).json({ pages: cleanedPages });
   } catch (err) {
     console.error('❌ /api/pages error:', err);
     return res.status(500).json({ error: 'Internal Server Error' });
