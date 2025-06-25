@@ -8,7 +8,6 @@ export default async function handler(req, res) {
   }
 
   const { siteId } = req.body;
-
   if (!siteId) {
     return res.status(400).json({ success: false, message: 'Missing siteId' });
   }
@@ -37,18 +36,13 @@ export default async function handler(req, res) {
     });
 
     const existing = await getRes.json();
-    const scripts = existing.scripts || [];
+    const existingScripts = existing.scripts || [];
 
-    const footerScript = scripts.find((s) => s.location === 'footer');
+    const hasScript = existingScripts.some(
+      (s) => s.location === 'footer' && s.content.trim().includes('theme-switcher.js')
+    );
 
-    if (!footerScript) {
-      return res.status(400).json({
-        success: false,
-        message: 'Footer script not found. Please manually add any footer script first via Webflow dashboard.',
-      });
-    }
-
-    if (footerScript.content.includes('theme-switcher.js')) {
+    if (hasScript) {
       return res.status(200).json({
         success: true,
         message: 'Script already injected. No action needed.',
@@ -56,22 +50,21 @@ export default async function handler(req, res) {
       });
     }
 
-    const updatedScripts = scripts.map((script) => {
-      if (script.location === 'footer') {
-        return {
-          id: script.id,
-          version: script.version,
-          location: 'footer',
-          content: `${script.content}\n${scriptTag}`,
-        };
-      }
-      return {
-        id: script.id,
-        version: script.version,
-        location: script.location,
-        content: script.content,
-      };
-    });
+    const updatedScripts = existingScripts.map((s) => ({
+      id: s.id || null,
+      version: s.version || null,
+      location: s.location,
+      content: s.location === 'footer' ? `${s.content}\n${scriptTag}` : s.content,
+    }));
+
+    if (!existingScripts.some((s) => s.location === 'footer')) {
+      updatedScripts.push({
+        id: null,
+        version: null,
+        location: 'footer',
+        content: scriptTag,
+      });
+    }
 
     const putRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
       method: 'PUT',
