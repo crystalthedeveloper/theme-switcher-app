@@ -1,9 +1,10 @@
 // pages/callback.js
+// pages/callback.js
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import en from '../locales/en';
 import Logo from '../components/Logo';
-import styles from './css/callback.module.css'; // ✅ Fixed missing import
+import styles from './css/callback.module.css';
 
 export default function Callback() {
   const router = useRouter();
@@ -85,7 +86,8 @@ export default function Callback() {
 
         hasResponded.current = true;
 
-        await router.replace(`/select-site${testMode ? '?test=true' : ''}`);
+        // ✅ Redirect to homepage (no more select-site)
+        await router.replace(`/${testMode ? '?test=true' : ''}`);
       } catch (err) {
         console.error('❌ Token exchange error:', err);
         if (!hasResponded.current) {
@@ -99,7 +101,7 @@ export default function Callback() {
     exchangeToken();
   }, [router.isReady]);
 
-  const t = en; // ✅ Fix for undefined "t"
+  const t = en;
 
   return (
     <main style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }} aria-busy={loading}>

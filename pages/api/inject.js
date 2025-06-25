@@ -2,15 +2,10 @@
 import * as cookie from 'cookie';
 
 export default async function handler(req, res) {
-  console.log('🌐 [API] Page-Level Inject handler called');
+  console.log('🌐 [API] Homepage Inject handler called');
 
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method Not Allowed' });
-  }
-
-  const { siteId, pageId } = req.body;
-  if (!siteId || !pageId) {
-    return res.status(400).json({ success: false, message: 'Missing siteId or pageId' });
   }
 
   const cookies = cookie.parse(req.headers.cookie || '');
@@ -19,16 +14,46 @@ export default async function handler(req, res) {
     (req.headers.authorization?.startsWith('Bearer ')
       ? req.headers.authorization.split('Bearer ')[1]
       : null);
+  const siteId = cookies.webflow_site_id;
 
-  if (!token) {
-    return res.status(401).json({ success: false, message: 'Unauthorized: No token found' });
+  if (!token || !siteId) {
+    return res.status(401).json({ success: false, message: 'Unauthorized: Missing token or siteId' });
   }
 
-  const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
-  const url = `https://api.webflow.com/v2/sites/${siteId}/pages/${pageId}/custom_code`;
-
   try {
-    const patchRes = await fetch(url, {
+    // Step 1: Get all pages for the site
+    const pagesRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/pages`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const pagesData = await pagesRes.json();
+
+    if (!pagesRes.ok || !pagesData.pages) {
+      return res.status(pagesRes.status).json({
+        success: false,
+        message: pagesData.message || '❌ Failed to fetch pages',
+        error: pagesData,
+      });
+    }
+
+    // Step 2: Find the homepage
+    const homepage = pagesData.pages.find(p => p.slug === 'index' || p.isHomepage);
+
+    if (!homepage) {
+      return res.status(404).json({
+        success: false,
+        message: '❌ Homepage not found',
+      });
+    }
+
+    // Step 3: Inject script into homepage custom code
+    const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
+    const injectUrl = `https://api.webflow.com/v2/sites/${siteId}/pages/${homepage._id}/custom_code`;
+
+    const injectRes = await fetch(injectUrl, {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -37,26 +62,19 @@ export default async function handler(req, res) {
       body: JSON.stringify({ beforeBodyEnd: scriptTag }),
     });
 
-    const result = await patchRes.json();
-    if (!patchRes.ok) {
-      if (result?.code === 'RouteNotFoundError') {
-        return res.status(400).json({
-          success: false,
-          message: '❌ This page does not support page-level custom code. Try another one.',
-          error: result,
-        });
-      }
+    const injectData = await injectRes.json();
 
-      return res.status(patchRes.status).json({
+    if (!injectRes.ok) {
+      return res.status(injectRes.status).json({
         success: false,
-        message: result?.message || '❌ Injection failed',
-        error: result,
+        message: injectData?.message || '❌ Injection failed',
+        error: injectData,
       });
     }
 
     return res.status(200).json({
       success: true,
-      message: '✅ Script successfully injected into page-level custom code!',
+      message: '✅ Script successfully injected into homepage!',
     });
   } catch (err) {
     console.error('❌ Server error during injection:', err);

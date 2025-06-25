@@ -8,13 +8,15 @@ import Footer from '../components/Footer';
 
 export default function Home() {
   const t = en;
-  const [isInDesigner, setIsInDesigner] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(false);
   const [injecting, setInjecting] = useState(false);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setIsInDesigner(window.self !== window.top);
+      const hasToken = sessionStorage.getItem('webflow_token');
+      const hasSiteId = sessionStorage.getItem('webflow_site_id');
+      setIsAuthorized(Boolean(hasToken && hasSiteId));
     }
   }, []);
 
@@ -53,7 +55,7 @@ export default function Home() {
 
         <h1 className={styles['main-heading']}>
           Theme Switcher
-          {isInDesigner && (
+          {isAuthorized && (
             <span style={{ fontSize: '1rem', marginLeft: '0.5rem' }}>✅ Installed</span>
           )}
         </h1>
@@ -62,13 +64,13 @@ export default function Home() {
           Let your visitors switch between dark and light mode — no coding required.
         </p>
 
-        {!isInDesigner && (
+        {!isAuthorized && (
           <a href={authURL} aria-label="Connect Webflow app" rel="noopener noreferrer">
             <button className={styles['main-button']}>{t.buttonInstall}</button>
           </a>
         )}
 
-        {isInDesigner && (
+        {isAuthorized && (
           <button
             className={styles['main-button']}
             onClick={handleInjectClick}
