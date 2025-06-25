@@ -1,5 +1,4 @@
 // pages/api/inject.js
-
 import * as cookie from 'cookie';
 
 export default async function handler(req, res) {
@@ -51,16 +50,16 @@ export default async function handler(req, res) {
     }
 
     const updatedScripts = existingScripts.map((s) => ({
-      id: s.id || null,
-      version: s.version || null,
+      id: typeof s.id === 'string' ? s.id : '',
+      version: typeof s.version === 'string' ? s.version : '',
       location: s.location,
       content: s.location === 'footer' ? `${s.content}\n${scriptTag}` : s.content,
     }));
 
     if (!existingScripts.some((s) => s.location === 'footer')) {
       updatedScripts.push({
-        id: null,
-        version: null,
+        id: '',
+        version: '',
         location: 'footer',
         content: scriptTag,
       });
