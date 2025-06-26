@@ -81,7 +81,9 @@ export default function Callback() {
           throw new Error(data.error || 'Missing access token or site ID.');
         }
 
-        console.log('✅ Saving to sessionStorage:', { access_token, site_id });
+        if (isTest) {
+          console.log('✅ Saving to sessionStorage:', { access_token, site_id });
+        }
 
         storage.setItem('webflow_token', access_token);
         storage.setItem('webflow_site_id', site_id);
@@ -92,9 +94,12 @@ export default function Callback() {
 
         hasResponded.current = true;
 
+        // Redirect back to homepage or with test param
         await router.replace(`/${isTest ? '?test=true' : ''}`);
-        setTimeout(() => (window.location.href = '/'), 2000);
-      } catch (err) {
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 2000);
+      } catch (err: any) {
         console.error('❌ Token exchange error:', err);
         if (!hasResponded.current) {
           hasResponded.current = true;

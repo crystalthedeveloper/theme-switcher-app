@@ -15,6 +15,15 @@
     return sessionStorage.getItem(key);
   }
 
+  function setSessionItem(key, value) {
+    try {
+      if (window.parent && window.parent !== window && window.parent.sessionStorage) {
+        window.parent.sessionStorage.setItem(key, value);
+      }
+    } catch (e) {}
+    sessionStorage.setItem(key, value);
+  }
+
   function injectPanel(isInstalled) {
     if (sessionStorage.getItem('theme-switcher-dismissed') === 'true') return;
     if (document.getElementById('theme-switcher-panel')) return;
@@ -32,7 +41,7 @@
 
     panel.innerHTML = isInstalled
       ? `
-        <h2 id="theme-switcher-heading" style="font-size:16px;margin-bottom:12px;">🌓 Theme Switcher</h2>
+        <h2 style="font-size:16px;margin-bottom:12px;">🌓 Theme Switcher</h2>
         <button id="copy-script" style="width:100%;padding:8px;font-size:14px;">📋 Copy Script Tag</button>
         <div style="background:#111;padding:12px;border-radius:8px;margin-top:12px;color:#00ff88;font-size:13px;">
           ✅ <strong>Installed!</strong><br />
@@ -46,19 +55,18 @@
         <button id="dismiss-panel" style="margin-top:12px;width:100%;padding:6px;font-size:13px;">❌ Close</button>
       `
       : `
-        <h2 id="theme-switcher-heading" style="font-size:16px;margin-bottom:12px;">🌓 Theme Switcher</h2>
-        <p style="font-size:14px;">Please install the app first from:</p>
-        <a href="https://theme-toggle-webflow.vercel.app" target="_blank" style="color:#00ff88;text-decoration:underline;">
-          theme-toggle-webflow.vercel.app
-        </a>
-        <button id="dismiss-panel" style="margin-top:12px;width:100%;padding:6px;font-size:13px;">❌ Close</button>
+        <h2 style="font-size:16px;margin-bottom:12px;">🌓 Theme Switcher</h2>
+        <p style="font-size:14px;">App not detected as installed.</p>
+        <a href="https://theme-toggle-webflow.vercel.app" target="_blank" style="color:#00ff88;text-decoration:underline;">Click here to install it</a>
+        <button id="retry-check" style="margin-top:12px;width:100%;padding:6px;font-size:13px;">🔄 Retry</button>
+        <button id="dismiss-panel" style="margin-top:8px;width:100%;padding:6px;font-size:13px;">❌ Close</button>
       `;
 
     document.body.appendChild(panel);
     log('Panel rendered.');
 
     if (isInstalled) {
-      panel.querySelector('#copy-script').addEventListener('click', () => {
+      panel.querySelector('#copy-script')?.addEventListener('click', () => {
         navigator.clipboard.writeText(SCRIPT_TAG)
           .then(() => alert('📋 Script copied! Paste it into Webflow Footer settings.'))
           .catch(err => {
@@ -66,9 +74,15 @@
             alert('⚠️ Couldn’t copy. Try manually.');
           });
       });
+    } else {
+      panel.querySelector('#retry-check')?.addEventListener('click', () => {
+        panel.remove();
+        waitForDesignerAPI();
+        log('🔄 Retrying status check...');
+      });
     }
 
-    panel.querySelector('#dismiss-panel').addEventListener('click', () => {
+    panel.querySelector('#dismiss-panel')?.addEventListener('click', () => {
       sessionStorage.setItem('theme-switcher-dismissed', 'true');
       panel.remove();
       log('Panel dismissed.');
