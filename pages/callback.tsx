@@ -12,6 +12,17 @@ export default function Callback() {
   const [error, setError] = useState('');
   const hasResponded = useRef(false);
 
+  const getStorage = () => {
+    try {
+      if (window.parent && window.parent !== window && window.parent.sessionStorage) {
+        return window.parent.sessionStorage;
+      }
+    } catch (e) {
+      console.warn('⚠️ Cannot access parent.sessionStorage:', e);
+    }
+    return window.sessionStorage;
+  };
+
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (loading && !hasResponded.current) {
@@ -30,11 +41,10 @@ export default function Callback() {
     const isTest = test === 'true';
     setTestMode(isTest);
 
-    // Clear any existing values first
-    if (typeof window !== 'undefined') {
-      ['webflow_token', 'webflow_site_id', 'webflow_app_installed', 'webflow_test_mode']
-        .forEach(key => sessionStorage.removeItem(key));
-    }
+    const storage = getStorage();
+    ['webflow_token', 'webflow_site_id', 'webflow_app_installed', 'webflow_test_mode'].forEach(key =>
+      storage.removeItem(key)
+    );
 
     if (oauthError) {
       if (isTest) console.error('❌ OAuth Error:', error_description || oauthError);
@@ -65,28 +75,25 @@ export default function Callback() {
         });
 
         const data = await res.json();
+        const { access_token, site_id, warning } = data;
 
-        if (!res.ok || !data.access_token || !data.site_id) {
+        if (!res.ok || !access_token || !site_id) {
           throw new Error(data.error || 'Missing access token or site ID.');
         }
 
-        const { access_token, site_id, warning } = data;
+        console.log('✅ Saving to sessionStorage:', { access_token, site_id });
 
-        if (typeof window !== 'undefined') {
-          console.log('✅ Saving to sessionStorage:', { access_token, site_id });
-          sessionStorage.setItem('webflow_token', access_token);
-          sessionStorage.setItem('webflow_site_id', site_id);
-          sessionStorage.setItem('webflow_app_installed', 'true');
-          if (testMode) sessionStorage.setItem('webflow_test_mode', 'true');
-        }
+        storage.setItem('webflow_token', access_token);
+        storage.setItem('webflow_site_id', site_id);
+        storage.setItem('webflow_app_installed', 'true');
+        if (isTest) storage.setItem('webflow_test_mode', 'true');
 
         if (warning) console.warn('⚠️ Warning:', warning);
 
         hasResponded.current = true;
 
-        // Redirect back to home
-        await router.replace(`/${testMode ? '?test=true' : ''}`);
-        setTimeout(() => window.location.href = '/', 2000); // fallback just in case
+        await router.replace(`/${isTest ? '?test=true' : ''}`);
+        setTimeout(() => (window.location.href = '/'), 2000);
       } catch (err) {
         console.error('❌ Token exchange error:', err);
         if (!hasResponded.current) {
@@ -107,9 +114,7 @@ export default function Callback() {
       <Logo />
       <h1>{t.connecting || 'Connecting to Webflow...'}</h1>
       <p aria-live="polite">
-        {loading
-          ? (t.exchanging || 'Exchanging code...')
-          : (error || t.tryAgainFallback || 'Something went wrong.')}
+        {loading ? t.exchanging || 'Exchanging code...' : error || t.tryAgainFallback || 'Something went wrong.'}
       </p>
 
       {error && (

@@ -16,9 +16,20 @@ export default function Home() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedToken = sessionStorage.getItem('webflow_token');
-      const savedSiteId = sessionStorage.getItem('webflow_site_id');
-      const appInstalled = sessionStorage.getItem('webflow_app_installed');
+      let storage = window.sessionStorage;
+
+      // Fallback to parent frame's sessionStorage if available
+      try {
+        if (window.parent && window.parent !== window && window.parent.sessionStorage) {
+          storage = window.parent.sessionStorage;
+        }
+      } catch (e) {
+        console.warn('Fallback to parent.sessionStorage failed:', e);
+      }
+
+      const savedToken = storage.getItem('webflow_token');
+      const savedSiteId = storage.getItem('webflow_site_id');
+      const appInstalled = storage.getItem('webflow_app_installed');
 
       setToken(savedToken || '');
       setSiteId(savedSiteId || '');
