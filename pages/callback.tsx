@@ -30,6 +30,7 @@ export default function Callback() {
     const isTest = test === 'true';
     setTestMode(isTest);
 
+    // Clear any existing values first
     if (typeof window !== 'undefined') {
       ['webflow_token', 'webflow_site_id', 'webflow_app_installed', 'webflow_test_mode']
         .forEach(key => sessionStorage.removeItem(key));
@@ -57,8 +58,6 @@ export default function Callback() {
 
     const exchangeToken = async () => {
       try {
-        if (isTest) console.log('🔄 Exchanging code for token:', code);
-
         const res = await fetch('/api/exchange-token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -68,25 +67,26 @@ export default function Callback() {
         const data = await res.json();
 
         if (!res.ok || !data.access_token || !data.site_id) {
-          if (isTest) console.error('⚠️ Token exchange failed:', data);
           throw new Error(data.error || 'Missing access token or site ID.');
         }
 
         const { access_token, site_id, warning } = data;
 
         if (typeof window !== 'undefined') {
+          console.log('✅ Saving to sessionStorage:', { access_token, site_id });
           sessionStorage.setItem('webflow_token', access_token);
           sessionStorage.setItem('webflow_site_id', site_id);
           sessionStorage.setItem('webflow_app_installed', 'true');
           if (testMode) sessionStorage.setItem('webflow_test_mode', 'true');
         }
 
-        if (isTest && warning) console.warn('⚠️ Warning:', warning);
+        if (warning) console.warn('⚠️ Warning:', warning);
 
         hasResponded.current = true;
 
-        // ✅ Redirect to homepage (no more select-site)
+        // Redirect back to home
         await router.replace(`/${testMode ? '?test=true' : ''}`);
+        setTimeout(() => window.location.href = '/', 2000); // fallback just in case
       } catch (err) {
         console.error('❌ Token exchange error:', err);
         if (!hasResponded.current) {
@@ -118,9 +118,7 @@ export default function Callback() {
         </p>
       )}
 
-      {loading && (
-        <div style={{ fontSize: '2rem', marginTop: '1.5rem' }}>⏳</div>
-      )}
+      {loading && <div style={{ fontSize: '2rem', marginTop: '1.5rem' }}>⏳</div>}
 
       {!loading && (
         <div style={{ marginTop: '2rem' }}>
