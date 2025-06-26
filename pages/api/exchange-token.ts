@@ -12,9 +12,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Missing authorization code' });
   }
 
-  const clientId = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID;
-  const clientSecret = process.env.WEBFLOW_CLIENT_SECRET;
-  const redirectUri = process.env.WEBFLOW_REDIRECT_URI;
+  const clientId = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID as string;
+  const clientSecret = process.env.WEBFLOW_CLIENT_SECRET as string;
+  const redirectUri = process.env.WEBFLOW_REDIRECT_URI as string;
 
   if (!clientId || !clientSecret || !redirectUri) {
     console.error('❌ Missing environment variables:', {
@@ -23,6 +23,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       redirectUri: !!redirectUri,
     });
     return res.status(500).json({ error: 'Missing Webflow OAuth environment config' });
+  }
+
+  // Debug tip: helps catch mismatch between expected and actual redirect URI
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🌐 Redirect URI used:', redirectUri);
   }
 
   try {
@@ -36,8 +41,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       redirect_uri: redirectUri,
     };
 
-    console.log('📦 POST body:', body);
-
     const response = await fetch('https://api.webflow.com/oauth/access_token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -49,7 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!response.ok) {
       console.error('❌ Token exchange failed:', data);
-      return res.status(500).json({ error: data.message || 'Failed to exchange token' });
+      return res.status(500).json({ error: data.error_description || 'Failed to exchange token' });
     }
 
     const { access_token, sites } = data;
