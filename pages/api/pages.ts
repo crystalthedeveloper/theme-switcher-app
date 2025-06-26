@@ -1,58 +1,33 @@
-// pages/api/pages.ts
-import * as cookie from 'cookie';
+// /pages/api/pages.ts
+import type { NextApiRequest, NextApiResponse } from 'next';
 
-export default async function handler(req, res) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { siteId } = req.query;
-  const cookies = cookie.parse(req.headers.cookie || '');
-  const token =
-    cookies.webflow_token ||
-    (req.headers.authorization?.startsWith('Bearer ')
-      ? req.headers.authorization.split('Bearer ')[1]
-      : null);
+  const token = req.headers.authorization?.replace('Bearer ', '');
 
-  if (!token || !siteId) {
-    return res.status(401).json({
-      success: false,
-      message: 'Unauthorized: Missing token or siteId',
-    });
+  if (!siteId || !token) {
+    return res.status(400).json({ error: 'Missing siteId or token' });
   }
 
   try {
-    const pageRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/pages`, {
+    const response = await fetch(`https://api.webflow.com/v2/sites/${siteId}/pages`, {
       headers: {
         Authorization: `Bearer ${token}`,
+        'accept-version': '1.0.0',
         'Content-Type': 'application/json',
       },
     });
 
-    const result = await pageRes.json();
+    const data = await response.json();
 
-    if (!pageRes.ok || !result.pages) {
-      return res.status(500).json({
-        success: false,
-        message: '❌ Failed to fetch pages',
-        error: result,
-      });
-    }
+    // ✅ Optional: filter only static pages and home
+    const staticPages = (data.pages || []).filter((page: any) =>
+      page.pageType === 'static' || page.pageType === 'home'
+    );
 
-    // ✅ Filter pages that are static and have a valid id and slug (slug === '' is homepage)
-    const staticPages = result.pages.filter((p) => {
-      return (
-        p.type === 'static' &&
-        p.id &&
-        p.slug !== undefined &&
-        !p.slug?.startsWith('detail_') // optional: hide CMS templates
-      );
-    });
-
-    const pages = staticPages.map((p) => ({
-      id: p.id,
-      slug: p.slug === '' ? 'homepage' : p.slug,
-      name: p.name,
-    }));
-
-    return res.status(200).json({ success: true, pages });
+    res.status(200).json({ pages: staticPages });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error('[Webflow Pages API Error]', err);
+    res.status(500).json({ error: 'Failed to fetch pages from Webflow' });
   }
 }
