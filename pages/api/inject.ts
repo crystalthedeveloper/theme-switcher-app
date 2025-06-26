@@ -2,7 +2,7 @@
 import * as cookie from 'cookie';
 
 export default async function handler(req, res) {
-  console.log('🌐 [API] Inject handler called');
+  console.log('🌐 [API] Inject handler called (Site-wide)');
 
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method Not Allowed' });
@@ -16,17 +16,16 @@ export default async function handler(req, res) {
     (authHeader.startsWith('Bearer ') ? authHeader.split('Bearer ')[1] : null);
 
   const siteId = req.body.siteId || cookies.webflow_site_id;
-  const pageId = req.body.pageId;
 
-  if (!token || !siteId || !pageId) {
-    console.warn('⚠️ Missing token, siteId, or pageId', { token, siteId, pageId });
+  if (!token || !siteId) {
+    console.warn('⚠️ Missing token or siteId', { token, siteId });
     return res.status(401).json({
       success: false,
-      message: 'Unauthorized: Missing token, siteId, or pageId',
+      message: 'Unauthorized: Missing token or siteId',
     });
   }
 
-  const injectUrl = `https://api.webflow.com/v2/sites/${siteId}/pages/${pageId}/custom_code`;
+  const injectUrl = `https://api.webflow.com/v2/sites/${siteId}/custom_code`;
   const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
 
   try {
@@ -36,7 +35,9 @@ export default async function handler(req, res) {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ beforeBodyEnd: scriptTag }),
+      body: JSON.stringify({
+        footer: scriptTag, // ✅ injects into site-wide footer
+      }),
     });
 
     const injectData = await injectRes.json();
@@ -50,10 +51,10 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log(`✅ Script injected into pageId: ${pageId}`);
+    console.log(`✅ Script injected into site: ${siteId}`);
     return res.status(200).json({
       success: true,
-      message: '✅ Script successfully injected!',
+      message: '✅ Script successfully injected into site-wide footer!',
     });
   } catch (err) {
     console.error('❌ Server error during injection:', err);

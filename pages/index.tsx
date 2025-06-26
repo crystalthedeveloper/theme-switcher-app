@@ -6,23 +6,13 @@ import styles from './css/index.module.css';
 import Logo from '../components/Logo';
 import Footer from '../components/Footer';
 
-// ✅ Add a type for Webflow pages
-type WebflowPage = {
-  id: string;
-  slug: string;
-  name: string;
-};
-
 export default function Home() {
   const t = en;
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [injecting, setInjecting] = useState(false);
-  const [loadingPages, setLoadingPages] = useState(false);
   const [message, setMessage] = useState('');
   const [token, setToken] = useState('');
   const [siteId, setSiteId] = useState('');
-  const [pages, setPages] = useState<WebflowPage[]>([]);
-  const [selectedPageId, setSelectedPageId] = useState('');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -31,37 +21,12 @@ export default function Home() {
 
       setToken(savedToken || '');
       setSiteId(savedSiteId || '');
-      const authorized = Boolean(savedToken && savedSiteId);
-      setIsAuthorized(authorized);
 
-      if (authorized) {
-        setLoadingPages(true);
-        fetch(`/api/pages?siteId=${savedSiteId}`, {
-          headers: { Authorization: `Bearer ${savedToken}` },
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            console.log('✅ Pages fetched from Webflow:', data.pages);
-            const staticPages = (data.pages || []).sort((a: WebflowPage, b: WebflowPage) =>
-              (a.slug || '').localeCompare(b.slug || '')
-            );
-            setPages(staticPages);
-            if (staticPages.length > 0) {
-              setSelectedPageId(staticPages[0].id);
-            } else {
-              setMessage('⚠️ No eligible static pages found to inject the script.');
-            }
-          })
-          .catch((err) => {
-            console.error('❌ Failed to fetch pages:', err);
-            setMessage('❌ Failed to load page list. Try reconnecting.');
-          })
-          .finally(() => setLoadingPages(false));
-      }
+      setIsAuthorized(Boolean(savedToken && savedSiteId));
     }
   }, []);
 
-  const authURL = `https://webflow.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.NEXT_PUBLIC_BASE_URL + '/callback')}&response_type=code&scope=sites:read pages:read custom_code:write`;
+  const authURL = `https://webflow.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.NEXT_PUBLIC_BASE_URL + '/callback')}&response_type=code&scope=sites:read custom_code:write`;
 
   const handleInjectClick = async () => {
     setInjecting(true);
@@ -74,10 +39,7 @@ export default function Home() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          siteId,
-          pageId: selectedPageId,
-        }),
+        body: JSON.stringify({ siteId }),
       });
 
       const data = await res.json();
@@ -125,33 +87,14 @@ export default function Home() {
           </a>
         )}
 
-        {isAuthorized && pages.length > 0 && (
-          <div style={{ marginTop: '1rem' }}>
-            <label htmlFor="page-select">Select page to inject:</label>
-            <select
-              id="page-select"
-              value={selectedPageId}
-              onChange={(e) => setSelectedPageId(e.target.value)}
-              style={{ marginLeft: '0.5rem' }}
-              disabled={loadingPages || injecting}
-            >
-              {pages.map((page) => (
-                <option key={page.id} value={page.id}>
-                  {page.slug}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
         {isAuthorized && (
           <button
             className={styles['main-button']}
             onClick={handleInjectClick}
-            disabled={injecting || loadingPages || !selectedPageId}
+            disabled={injecting}
             style={{ marginTop: '1rem' }}
           >
-            {injecting ? 'Injecting...' : 'Inject Script'}
+            {injecting ? 'Injecting...' : 'Inject Script to Footer'}
           </button>
         )}
 
