@@ -35,7 +35,12 @@ export default async function handler(req, res) {
       });
     }
 
-    const pages = result.pages.map((p) => ({
+    // ✅ Filter only static pages (type === 'static') that can receive custom_code
+    const staticPages = result.pages.filter((p) =>
+      p.type === 'static' && p.id && !p.slug?.startsWith('detail_')
+    );
+
+    const pages = staticPages.map((p) => ({
       id: p.id,
       slug: p.slug || 'homepage',
       name: p.name,
