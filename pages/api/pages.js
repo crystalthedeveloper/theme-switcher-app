@@ -4,7 +4,6 @@ import * as cookie from 'cookie';
 export default async function handler(req, res) {
   const { siteId } = req.query;
   const cookies = cookie.parse(req.headers.cookie || '');
-
   const token =
     cookies.webflow_token ||
     (req.headers.authorization?.startsWith('Bearer ')
@@ -12,7 +11,6 @@ export default async function handler(req, res) {
       : null);
 
   if (!token || !siteId) {
-    console.warn('❌ Missing token or siteId', { token, siteId });
     return res.status(401).json({
       success: false,
       message: 'Unauthorized: Missing token or siteId',
@@ -20,38 +18,31 @@ export default async function handler(req, res) {
   }
 
   try {
-    const structureRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/structure`, {
-      headers: { Authorization: `Bearer ${token}` },
+    const pageRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/pages`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
     });
 
-    const structure = await structureRes.json();
+    const result = await pageRes.json();
 
-    if (!structureRes.ok || !structure?.routes || !Array.isArray(structure.routes)) {
-      console.error('❌ Failed to fetch valid structure', structure);
+    if (!pageRes.ok || !result.pages) {
       return res.status(500).json({
         success: false,
-        message: 'Failed to fetch structure or routes missing',
-        error: structure,
+        message: '❌ Failed to fetch pages',
+        error: result,
       });
     }
 
-    const staticPages = structure.routes
-      .filter((route) => route.page?.id && route.type === 'static')
-      .map((route) => ({
-        id: route.page.id,
-        slug: route.slug === '' ? 'homepage' : route.slug,
-        type: route.type,
-      }));
+    const pages = result.pages.map((p) => ({
+      id: p.id,
+      slug: p.slug || 'homepage',
+      name: p.name,
+    }));
 
-    console.log('✅ Static pages found:', staticPages);
-
-    return res.status(200).json({ success: true, pages: staticPages });
+    return res.status(200).json({ success: true, pages });
   } catch (err) {
-    console.error('❌ Error in /api/pages:', err);
-    return res.status(500).json({
-      success: false,
-      message: 'Server error while fetching pages',
-      error: err.message,
-    });
+    return res.status(500).json({ success: false, message: err.message });
   }
 }

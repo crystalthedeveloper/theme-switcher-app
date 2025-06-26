@@ -9,25 +9,27 @@ export default async function handler(req, res) {
   }
 
   const cookies = cookie.parse(req.headers.cookie || '');
+  const authHeader = req.headers.authorization || '';
   const token =
+    req.body.token ||
     cookies.webflow_token ||
-    (req.headers.authorization?.startsWith('Bearer ')
-      ? req.headers.authorization.split('Bearer ')[1]
-      : null);
-  const siteId = cookies.webflow_site_id || req.body.siteId;
+    (authHeader.startsWith('Bearer ') ? authHeader.split('Bearer ')[1] : null);
+
+  const siteId = req.body.siteId || cookies.webflow_site_id;
   const pageId = req.body.pageId;
 
   if (!token || !siteId || !pageId) {
+    console.warn('⚠️ Missing token, siteId, or pageId', { token, siteId, pageId });
     return res.status(401).json({
       success: false,
       message: 'Unauthorized: Missing token, siteId, or pageId',
     });
   }
 
-  try {
-    const injectUrl = `https://api.webflow.com/v2/sites/${siteId}/pages/${pageId}/custom_code`;
-    const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
+  const injectUrl = `https://api.webflow.com/v2/sites/${siteId}/pages/${pageId}/custom_code`;
+  const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
 
+  try {
     const injectRes = await fetch(injectUrl, {
       method: 'PATCH',
       headers: {
@@ -57,7 +59,7 @@ export default async function handler(req, res) {
     console.error('❌ Server error during injection:', err);
     return res.status(500).json({
       success: false,
-      message: 'Server error during injection',
+      message: '❌ Server error during injection',
       error: err.message,
     });
   }
