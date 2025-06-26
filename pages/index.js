@@ -22,11 +22,6 @@ export default function Home() {
       const savedToken = sessionStorage.getItem('webflow_token');
       const savedSiteId = sessionStorage.getItem('webflow_site_id');
 
-      console.log('🌐 Loaded from sessionStorage:', {
-        token: savedToken,
-        siteId: savedSiteId,
-      });
-
       setToken(savedToken || '');
       setSiteId(savedSiteId || '');
       const authorized = Boolean(savedToken && savedSiteId);
@@ -61,8 +56,6 @@ export default function Home() {
   const handleInjectClick = async () => {
     setInjecting(true);
     setMessage('');
-    console.log('🚀 Inject button clicked');
-    console.log('🔐 Sending token, siteId, and pageId:', { token, siteId, pageId: selectedPageId });
 
     try {
       const res = await fetch('/api/inject', {
@@ -71,19 +64,19 @@ export default function Home() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ siteId, pageId: selectedPageId }),
+        body: JSON.stringify({
+          siteId,
+          pageId: selectedPageId,
+        }),
       });
 
       const data = await res.json();
-      console.log('📦 Inject API response:', data);
-
       if (data.success) {
         setMessage(data.message || '✅ Script successfully injected!');
         setTimeout(() => {
           window.location.href = '/success';
         }, 1000);
       } else {
-        console.warn('⚠️ Injection failed:', data.message);
         setMessage(data.message || data.error || '❌ Injection failed');
       }
     } catch (err) {
@@ -134,7 +127,7 @@ export default function Home() {
             >
               {pages.map((page) => (
                 <option key={page.id} value={page.id}>
-                  {page.slug === '' ? 'homepage' : page.slug}
+                  {page.slug}
                 </option>
               ))}
             </select>
