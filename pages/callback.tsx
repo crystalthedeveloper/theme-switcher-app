@@ -96,9 +96,6 @@ export default function Callback() {
 
         // Redirect back to homepage or with test param
         await router.replace(`/${isTest ? '?test=true' : ''}`);
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 2000);
       } catch (err: any) {
         console.error('❌ Token exchange error:', err);
         if (!hasResponded.current) {

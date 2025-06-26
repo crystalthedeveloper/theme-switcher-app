@@ -11,7 +11,7 @@
       if (window.parent && window.parent !== window && window.parent.sessionStorage) {
         return window.parent.sessionStorage.getItem(key);
       }
-    } catch (e) {}
+    } catch (e) { }
     return sessionStorage.getItem(key);
   }
 
@@ -20,7 +20,7 @@
       if (window.parent && window.parent !== window && window.parent.sessionStorage) {
         window.parent.sessionStorage.setItem(key, value);
       }
-    } catch (e) {}
+    } catch (e) { }
     sessionStorage.setItem(key, value);
   }
 
@@ -96,8 +96,15 @@
       if (extension) {
         clearInterval(interval);
         log('✅ Designer API ready');
-        const isInstalled = getSessionItem('webflow_app_installed') === 'true';
-        injectPanel(isInstalled);
+        let isInstalled = getSessionItem('webflow_app_installed') === 'true';
+        if (!isInstalled) {
+          setTimeout(() => {
+            isInstalled = getSessionItem('webflow_app_installed') === 'true';
+            injectPanel(isInstalled);
+          }, 1000); // wait 1s and retry
+        } else {
+          injectPanel(true);
+        }
       }
     }, 400);
   }
