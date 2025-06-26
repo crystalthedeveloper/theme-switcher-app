@@ -34,22 +34,19 @@ export default async function handler(req, res) {
     }
 
     console.log('🧾 Pages received:', pagesData.pages.map(p => ({
-      name: p.name,
       slug: p.slug,
       id: p.id,
       isHomepage: p.isHomepage,
     })));
 
-    // ✅ Safely check for homepage
-    let homepage = pagesData.pages.find(p => p.isHomepage);
+    // Try to find a homepage (even if not marked isHomepage)
+    let homepage = pagesData.pages.find(p =>
+      p.slug === '' || p.slug === 'home' || p.slug === 'index' || p.slug === 'about-me'
+    );
 
-    // 🛡️ Safe fallback match by name or slug
-    if (!homepage) {
-      homepage = pagesData.pages.find(p =>
-        (p.name && p.name.toLowerCase().includes('home')) ||
-        p.slug === 'home' || p.slug === 'index'
-      );
-      console.warn('⚠️ Fallback page used:', homepage?.name || homepage?.slug);
+    if (!homepage?.id) {
+      console.warn('⚠️ No matching homepage slug, using first static page');
+      homepage = pagesData.pages.find(p => p.slug && p.id);
     }
 
     if (!homepage?.id) {
@@ -79,10 +76,10 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log(`✅ Script injected into page: ${homepage.name || homepage.slug}`);
+    console.log(`✅ Script injected into page: ${homepage.slug}`);
     return res.status(200).json({
       success: true,
-      message: `✅ Script successfully injected into ${homepage.name || homepage.slug || 'homepage'}!`,
+      message: `✅ Script successfully injected into ${homepage.slug || 'homepage'}!`,
     });
 
   } catch (err) {
