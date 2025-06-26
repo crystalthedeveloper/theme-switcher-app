@@ -1,5 +1,3 @@
-// /public/extension.js
-
 (function () {
   const SCRIPT_URL = 'https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js';
   const SCRIPT_TAG = `<script src="${SCRIPT_URL}" defer></script>`;

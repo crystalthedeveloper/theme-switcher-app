@@ -13,23 +13,25 @@ export default function Home() {
   const [siteId, setSiteId] = useState('');
   const [injecting, setInjecting] = useState(false);
   const [message, setMessage] = useState('');
+  const [storage, setStorage] = useState<Storage | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      let storage = window.sessionStorage;
+      let resolvedStorage: Storage = window.sessionStorage;
 
-      // Fallback to parent frame's sessionStorage if available
       try {
         if (window.parent && window.parent !== window && window.parent.sessionStorage) {
-          storage = window.parent.sessionStorage;
+          resolvedStorage = window.parent.sessionStorage;
         }
       } catch (e) {
         console.warn('Fallback to parent.sessionStorage failed:', e);
       }
 
-      const savedToken = storage.getItem('webflow_token');
-      const savedSiteId = storage.getItem('webflow_site_id');
-      const appInstalled = storage.getItem('webflow_app_installed');
+      setStorage(resolvedStorage);
+
+      const savedToken = resolvedStorage.getItem('webflow_token');
+      const savedSiteId = resolvedStorage.getItem('webflow_site_id');
+      const appInstalled = resolvedStorage.getItem('webflow_app_installed');
 
       setToken(savedToken || '');
       setSiteId(savedSiteId || '');
@@ -91,7 +93,7 @@ export default function Home() {
 
         {!isAuthorized ? (
           <a href={authURL} aria-label="Connect Webflow app" rel="noopener noreferrer">
-            <button className={styles['main-button']}>{t.buttonInstall}</button>
+            <button className={styles['main-button']}>{t.buttonInstall || 'Install Theme Switcher'}</button>
           </a>
         ) : (
           <>
