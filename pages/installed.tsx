@@ -1,4 +1,5 @@
 // pages/installed.tsx
+
 import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import styles from './css/index.module.css';
@@ -17,7 +18,9 @@ export default function Installed() {
       if (window.parent && window.parent !== window && window.parent.sessionStorage) {
         storage = window.parent.sessionStorage;
       }
-    } catch (err) {}
+    } catch (err) {
+      console.warn('⚠️ Could not access parent sessionStorage:', err);
+    }
 
     setToken(storage.getItem('webflow_token') || '');
     setSiteId(storage.getItem('webflow_site_id') || '');
@@ -37,7 +40,8 @@ export default function Installed() {
       });
       const data = await res.json();
       setMessage(data.success ? '✅ Script injected!' : `❌ ${data.message || 'Injection failed'}`);
-    } catch {
+    } catch (err) {
+      console.error('❌ Injection error:', err);
       setMessage('❌ Script injection error.');
     } finally {
       setInjecting(false);
@@ -48,21 +52,26 @@ export default function Installed() {
     <div>
       <Head>
         <title>Theme Switcher Installed</title>
+        <meta name="description" content="Theme Switcher has been successfully installed in Webflow." />
       </Head>
+
       <main className={styles['main-content']}>
         <Logo />
         <h1 className={styles['main-heading']}>
           Theme Switcher <span style={{ fontSize: '1rem', marginLeft: '0.5rem' }}>✅ Installed</span>
         </h1>
         <p className={styles['main-subheading']}>
-          Let your visitors switch between dark and light mode — no coding required.
+          Let your visitors toggle between dark and light mode — no coding required.
         </p>
 
         <button className={styles['main-button']} onClick={handleInjectClick} disabled={injecting}>
           {injecting ? 'Injecting…' : 'Inject Script to Webflow Footer'}
         </button>
+
         {message && (
-          <p style={{ marginTop: '1rem', color: message.startsWith('✅') ? 'green' : 'red' }}>{message}</p>
+          <p style={{ marginTop: '1rem', color: message.startsWith('✅') ? 'green' : 'red' }} role="alert">
+            {message}
+          </p>
         )}
 
         <Footer />

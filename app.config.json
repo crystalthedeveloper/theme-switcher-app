@@ -1,6 +1,0 @@
-{
-  "name": "Theme Switcher",
-  "description": "Dark/light mode toggle script for Webflow sites.",
-  "redirect_uri": "https://theme-toggle-webflow.vercel.app/callback",
-  "permissions": ["custom_code:write", "sites:read", "pages:read"]
-}

@@ -1,8 +1,11 @@
 // /pages/api/inject.ts
+
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
 
   const { siteId } = req.body;
   const token = req.headers.authorization?.replace('Bearer ', '');
@@ -23,18 +26,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
       body: JSON.stringify({
         footer: scriptTag,
+        head: '', // optional: leave empty or customize if needed
       }),
     });
 
     const result = await response.json();
 
     if (!response.ok) {
-      return res.status(500).json({ error: result.message || 'Failed to inject script' });
+      console.error('❌ Webflow API error:', result);
+      return res.status(500).json({ error: result?.message || 'Script injection failed' });
     }
 
     return res.status(200).json({ success: true });
   } catch (err) {
-    console.error('❌ Webflow injection error:', err);
+    console.error('❌ Injection server error:', err);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 }

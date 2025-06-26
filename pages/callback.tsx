@@ -1,4 +1,5 @@
-// pages/callback.tsx
+// Token exchange – handles OAuth callback and token exchange with Webflow
+
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import en from '../locales/en';
@@ -12,6 +13,7 @@ export default function Callback() {
   const [error, setError] = useState('');
   const hasResponded = useRef(false);
 
+  // Safe access to parent sessionStorage (Webflow Designer context)
   const getStorage = () => {
     try {
       if (window.parent && window.parent !== window && window.parent.sessionStorage) {
@@ -23,6 +25,7 @@ export default function Callback() {
     return window.sessionStorage;
   };
 
+  // Timeout fallback if exchange takes too long
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (loading && !hasResponded.current) {
@@ -34,6 +37,7 @@ export default function Callback() {
     return () => clearTimeout(timeout);
   }, [loading]);
 
+  // Handle token exchange
   useEffect(() => {
     if (!router.isReady) return;
 
@@ -93,8 +97,6 @@ export default function Callback() {
         if (warning) console.warn('⚠️ Warning:', warning);
 
         hasResponded.current = true;
-
-        // Redirect back to homepage or with test param
         await router.replace(`/${isTest ? '?test=true' : ''}`);
       } catch (err: any) {
         console.error('❌ Token exchange error:', err);

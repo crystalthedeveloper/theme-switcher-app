@@ -1,4 +1,5 @@
 // components/Footer.tsx
+
 type FooterProps = {
   text?: string;
 };

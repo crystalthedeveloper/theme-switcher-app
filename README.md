@@ -1,57 +1,60 @@
 # 🌓 Theme Switcher App for Webflow
 
-This Webflow OAuth app allows users to securely connect their Webflow account and install a dark/light theme toggle into their Webflow site.
+A simple OAuth-powered Webflow app that helps users toggle between dark and light themes on their site — with a clean UI and a one-click script copy.
 
-> ⚠️ Webflow currently does **not allow automatic script injection** into Page or Site Settings via API for security reasons. Users must **manually paste** the script into the **Site Settings → Custom Code** panel.
+> ⚠️ Webflow does **not currently support automatic script injection** into Site or Page Settings via the API. Users must **manually paste** the script into **Site Settings → Custom Code**.
 
 ---
 
 ## ✨ Features
 
-- 🔐 Secure OAuth with Webflow
-- 🎨 One-click copy of the theme script for easy paste
-- 💡 Webflow Designer Extension panel to guide users
-- 🧼 Accessible, clean UI built with Next.js
-- 📱 Mobile-friendly interface
-- ✅ Detects successful installation via session tracking
-- 🧪 Developer test mode and console logging
+- 🔐 Secure OAuth flow with Webflow
+- 🧩 Webflow Designer Extension with install buttons
+- 🎨 One-click script copy for easy manual paste
+- 🧼 Clean, accessible UI built in Next.js
+- 📱 Mobile-friendly and responsive layout
+- ✅ Session-based install status detection
+- 🧪 Developer test mode with console logs
 
 ---
 
 ## 🚀 How It Works
 
 1. User clicks **Connect to Webflow**
-2. App completes OAuth and exchanges code for access token
-3. User selects which hosted Webflow site they want to use
-4. App shows instructions and script to copy
-5. User pastes the script manually into Webflow settings
+2. OAuth exchange returns `access_token` + `site_id`
+3. App shows status and copyable script
+4. User pastes script into Webflow **Footer Code**
+5. Done — theme switcher works on all published pages
 
 ---
 
 ## 🧩 Script to Add
 
+Paste this in **Webflow → Site Settings → Custom Code → Footer Code**:
+
 ```html
 <script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>
 ```
-
-Add this into your **Webflow → Site Settings → Custom Code → Footer Code** for the theme toggle to work.
 
 ---
 
 ## 📁 Pages Overview
 
-- `/` – Home page with "Connect to Webflow" button
-- `/callback` – Handles Webflow OAuth and redirects after token exchange
-- `/success?installed=true` – Confirms successful install and shows script
-- `/extension.js` – Webflow Designer panel with Add/Copy buttons
+| Page | Purpose |
+|------|---------|
+| `/` | Home page with "Connect to Webflow" button |
+| `/callback` | Handles Webflow OAuth and token exchange |
+| `/installed` | (Optional) Post-auth confirmation and re-injection |
+| `/public/extension.js` | Webflow Designer Extension UI |
+| `/api/inject` | Calls Webflow's PATCH `/custom-code` endpoint |
 
 ---
 
 ## ⚙️ Environment Variables
 
-Create a `.env.local` file or configure your Vercel environment:
+Create `.env.local`:
 
-```
+```env
 NEXT_PUBLIC_BASE_URL=https://theme-toggle-webflow.vercel.app
 NEXT_PUBLIC_WEBFLOW_CLIENT_ID=your_webflow_client_id
 WEBFLOW_CLIENT_SECRET=your_webflow_client_secret
@@ -62,37 +65,34 @@ WEBFLOW_REDIRECT_URI=https://theme-toggle-webflow.vercel.app/callback
 
 ## 🧪 Testing Notes
 
-- Works only on hosted (paid) Webflow sites
-- Developer Workspace or free sites won’t allow script injection
-- Designer extension fallback provides manual help panel
-- Append `?test=true` in URL for verbose console logs
+- ✅ Works on **paid or hosted Webflow sites**
+- 🚫 Won’t auto-inject on free projects (Webflow restriction)
+- 🧩 Designer extension gives fallback UI
+- 🔍 Add `?test=true` in the URL to enable console debug logs
 
 ---
 
 ## 🧾 Marketplace Notes
 
-- Uses Webflow Designer API only for contextual UI
-- Does **not** auto-inject into Project Settings (not allowed by Webflow)
-- Clear fallback and support guidance included
-- Users can uninstall from Webflow settings at any time
+- Uses only **Webflow Data (REST) API**
+- No auto-injection into Settings (against current policy)
+- All actions require **user confirmation**
+- Fully uninstallable via Webflow **Apps & Integrations**
 
 ---
 
 ## 🧼 Uninstall Instructions
 
-To remove the theme switcher:
-
-1. Go to your Webflow site’s **Project Settings**
-2. Click **Custom Code**
-3. Remove the `<script>` tag from the **Footer Code**
-4. Go to **Apps & Integrations** and click **Uninstall App**
+1. Go to **Webflow → Site Settings → Custom Code**
+2. Remove the `<script>` tag from Footer
+3. Go to **Apps & Integrations**, click **Uninstall App**
 
 ---
 
-## 🌐 Localization Ready
+## 🌍 Localization Ready
 
-All UI text is stored in `locales/en.js` for future i18n support.
+All UI text is stored in `locales/en.ts` and can be adapted for multi-language support.
 
 ---
 
-© Crystal The Developer – [crystalthedeveloper.ca](https://www.crystalthedeveloper.ca)
+© 2025 Crystal The Developer – [crystalthedeveloper.ca](https://www.crystalthedeveloper.ca)

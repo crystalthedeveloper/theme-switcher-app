@@ -11,12 +11,14 @@ export default function Home() {
   const t = en;
   const router = useRouter();
 
+  // State: Auth, Injecting, Messages, and Token Info
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [injecting, setInjecting] = useState(false);
   const [message, setMessage] = useState('');
   const [token, setToken] = useState('');
   const [siteId, setSiteId] = useState('');
 
+  // On load: Check for stored OAuth token and site ID
   useEffect(() => {
     let storage = sessionStorage;
     try {
@@ -39,8 +41,10 @@ export default function Home() {
     }
   }, []);
 
+  // OAuth authorization URL
   const authURL = `https://webflow.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.NEXT_PUBLIC_BASE_URL + '/callback')}&response_type=code&scope=sites:read custom_code:write`;
 
+  // Inject script into Webflow Footer using REST API
   const handleInjectClick = async () => {
     setInjecting(true);
     setMessage('');
@@ -84,7 +88,7 @@ export default function Home() {
 
         {!isAuthorized ? (
           <a href={authURL}>
-            <button className={styles['main-button']}>{t.buttonInstall}</button>
+            <button className={styles['main-button']}>{t.buttonInstall || 'Install App'}</button>
           </a>
         ) : (
           <>
