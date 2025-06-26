@@ -2,58 +2,30 @@
 import * as cookie from 'cookie';
 
 export default async function handler(req, res) {
-  console.log('🌐 [API] Homepage Inject handler called');
+  console.log('🌐 [API] Inject handler called');
 
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method Not Allowed' });
   }
 
   const cookies = cookie.parse(req.headers.cookie || '');
-  const token = cookies.webflow_token || (req.headers.authorization?.startsWith('Bearer ')
-    ? req.headers.authorization.split('Bearer ')[1]
-    : null);
+  const token =
+    cookies.webflow_token ||
+    (req.headers.authorization?.startsWith('Bearer ')
+      ? req.headers.authorization.split('Bearer ')[1]
+      : null);
   const siteId = cookies.webflow_site_id || req.body.siteId;
+  const pageId = req.body.pageId;
 
-  if (!token || !siteId) {
-    return res.status(401).json({ success: false, message: 'Unauthorized: Missing token or siteId' });
+  if (!token || !siteId || !pageId) {
+    return res.status(401).json({
+      success: false,
+      message: 'Unauthorized: Missing token, siteId, or pageId',
+    });
   }
 
   try {
-    const pagesRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/pages`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    const pagesData = await pagesRes.json();
-
-    if (!pagesRes.ok || !Array.isArray(pagesData.pages)) {
-      console.error('❌ Pages API failed:', pagesData);
-      return res.status(500).json({ success: false, message: 'Failed to fetch site pages', error: pagesData });
-    }
-
-    console.log('🧾 Pages received:', pagesData.pages.map(p => ({
-      slug: p.slug,
-      id: p.id,
-      isHomepage: p.isHomepage,
-    })));
-
-    // Try to find a homepage (even if not marked isHomepage)
-    let homepage = pagesData.pages.find(p =>
-      p.slug === '' || p.slug === 'home' || p.slug === 'index' || p.slug === 'about-me'
-    );
-
-    if (!homepage?.id) {
-      console.warn('⚠️ No matching homepage slug, using first static page');
-      homepage = pagesData.pages.find(p => p.slug && p.id);
-    }
-
-    if (!homepage?.id) {
-      return res.status(404).json({ success: false, message: '❌ No homepage with valid id found.' });
-    }
-
-    const injectUrl = `https://api.webflow.com/v2/sites/${siteId}/pages/${homepage.id}/custom_code`;
+    const injectUrl = `https://api.webflow.com/v2/sites/${siteId}/pages/${pageId}/custom_code`;
     const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
 
     const injectRes = await fetch(injectUrl, {
@@ -76,12 +48,11 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log(`✅ Script injected into page: ${homepage.slug}`);
+    console.log(`✅ Script injected into pageId: ${pageId}`);
     return res.status(200).json({
       success: true,
-      message: `✅ Script successfully injected into ${homepage.slug || 'homepage'}!`,
+      message: '✅ Script successfully injected!',
     });
-
   } catch (err) {
     console.error('❌ Server error during injection:', err);
     return res.status(500).json({
