@@ -1,8 +1,8 @@
-// pages/api/inject.ts
+// /pages/api/inject.ts
 import * as cookie from 'cookie';
 
 export default async function handler(req, res) {
-  console.log('🌐 [API] Inject handler called (Site-wide)');
+  console.log('🌐 [API] Site-level Inject handler called');
 
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method Not Allowed' });
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        footer: scriptTag, // ✅ injects into site-wide footer
+        beforeBodyEnd: scriptTag,
       }),
     });
 
@@ -51,10 +51,10 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log(`✅ Script injected into site: ${siteId}`);
+    console.log(`✅ Global script injected to siteId: ${siteId}`);
     return res.status(200).json({
       success: true,
-      message: '✅ Script successfully injected into site-wide footer!',
+      message: '✅ Script successfully injected globally!',
     });
   } catch (err) {
     console.error('❌ Server error during injection:', err);
