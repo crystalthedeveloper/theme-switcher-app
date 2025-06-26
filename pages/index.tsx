@@ -6,6 +6,13 @@ import styles from './css/index.module.css';
 import Logo from '../components/Logo';
 import Footer from '../components/Footer';
 
+// ✅ Add a type for Webflow pages
+type WebflowPage = {
+  id: string;
+  slug: string;
+  name: string;
+};
+
 export default function Home() {
   const t = en;
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -14,7 +21,7 @@ export default function Home() {
   const [message, setMessage] = useState('');
   const [token, setToken] = useState('');
   const [siteId, setSiteId] = useState('');
-  const [pages, setPages] = useState([]);
+  const [pages, setPages] = useState<WebflowPage[]>([]);
   const [selectedPageId, setSelectedPageId] = useState('');
 
   useEffect(() => {
@@ -34,8 +41,8 @@ export default function Home() {
         })
           .then((res) => res.json())
           .then((data) => {
-            console.log('✅ Pages fetched from Webflow:', data.pages); // 🔍 log all pages
-            const staticPages = (data.pages || []).sort((a, b) =>
+            console.log('✅ Pages fetched from Webflow:', data.pages);
+            const staticPages = (data.pages || []).sort((a: WebflowPage, b: WebflowPage) =>
               (a.slug || '').localeCompare(b.slug || '')
             );
             setPages(staticPages);
