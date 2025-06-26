@@ -23,13 +23,19 @@ export default function Callback() {
     return window.sessionStorage;
   };
 
+  const setErrorAndStop = (message: string) => {
+    if (!hasResponded.current) {
+      hasResponded.current = true;
+      setError(message);
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (loading && !hasResponded.current) {
         console.warn('⚠️ Exchange timeout triggered');
-        hasResponded.current = true;
-        setLoading(false);
-        setError('Request timed out. Please try again.');
+        setErrorAndStop('Request timed out. Please try again.');
       }
     }, 15000);
     return () => clearTimeout(timeout);
@@ -50,23 +56,13 @@ export default function Callback() {
     );
 
     if (oauthError) {
-      console.error('❌ OAuth Error from Webflow:', oauthError, '| Description:', error_description);
-      if (!hasResponded.current) {
-        hasResponded.current = true;
-        setError('Authorization failed. Please try again.');
-        setLoading(false);
-      }
-      return;
+      console.error('❌ OAuth Error from Webflow:', oauthError, '|', error_description);
+      return setErrorAndStop('Authorization failed. Please try again.');
     }
 
     if (!code || typeof code !== 'string') {
       console.warn('⚠️ Invalid or missing `code` in query:', code);
-      if (!hasResponded.current) {
-        hasResponded.current = true;
-        setError('Missing or invalid authorization code.');
-        setLoading(false);
-      }
-      return;
+      return setErrorAndStop('Missing or invalid authorization code.');
     }
 
     const exchangeToken = async () => {
@@ -79,19 +75,15 @@ export default function Callback() {
           body: JSON.stringify({ code }),
         });
 
-        console.log('📡 Exchange response status:', res.status);
-
         const data = await res.json();
-        console.log('📬 Exchange response body:', data);
+        console.log('📬 Exchange response:', res.status, data);
 
         const { access_token, site_id, warning } = data;
 
         if (!res.ok || !access_token || !site_id) {
-          console.error('❌ Token exchange failed with data:', data);
+          console.error('❌ Token exchange failed:', data);
           throw new Error(data.error || 'Missing access token or site ID.');
         }
-
-        console.log('✅ Token and Site ID received:', { access_token, site_id });
 
         storage.setItem('webflow_token', access_token);
         storage.setItem('webflow_site_id', site_id);
@@ -103,12 +95,8 @@ export default function Callback() {
         hasResponded.current = true;
         await router.replace(`/${isTest ? '?test=true' : ''}`);
       } catch (err: any) {
-        console.error('❌ Error during token exchange:', err);
-        if (!hasResponded.current) {
-          hasResponded.current = true;
-          setError(err?.message || 'Token exchange failed. Please try again.');
-          setLoading(false);
-        }
+        console.error('❌ Exchange error:', err);
+        setErrorAndStop(err?.message || 'Token exchange failed. Please try again.');
       }
     };
 

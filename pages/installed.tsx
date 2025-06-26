@@ -1,5 +1,4 @@
 // pages/installed.tsx
-
 import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import styles from './css/index.module.css';
@@ -12,23 +11,32 @@ export default function Installed() {
   const [token, setToken] = useState('');
   const [siteId, setSiteId] = useState('');
 
-  useEffect(() => {
-    let storage = sessionStorage;
+  const getStorage = () => {
     try {
       if (window.parent && window.parent !== window && window.parent.sessionStorage) {
-        storage = window.parent.sessionStorage;
+        return window.parent.sessionStorage;
       }
     } catch (err) {
-      console.warn('⚠️ Could not access parent sessionStorage:', err);
+      console.warn('⚠️ Could not access parent.sessionStorage:', err);
     }
+    return window.sessionStorage;
+  };
 
+  useEffect(() => {
+    const storage = getStorage();
     setToken(storage.getItem('webflow_token') || '');
     setSiteId(storage.getItem('webflow_site_id') || '');
   }, []);
 
   const handleInjectClick = async () => {
+    if (!token || !siteId) {
+      setMessage('❌ Missing token or site ID.');
+      return;
+    }
+
     setInjecting(true);
     setMessage('');
+
     try {
       const res = await fetch('/api/inject', {
         method: 'POST',
@@ -38,6 +46,7 @@ export default function Installed() {
         },
         body: JSON.stringify({ siteId }),
       });
+
       const data = await res.json();
       setMessage(data.success ? '✅ Script injected!' : `❌ ${data.message || 'Injection failed'}`);
     } catch (err) {
@@ -64,7 +73,11 @@ export default function Installed() {
           Let your visitors toggle between dark and light mode — no coding required.
         </p>
 
-        <button className={styles['main-button']} onClick={handleInjectClick} disabled={injecting}>
+        <button
+          className={styles['main-button']}
+          onClick={handleInjectClick}
+          disabled={injecting || !token || !siteId}
+        >
           {injecting ? 'Injecting…' : 'Inject Script to Webflow Footer'}
         </button>
 

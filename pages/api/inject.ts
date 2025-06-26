@@ -2,15 +2,21 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const sendError = (status: number, message: string) => {
+    console.warn(`⚠️ ${status} – ${message}`);
+    return res.status(status).json({ error: message });
+  };
+
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
+    return sendError(405, 'Method Not Allowed');
   }
 
   const { siteId } = req.body;
-  const token = req.headers.authorization?.replace('Bearer ', '');
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
 
   if (!token || !siteId) {
-    return res.status(400).json({ error: 'Missing siteId or token' });
+    return sendError(400, 'Missing siteId or token');
   }
 
   const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
@@ -25,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
       body: JSON.stringify({
         footer: scriptTag,
-        head: '', // optional: leave empty or customize if needed
+        head: '', // optional: leave empty or customize
       }),
     });
 
@@ -33,12 +39,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!response.ok) {
       console.error('❌ Webflow API error:', result);
-      return res.status(500).json({ error: result?.message || 'Script injection failed' });
+      return sendError(500, result?.message || 'Script injection failed');
     }
 
+    console.log('✅ Script injected successfully to site:', siteId);
     return res.status(200).json({ success: true });
   } catch (err) {
-    console.error('❌ Injection server error:', err);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    console.error('❌ Unexpected injection error:', err);
+    return sendError(500, 'Internal Server Error');
   }
 }
