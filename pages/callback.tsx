@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import en from '../locales/en';
 import Logo from '../components/Logo';
-import styles from './css/callback.module.css';
+import Footer from '../components/Footer';
 
 export default function Callback() {
   const router = useRouter();
@@ -145,9 +145,7 @@ export default function Callback() {
         </p>
       )}
 
-      <footer className={styles['main-footer']}>
-        <p>{t.footer || 'Theme Switcher by Crystal'}</p>
-      </footer>
+       <Footer />
     </main>
   );
 }
