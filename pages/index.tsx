@@ -11,41 +11,53 @@ export default function Home() {
   const t = en;
   const router = useRouter();
 
-  // State: Auth, Injecting, Messages, and Token Info
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [injecting, setInjecting] = useState(false);
   const [message, setMessage] = useState('');
   const [token, setToken] = useState('');
   const [siteId, setSiteId] = useState('');
 
-  // On load: Check for stored OAuth token and site ID
   useEffect(() => {
     let storage = sessionStorage;
     try {
       if (window.parent && window.parent !== window && window.parent.sessionStorage) {
         storage = window.parent.sessionStorage;
       }
-    } catch (err) { }
+    } catch (err) {
+      console.warn('⚠️ Could not access parent sessionStorage:', err);
+    }
 
     const savedToken = storage.getItem('webflow_token');
     const savedSiteId = storage.getItem('webflow_site_id');
     const installed = storage.getItem('webflow_app_installed') === 'true';
 
+    console.log('🔍 Loaded from sessionStorage:', {
+      savedToken,
+      savedSiteId,
+      installed,
+    });
+
     setToken(savedToken || '');
     setSiteId(savedSiteId || '');
+
     const authorized = !!savedToken && !!savedSiteId && installed;
     setIsAuthorized(authorized);
 
-    if (authorized && router.pathname !== '/installed') {
-      router.replace('/installed');
+    if (authorized) {
+      console.log('✅ User is authorized, redirecting to /installed');
+      if (router.pathname !== '/installed') {
+        router.replace('/installed');
+      }
+    } else {
+      console.log('🚫 User not authorized yet');
     }
   }, []);
 
-  // OAuth authorization URL
   const authURL = `https://webflow.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.WEBFLOW_REDIRECT_URI!)}&response_type=code&scope=sites:read custom_code:write`;
 
-  // Inject script into Webflow Footer using REST API
   const handleInjectClick = async () => {
+    console.log('🚀 Injecting script for site ID:', siteId);
+
     setInjecting(true);
     setMessage('');
 
@@ -60,8 +72,11 @@ export default function Home() {
       });
 
       const data = await res.json();
+      console.log('📦 Inject response:', data);
+
       setMessage(data.success ? '✅ Script injected!' : `❌ ${data.message || 'Injection failed'}`);
     } catch (err) {
+      console.error('❌ Error during script injection:', err);
       setMessage('❌ Script injection error.');
     } finally {
       setInjecting(false);
@@ -88,7 +103,9 @@ export default function Home() {
 
         {!isAuthorized ? (
           <a href={authURL}>
-            <button className={styles['main-button']}>{t.buttonInstall || 'Install App'}</button>
+            <button className={styles['main-button']}>
+              {t.buttonInstall || 'Install App'}
+            </button>
           </a>
         ) : (
           <>

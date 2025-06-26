@@ -1,5 +1,4 @@
 // Token exchange – handles OAuth callback and token exchange with Webflow
-
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import en from '../locales/en';
@@ -13,7 +12,6 @@ export default function Callback() {
   const [error, setError] = useState('');
   const hasResponded = useRef(false);
 
-  // Safe access to parent sessionStorage (Webflow Designer context)
   const getStorage = () => {
     try {
       if (window.parent && window.parent !== window && window.parent.sessionStorage) {
@@ -25,10 +23,10 @@ export default function Callback() {
     return window.sessionStorage;
   };
 
-  // Timeout fallback if exchange takes too long
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (loading && !hasResponded.current) {
+        console.warn('⚠️ Exchange timeout triggered');
         hasResponded.current = true;
         setLoading(false);
         setError('Request timed out. Please try again.');
@@ -37,7 +35,6 @@ export default function Callback() {
     return () => clearTimeout(timeout);
   }, [loading]);
 
-  // Handle token exchange
   useEffect(() => {
     if (!router.isReady) return;
 
@@ -45,13 +42,15 @@ export default function Callback() {
     const isTest = test === 'true';
     setTestMode(isTest);
 
+    console.log('🔍 Router query:', router.query);
+
     const storage = getStorage();
     ['webflow_token', 'webflow_site_id', 'webflow_app_installed', 'webflow_test_mode'].forEach(key =>
       storage.removeItem(key)
     );
 
     if (oauthError) {
-      if (isTest) console.error('❌ OAuth Error:', error_description || oauthError);
+      console.error('❌ OAuth Error from Webflow:', oauthError, '| Description:', error_description);
       if (!hasResponded.current) {
         hasResponded.current = true;
         setError('Authorization failed. Please try again.');
@@ -61,7 +60,7 @@ export default function Callback() {
     }
 
     if (!code || typeof code !== 'string') {
-      if (isTest) console.warn('⚠️ Missing or invalid code.');
+      console.warn('⚠️ Invalid or missing `code` in query:', code);
       if (!hasResponded.current) {
         hasResponded.current = true;
         setError('Missing or invalid authorization code.');
@@ -71,6 +70,8 @@ export default function Callback() {
     }
 
     const exchangeToken = async () => {
+      console.log('🔁 Starting token exchange with code:', code);
+
       try {
         const res = await fetch('/api/exchange-token', {
           method: 'POST',
@@ -78,28 +79,31 @@ export default function Callback() {
           body: JSON.stringify({ code }),
         });
 
+        console.log('📡 Exchange response status:', res.status);
+
         const data = await res.json();
+        console.log('📬 Exchange response body:', data);
+
         const { access_token, site_id, warning } = data;
 
         if (!res.ok || !access_token || !site_id) {
+          console.error('❌ Token exchange failed with data:', data);
           throw new Error(data.error || 'Missing access token or site ID.');
         }
 
-        if (isTest) {
-          console.log('✅ Saving to sessionStorage:', { access_token, site_id });
-        }
+        console.log('✅ Token and Site ID received:', { access_token, site_id });
 
         storage.setItem('webflow_token', access_token);
         storage.setItem('webflow_site_id', site_id);
         storage.setItem('webflow_app_installed', 'true');
         if (isTest) storage.setItem('webflow_test_mode', 'true');
 
-        if (warning) console.warn('⚠️ Warning:', warning);
+        if (warning) console.warn('⚠️ API Warning:', warning);
 
         hasResponded.current = true;
         await router.replace(`/${isTest ? '?test=true' : ''}`);
       } catch (err: any) {
-        console.error('❌ Token exchange error:', err);
+        console.error('❌ Error during token exchange:', err);
         if (!hasResponded.current) {
           hasResponded.current = true;
           setError(err?.message || 'Token exchange failed. Please try again.');
@@ -145,7 +149,7 @@ export default function Callback() {
         </p>
       )}
 
-       <Footer />
+      <Footer />
     </main>
   );
 }
