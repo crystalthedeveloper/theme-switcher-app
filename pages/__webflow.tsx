@@ -1,5 +1,4 @@
-// pages/__webflow.js
-
+// pages/__webflow.tsx
 import styles from './css/webflow-health.module.css';
 
 export async function getServerSideProps({ res }) {

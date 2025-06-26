@@ -1,4 +1,4 @@
-// components/Logo.js
+// components/Logo.tsx
 import Image from 'next/image';
 import styles from './css/Logo.module.css';
 

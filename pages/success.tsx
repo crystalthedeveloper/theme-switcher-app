@@ -1,4 +1,4 @@
-// pages/success.js
+// pages/success.tsx
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import styles from './css/success.module.css';

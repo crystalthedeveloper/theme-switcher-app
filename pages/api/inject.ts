@@ -1,4 +1,4 @@
-// pages/api/inject.js
+// pages/api/inject.ts
 import * as cookie from 'cookie';
 
 export default async function handler(req, res) {

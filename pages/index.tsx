@@ -1,4 +1,4 @@
-// pages/index.js
+// pages/index.tsx
 import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import en from '../locales/en';
@@ -34,12 +34,15 @@ export default function Home() {
         })
           .then((res) => res.json())
           .then((data) => {
+            console.log('✅ Pages fetched from Webflow:', data.pages); // 🔍 log all pages
             const staticPages = (data.pages || []).sort((a, b) =>
               (a.slug || '').localeCompare(b.slug || '')
             );
             setPages(staticPages);
             if (staticPages.length > 0) {
               setSelectedPageId(staticPages[0].id);
+            } else {
+              setMessage('⚠️ No eligible static pages found to inject the script.');
             }
           })
           .catch((err) => {
@@ -138,7 +141,7 @@ export default function Home() {
           <button
             className={styles['main-button']}
             onClick={handleInjectClick}
-            disabled={injecting || loadingPages}
+            disabled={injecting || loadingPages || !selectedPageId}
             style={{ marginTop: '1rem' }}
           >
             {injecting ? 'Injecting...' : 'Inject Script'}

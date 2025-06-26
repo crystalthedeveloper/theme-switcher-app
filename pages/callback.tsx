@@ -1,5 +1,4 @@
-// pages/callback.js
-// pages/callback.js
+// pages/callback.tsx
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import en from '../locales/en';

@@ -1,4 +1,4 @@
-// pages/api/pages.js
+// pages/api/pages.ts
 import * as cookie from 'cookie';
 
 export default async function handler(req, res) {

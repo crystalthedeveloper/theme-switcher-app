@@ -1,4 +1,4 @@
-// pages/api/exchange-token.js
+// pages/api/exchange-token.ts
 
 import * as cookie from 'cookie';
 import { fetchWebflowSites } from '../../lib/webflow';
@@ -97,7 +97,7 @@ export default async function handler(req, res) {
         secure: process.env.NODE_ENV === 'production',
         maxAge: 3600,
         path: '/',
-        sameSite: 'Lax',
+        sameSite: 'lax',
       })
     );
 
