@@ -25,7 +25,7 @@ export default function Home() {
       if (window.parent && window.parent !== window && window.parent.sessionStorage) {
         storage = window.parent.sessionStorage;
       }
-    } catch (err) {}
+    } catch (err) { }
 
     const savedToken = storage.getItem('webflow_token');
     const savedSiteId = storage.getItem('webflow_site_id');
@@ -42,7 +42,7 @@ export default function Home() {
   }, []);
 
   // OAuth authorization URL
-  const authURL = `https://webflow.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.NEXT_PUBLIC_BASE_URL + '/callback')}&response_type=code&scope=sites:read custom_code:write`;
+  const authURL = `https://webflow.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.WEBFLOW_REDIRECT_URI!)}&response_type=code&scope=sites:read custom_code:write`;
 
   // Inject script into Webflow Footer using REST API
   const handleInjectClick = async () => {
