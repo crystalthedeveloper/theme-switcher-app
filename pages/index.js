@@ -19,6 +19,11 @@ export default function Home() {
       const savedToken = sessionStorage.getItem('webflow_token');
       const savedSiteId = sessionStorage.getItem('webflow_site_id');
 
+      console.log('🌐 Loaded from sessionStorage:', {
+        token: savedToken,
+        siteId: savedSiteId,
+      });
+
       setToken(savedToken || '');
       setSiteId(savedSiteId || '');
       setIsAuthorized(Boolean(savedToken && savedSiteId));
@@ -28,6 +33,9 @@ export default function Home() {
   const authURL = `https://webflow.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.NEXT_PUBLIC_BASE_URL + '/callback')}&response_type=code&scope=sites:read pages:read custom_code:write`;
 
   const handleInjectClick = async () => {
+    console.log('🚀 Inject button clicked');
+    console.log('🔐 Sending token and siteId:', { token, siteId });
+
     setInjecting(true);
     setMessage('');
 
@@ -42,10 +50,12 @@ export default function Home() {
       });
 
       const data = await res.json();
+      console.log('📦 Inject API response:', data);
 
       if (data.success) {
         window.location.href = '/success';
       } else {
+        console.warn('⚠️ Injection failed:', data.message);
         setMessage(data.message || '❌ Injection failed');
       }
     } catch (err) {
