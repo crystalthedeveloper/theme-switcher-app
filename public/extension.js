@@ -36,8 +36,8 @@
       <button id="copy-script" style="width:100%;padding:8px;font-size:14px;">📋 Copy Script Tag</button>
       <div style="background:#111;padding:12px;border-radius:8px;margin-top:12px;color:#00ff88;font-size:13px;">
         ✅ <strong>Installed!</strong><br />
-        Webflow does not allow automatic injection into Site or Page settings.<br /><br />
-        <strong>Please paste the copied script</strong> manually into:<br />
+        If automatic injection didn’t work, you can add this manually.<br /><br />
+        <strong>Paste this script into:</strong><br />
         <ul style="margin:6px 0 0 1rem;padding:0;color:#ccc;font-size:12px;">
           <li>Site Settings → Custom Code → Footer</li>
           <li>OR Page Settings → Footer</li>
@@ -51,7 +51,7 @@
 
     panel.querySelector('#copy-script').addEventListener('click', () => {
       navigator.clipboard.writeText(SCRIPT_TAG)
-        .then(() => alert('📋 Script copied! Paste it into Site Settings → Footer.'))
+        .then(() => alert('📋 Script copied! Paste it into Webflow Footer settings if needed.'))
         .catch(err => {
           error('Clipboard error:', err);
           alert('⚠️ Couldn’t copy automatically. Try manually.');
