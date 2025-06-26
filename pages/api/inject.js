@@ -19,7 +19,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // ✅ Use correct API endpoint
     const pagesRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/pages`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -36,18 +35,21 @@ export default async function handler(req, res) {
 
     console.log('🧾 Pages received:', pagesData.pages.map(p => ({
       name: p.name,
+      slug: p.slug,
       id: p.id,
       isHomepage: p.isHomepage,
     })));
 
+    // ✅ Safely check for homepage
     let homepage = pagesData.pages.find(p => p.isHomepage);
 
-    // fallback if homepage flag is missing
+    // 🛡️ Safe fallback match by name or slug
     if (!homepage) {
       homepage = pagesData.pages.find(p =>
-        p.name.toLowerCase().includes('home') || p.slug === 'home' || p.slug === 'index'
+        (p.name && p.name.toLowerCase().includes('home')) ||
+        p.slug === 'home' || p.slug === 'index'
       );
-      console.warn('⚠️ Fallback page used:', homepage?.name);
+      console.warn('⚠️ Fallback page used:', homepage?.name || homepage?.slug);
     }
 
     if (!homepage?.id) {
@@ -77,10 +79,10 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log(`✅ Script injected into page: ${homepage.name}`);
+    console.log(`✅ Script injected into page: ${homepage.name || homepage.slug}`);
     return res.status(200).json({
       success: true,
-      message: `✅ Script successfully injected into ${homepage.name || 'homepage'}!`,
+      message: `✅ Script successfully injected into ${homepage.name || homepage.slug || 'homepage'}!`,
     });
 
   } catch (err) {
