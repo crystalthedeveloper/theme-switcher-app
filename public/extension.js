@@ -7,7 +7,7 @@
   const log = (...args) => console.log('🌓 ThemeSwitcher:', ...args);
   const error = (...args) => console.error('❌ ThemeSwitcher:', ...args);
 
-  function injectPanel() {
+  function injectPanel(isInstalled) {
     if (sessionStorage.getItem('theme-switcher-dismissed') === 'true') return;
     if (document.getElementById('theme-switcher-panel')) return;
 
@@ -31,7 +31,8 @@
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
     `;
 
-    panel.innerHTML = `
+    panel.innerHTML = isInstalled
+      ? `
       <h2 id="theme-switcher-heading" style="font-size:16px;margin-bottom:12px;">🌓 Theme Switcher</h2>
       <button id="copy-script" style="width:100%;padding:8px;font-size:14px;">📋 Copy Script Tag</button>
       <div style="background:#111;padding:12px;border-radius:8px;margin-top:12px;color:#00ff88;font-size:13px;">
@@ -44,19 +45,29 @@
         </ul>
       </div>
       <button id="dismiss-panel" style="margin-top:12px;width:100%;padding:6px;font-size:13px;">❌ Close</button>
+    `
+      : `
+      <h2 id="theme-switcher-heading" style="font-size:16px;margin-bottom:12px;">🌓 Theme Switcher</h2>
+      <p style="font-size:14px;">To activate this theme toggle, please run the installer on:</p>
+      <a href="https://theme-toggle-webflow.vercel.app" target="_blank" style="color:#00ff88;text-decoration:underline;">
+        theme-toggle-webflow.vercel.app
+      </a>
+      <button id="dismiss-panel" style="margin-top:12px;width:100%;padding:6px;font-size:13px;">❌ Close</button>
     `;
 
     document.body.appendChild(panel);
     log('Panel rendered.');
 
-    panel.querySelector('#copy-script').addEventListener('click', () => {
-      navigator.clipboard.writeText(SCRIPT_TAG)
-        .then(() => alert('📋 Script copied! Paste it into Webflow Footer settings if needed.'))
-        .catch(err => {
-          error('Clipboard error:', err);
-          alert('⚠️ Couldn’t copy automatically. Try manually.');
-        });
-    });
+    if (isInstalled) {
+      panel.querySelector('#copy-script').addEventListener('click', () => {
+        navigator.clipboard.writeText(SCRIPT_TAG)
+          .then(() => alert('📋 Script copied! Paste it into Webflow Footer settings if needed.'))
+          .catch(err => {
+            error('Clipboard error:', err);
+            alert('⚠️ Couldn’t copy automatically. Try manually.');
+          });
+      });
+    }
 
     panel.querySelector('#dismiss-panel').addEventListener('click', () => {
       sessionStorage.setItem('theme-switcher-dismissed', 'true');
@@ -75,7 +86,9 @@
       if (extension) {
         clearInterval(interval);
         log('✅ Designer API available');
-        injectPanel();
+
+        const isInstalled = sessionStorage.getItem('webflow_app_installed') === 'true';
+        injectPanel(isInstalled);
       }
     }, 400);
   }
