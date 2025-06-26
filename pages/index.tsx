@@ -1,6 +1,7 @@
 // pages/index.tsx
 import Head from 'next/head';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import en from '../locales/en';
 import styles from './css/index.module.css';
 import Logo from '../components/Logo';
@@ -8,6 +9,8 @@ import Footer from '../components/Footer';
 
 export default function Home() {
   const t = en;
+  const router = useRouter();
+
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [injecting, setInjecting] = useState(false);
   const [message, setMessage] = useState('');
@@ -28,7 +31,12 @@ export default function Home() {
 
     setToken(savedToken || '');
     setSiteId(savedSiteId || '');
-    setIsAuthorized(!!savedToken && !!savedSiteId && installed);
+    const authorized = !!savedToken && !!savedSiteId && installed;
+    setIsAuthorized(authorized);
+
+    if (authorized && router.pathname !== '/installed') {
+      router.replace('/installed');
+    }
   }, []);
 
   const authURL = `https://webflow.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.NEXT_PUBLIC_BASE_URL + '/callback')}&response_type=code&scope=sites:read custom_code:write`;
