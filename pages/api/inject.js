@@ -19,39 +19,42 @@ export default async function handler(req, res) {
   }
 
   try {
-    const structureRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/structure`, {
+    // ✅ Use correct API endpoint
+    const pagesRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/pages`, {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
     });
 
-    const structure = await structureRes.json();
+    const pagesData = await pagesRes.json();
 
-    if (!structureRes.ok || !Array.isArray(structure.routes)) {
-      console.error('❌ Structure API failed:', structure);
-      return res.status(500).json({ success: false, message: 'Failed to fetch site structure', error: structure });
+    if (!pagesRes.ok || !Array.isArray(pagesData.pages)) {
+      console.error('❌ Pages API failed:', pagesData);
+      return res.status(500).json({ success: false, message: 'Failed to fetch site pages', error: pagesData });
     }
 
-    console.log('🧾 Routes received:', structure.routes.map(r => ({
-      slug: r.slug,
-      isHomepage: r.isHome,
-      pageId: r.page?.id || null
+    console.log('🧾 Pages received:', pagesData.pages.map(p => ({
+      name: p.name,
+      id: p.id,
+      isHomepage: p.isHomepage,
     })));
 
-    let homepage = structure.routes.find(r => r.isHome && r.page?.id);
+    let homepage = pagesData.pages.find(p => p.isHomepage);
 
-    // fallback: try to find a static slug
+    // fallback if homepage flag is missing
     if (!homepage) {
-      homepage = structure.routes.find(r => r.slug === 'index' || r.slug === 'home' || r.slug === 'about-me');
-      console.warn('⚠️ Fallback page used:', homepage?.slug);
+      homepage = pagesData.pages.find(p =>
+        p.name.toLowerCase().includes('home') || p.slug === 'home' || p.slug === 'index'
+      );
+      console.warn('⚠️ Fallback page used:', homepage?.name);
     }
 
-    if (!homepage?.page?.id) {
-      return res.status(404).json({ success: false, message: '❌ No homepage with valid _id found.' });
+    if (!homepage?.id) {
+      return res.status(404).json({ success: false, message: '❌ No homepage with valid id found.' });
     }
 
-    const injectUrl = `https://api.webflow.com/v2/sites/${siteId}/pages/${homepage.page.id}/custom_code`;
+    const injectUrl = `https://api.webflow.com/v2/sites/${siteId}/pages/${homepage.id}/custom_code`;
     const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
 
     const injectRes = await fetch(injectUrl, {
@@ -74,10 +77,10 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log(`✅ Script injected into page: ${homepage.slug}`);
+    console.log(`✅ Script injected into page: ${homepage.name}`);
     return res.status(200).json({
       success: true,
-      message: `✅ Script successfully injected into ${homepage.slug || 'homepage'}!`,
+      message: `✅ Script successfully injected into ${homepage.name || 'homepage'}!`,
     });
 
   } catch (err) {
