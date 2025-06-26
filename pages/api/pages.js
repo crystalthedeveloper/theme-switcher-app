@@ -35,14 +35,19 @@ export default async function handler(req, res) {
       });
     }
 
-    // ✅ Filter only static pages (type === 'static') that can receive custom_code
-    const staticPages = result.pages.filter((p) =>
-      p.type === 'static' && p.id && !p.slug?.startsWith('detail_')
-    );
+    // ✅ Filter pages that are static and have a valid id and slug (slug === '' is homepage)
+    const staticPages = result.pages.filter((p) => {
+      return (
+        p.type === 'static' &&
+        p.id &&
+        p.slug !== undefined &&
+        !p.slug?.startsWith('detail_') // optional: hide CMS templates
+      );
+    });
 
     const pages = staticPages.map((p) => ({
       id: p.id,
-      slug: p.slug || 'homepage',
+      slug: p.slug === '' ? 'homepage' : p.slug,
       name: p.name,
     }));
 
