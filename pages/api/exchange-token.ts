@@ -13,11 +13,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        client_id: process.env.WEBFLOW_CLIENT_ID,
+        client_id: process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID,
         client_secret: process.env.WEBFLOW_CLIENT_SECRET,
         code,
         grant_type: 'authorization_code',
-        redirect_uri: `${process.env.BASE_URL}/callback`,
+        redirect_uri: process.env.WEBFLOW_REDIRECT_URI,
       }),
     });
 
