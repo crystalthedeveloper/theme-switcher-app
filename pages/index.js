@@ -33,11 +33,10 @@ export default function Home() {
   const authURL = `https://webflow.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.NEXT_PUBLIC_BASE_URL + '/callback')}&response_type=code&scope=sites:read pages:read custom_code:write`;
 
   const handleInjectClick = async () => {
-    console.log('🚀 Inject button clicked');
-    console.log('🔐 Sending token and siteId:', { token, siteId });
-
     setInjecting(true);
     setMessage('');
+    console.log('🚀 Inject button clicked');
+    console.log('🔐 Sending token and siteId:', { token, siteId });
 
     try {
       const res = await fetch('/api/inject', {
@@ -65,6 +64,7 @@ export default function Home() {
       setInjecting(false);
     }
   };
+
 
   return (
     <div>
