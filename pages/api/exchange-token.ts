@@ -12,15 +12,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Missing authorization code' });
   }
 
+  const clientId = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID;
+  const clientSecret = process.env.WEBFLOW_CLIENT_SECRET;
+  const redirectUri = process.env.WEBFLOW_REDIRECT_URI;
+
+  if (!clientId || !clientSecret || !redirectUri) {
+    console.error('❌ Missing environment variables:', {
+      clientId: !!clientId,
+      clientSecret: !!clientSecret,
+      redirectUri: !!redirectUri,
+    });
+    return res.status(500).json({ error: 'Missing Webflow OAuth environment config' });
+  }
+
   try {
     console.log('🔁 Exchanging code:', code);
 
     const body = {
-      client_id: process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID,
-      client_secret: process.env.WEBFLOW_CLIENT_SECRET,
+      client_id: clientId,
+      client_secret: clientSecret,
       code,
       grant_type: 'authorization_code',
-      redirect_uri: process.env.WEBFLOW_REDIRECT_URI,
+      redirect_uri: redirectUri,
     };
 
     console.log('📦 POST body:', body);
@@ -32,7 +45,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     const data = await response.json();
-
     console.log('📬 Webflow token response:', data);
 
     if (!response.ok) {
