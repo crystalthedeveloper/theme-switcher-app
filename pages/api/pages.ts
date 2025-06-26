@@ -20,9 +20,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const data = await response.json();
 
-    // ✅ Optional: filter only static pages and home
+    // 🐞 Log full response for debugging
+    console.log('[DEBUG] Full response from Webflow:', JSON.stringify(data, null, 2));
+
+    // ✅ Adjust filter to catch more valid page types
     const staticPages = (data.pages || []).filter((page: any) =>
-      page.pageType === 'static' || page.pageType === 'home'
+      ['static', 'home', 'generic'].includes(page.pageType)
     );
 
     res.status(200).json({ pages: staticPages });
