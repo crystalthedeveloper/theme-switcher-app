@@ -48,7 +48,7 @@ export default function Home() {
   }, [router]);
 
   const clientId = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID;
-  const redirectUri = process.env.WEBFLOW_REDIRECT_URI;
+  const redirectUri = process.env.NEXT_PUBLIC_WEBFLOW_REDIRECT_URI;
 
   const authURL = clientId && redirectUri
     ? `https://webflow.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=sites:read custom_code:write`
