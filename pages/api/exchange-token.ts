@@ -1,4 +1,5 @@
 // /pages/api/exchange-token.ts
+
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -7,14 +8,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(status).json({ error: message });
   };
 
-  if (req.method !== 'POST') return sendError(405, 'Method Not Allowed');
+  if (req.method !== 'POST') {
+    return sendError(405, 'Method Not Allowed');
+  }
 
   const { code } = req.body;
-  if (!code || typeof code !== 'string') return sendError(400, 'Missing or invalid authorization code');
 
-  const clientId = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID!;
-  const clientSecret = process.env.WEBFLOW_CLIENT_SECRET!;
-  const redirectUri = process.env.WEBFLOW_REDIRECT_URI!;
+  if (!code || typeof code !== 'string') {
+    return sendError(400, 'Missing or invalid authorization code');
+  }
+
+  const clientId = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID;
+  const clientSecret = process.env.WEBFLOW_CLIENT_SECRET;
+  const redirectUri = process.env.WEBFLOW_REDIRECT_URI;
+
+  if (!clientId || !clientSecret || !redirectUri) {
+    return sendError(500, 'Missing environment variables');
+  }
 
   try {
     const tokenRes = await fetch('https://api.webflow.com/oauth/access_token', {
@@ -38,7 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const access_token = tokenData.access_token;
 
-    // 🔁 NEW: Get list of authorized sites
+    // ✅ Use v2 API to fetch authorized sites
     const siteRes = await fetch('https://api.webflow.com/v2/sites', {
       headers: {
         Authorization: `Bearer ${access_token}`,
@@ -53,7 +63,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return sendError(500, 'No authorized sites found for this user');
     }
 
-    const site_id = siteData[0].id; // or allow user to choose
+    const site_id = siteData[0].id;
 
     console.log('✅ OAuth success:', {
       access_token: '[REDACTED]',
