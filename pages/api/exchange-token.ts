@@ -18,9 +18,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const clientId = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID;
   const clientSecret = process.env.WEBFLOW_CLIENT_SECRET;
-  const rawRedirectUri = process.env.WEBFLOW_REDIRECT_URI;
+  const rawRedirectUri = process.env.NEXT_PUBLIC_WEBFLOW_REDIRECT_URI;
 
-  const redirectUri = rawRedirectUri;
+  const redirectUri = rawRedirectUri?.replace(/\/$/, ''); // remove trailing slash just in case
 
   if (!clientId || !clientSecret || !redirectUri) {
     console.error('❌ Missing Webflow OAuth config', {
