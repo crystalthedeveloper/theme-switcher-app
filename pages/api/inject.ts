@@ -22,12 +22,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
 
   try {
-    // ✅ Use v1 API to fetch existing custom code
-    const getRes = await fetch(`https://api.webflow.com/sites/${siteId}/customcode`, {
+    // ✅ Step 1: Get current custom code
+    const getRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom-code`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
-        'accept-version': '1.0.0',
+        'accept-version': '2.0.0',
         'Content-Type': 'application/json',
       },
     });
@@ -49,12 +49,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const updatedFooter = `${currentFooter}\n${scriptTag}`;
 
-    // ✅ PATCH updated footer using v1 API
+    // ✅ Step 2: PATCH via Webflow's upsert endpoint (v2)
     const patchRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom-code`, {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${token}`,
-        'accept-version': '1.0.0',
+        'accept-version': '2.0.0',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
