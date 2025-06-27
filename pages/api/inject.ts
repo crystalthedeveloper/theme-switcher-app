@@ -22,12 +22,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
 
   try {
-    // Step 1: Fetch existing custom code
-    const getRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom-code`, {
+    // ✅ Use v1 API to fetch existing custom code
+    const getRes = await fetch(`https://api.webflow.com/sites/${siteId}/customcode`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
-        'accept-version': '2.0.0',
+        'accept-version': '1.0.0',
+        'Content-Type': 'application/json',
       },
     });
 
@@ -48,13 +49,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const updatedFooter = `${currentFooter}\n${scriptTag}`;
 
-    // Step 2: PATCH with updated footer
-    const patchRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom-code`, {
+    // ✅ PATCH updated footer using v1 API
+    const patchRes = await fetch(`https://api.webflow.com/sites/${siteId}/customcode`, {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${token}`,
+        'accept-version': '1.0.0',
         'Content-Type': 'application/json',
-        'accept-version': '2.0.0',
       },
       body: JSON.stringify({
         footer: updatedFooter,
@@ -69,7 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return sendError(500, patchData?.message || 'Script injection failed.');
     }
 
-    console.log('✅ Script appended to footer for site:', siteId);
+    console.log('✅ Script injected for site:', siteId);
     return res.status(200).json({ success: true });
   } catch (err: any) {
     console.error('❌ Unexpected injection error:', err?.message || err);
