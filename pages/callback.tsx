@@ -82,7 +82,7 @@ export default function Callback() {
 
         if (!res.ok || !access_token || !site_id) {
           console.error('❌ Token exchange failed:', data);
-          throw new Error(data.error || 'Missing access token or site ID.');
+          throw new Error(data.error || 'Missing access token or site ID from Webflow.');
         }
 
         storage.setItem('webflow_token', access_token);

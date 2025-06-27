@@ -18,7 +18,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const clientId = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID;
   const clientSecret = process.env.WEBFLOW_CLIENT_SECRET;
-  const redirectUri = process.env.WEBFLOW_REDIRECT_URI;
+  const rawRedirectUri = process.env.WEBFLOW_REDIRECT_URI;
+
+  const redirectUri = rawRedirectUri?.replace(/\/$/, ''); // 🔁 Remove trailing slash just in case
 
   if (!clientId || !clientSecret || !redirectUri) {
     console.error('❌ Missing Webflow OAuth config', {
@@ -47,16 +49,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     const data = await response.json();
+
     if (!response.ok) {
-      console.error('❌ Token exchange failed:', data);
-      return sendError(500, data.error_description || 'Token exchange failed');
+      console.error('❌ Token exchange failed:', {
+        status: response.status,
+        body: data,
+      });
+      return sendError(500, data.error_description || `Webflow token exchange failed (${response.status})`);
     }
 
     const { access_token, sites } = data;
 
     if (!access_token || !Array.isArray(sites) || !sites[0]?.id) {
       console.error('❌ Incomplete response from Webflow:', data);
-      return sendError(500, 'Missing access token or site ID');
+      return sendError(500, 'Missing access token or site ID from Webflow');
     }
 
     console.log('✅ Token and Site ID received:', {
@@ -68,8 +74,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       access_token,
       site_id: sites[0].id,
     });
-  } catch (err) {
-    console.error('❌ Unexpected error during exchange:', err);
-    return sendError(500, 'Exchange failed');
+  } catch (err: any) {
+    console.error('❌ Unexpected error during exchange:', err.message || err);
+    return sendError(500, 'Exchange failed – unexpected server error');
   }
 }
