@@ -7,75 +7,62 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(status).json({ error: message });
   };
 
-  if (req.method !== 'POST') {
-    return sendError(405, 'Method Not Allowed');
-  }
+  if (req.method !== 'POST') return sendError(405, 'Method Not Allowed');
 
   const { code } = req.body;
-  if (!code || typeof code !== 'string') {
-    return sendError(400, 'Missing or invalid authorization code');
-  }
+  if (!code || typeof code !== 'string') return sendError(400, 'Missing or invalid authorization code');
 
-  const clientId = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID;
-  const clientSecret = process.env.WEBFLOW_CLIENT_SECRET;
-  const rawRedirectUri = process.env.NEXT_PUBLIC_WEBFLOW_REDIRECT_URI;
-
-  const redirectUri = rawRedirectUri;
-
-  if (!clientId || !clientSecret || !redirectUri) {
-    console.error('❌ Missing Webflow OAuth config', {
-      clientId,
-      hasSecret: !!clientSecret,
-      redirectUri,
-    });
-    return sendError(500, 'Missing Webflow OAuth environment config');
-  }
+  const clientId = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID!;
+  const clientSecret = process.env.WEBFLOW_CLIENT_SECRET!;
+  const redirectUri = process.env.WEBFLOW_REDIRECT_URI!;
 
   try {
-    const payload = {
-      client_id: clientId,
-      client_secret: clientSecret,
-      code,
-      grant_type: 'authorization_code',
-      redirect_uri: redirectUri,
-    };
-
-    console.log('🔁 Exchanging code for token:', { code, redirectUri });
-
-    const response = await fetch('https://api.webflow.com/oauth/access_token', {
+    const tokenRes = await fetch('https://api.webflow.com/oauth/access_token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        client_id: clientId,
+        client_secret: clientSecret,
+        code,
+        grant_type: 'authorization_code',
+        redirect_uri: redirectUri,
+      }),
     });
 
-    const data = await response.json();
+    const tokenData = await tokenRes.json();
 
-    if (!response.ok) {
-      console.error('❌ Token exchange failed:', {
-        status: response.status,
-        body: data,
-      });
-      return sendError(500, data.error_description || `Webflow token exchange failed (${response.status})`);
+    if (!tokenRes.ok || !tokenData.access_token) {
+      console.error('❌ Token exchange failed:', tokenData);
+      return sendError(500, tokenData.error_description || 'Token exchange failed');
     }
 
-    const { access_token, sites } = data;
+    const access_token = tokenData.access_token;
 
-    if (!access_token || !Array.isArray(sites) || !sites[0]?.id) {
-      console.error('❌ Incomplete response from Webflow:', data);
-      return sendError(500, 'Missing access token or site ID from Webflow');
+    // 🔁 NEW: Get list of authorized sites
+    const siteRes = await fetch('https://api.webflow.com/v2/sites', {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+        'accept-version': '2.0.0',
+      },
+    });
+
+    const siteData = await siteRes.json();
+
+    if (!Array.isArray(siteData) || siteData.length === 0) {
+      console.error('❌ No sites returned:', siteData);
+      return sendError(500, 'No authorized sites found for this user');
     }
 
-    console.log('✅ Token and Site ID received:', {
+    const site_id = siteData[0].id; // or allow user to choose
+
+    console.log('✅ OAuth success:', {
       access_token: '[REDACTED]',
-      site_id: sites[0].id,
+      site_id,
     });
 
-    return res.status(200).json({
-      access_token,
-      site_id: sites[0].id,
-    });
+    return res.status(200).json({ access_token, site_id });
   } catch (err: any) {
-    console.error('❌ Unexpected error during exchange:', err.message || err);
-    return sendError(500, 'Exchange failed – unexpected server error');
+    console.error('❌ Unexpected error:', err.message || err);
+    return sendError(500, 'Unexpected error during token exchange');
   }
 }
