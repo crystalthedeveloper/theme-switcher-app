@@ -50,7 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const updatedFooter = `${currentFooter}\n${scriptTag}`;
 
     // ✅ PATCH updated footer using v1 API
-    const patchRes = await fetch(`https://api.webflow.com/sites/${siteId}/customcode`, {
+    const patchRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom-code`, {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${token}`,
