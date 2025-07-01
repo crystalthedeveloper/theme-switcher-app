@@ -25,6 +25,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!clientId || !clientSecret || !redirectUri) {
         return sendError(500, 'Missing environment variables');
     }
+    
+    console.log('📦 Sending token request with redirect_uri:', redirectUri);
 
     try {
         const tokenRes = await fetch('https://api.webflow.com/oauth/access_token', {
