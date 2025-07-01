@@ -20,12 +20,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const clientId = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID;
     const clientSecret = process.env.WEBFLOW_CLIENT_SECRET;
-    const redirectUri = process.env.NEXT_PUBLIC_WEBFLOW_REDIRECT_URI;
+    // TEMP: Hardcoded redirect URI for debugging
+    const redirectUri = 'https://theme-toggle-webflow.vercel.app/callback';
+
+    console.log('📤 Using hardcoded redirect_uri:', redirectUri);
+
 
     if (!clientId || !clientSecret || !redirectUri) {
         return sendError(500, 'Missing environment variables');
     }
-    
+
     console.log('📦 Sending token request with redirect_uri:', redirectUri);
 
     try {
