@@ -68,11 +68,17 @@ export default function Callback() {
     const exchangeToken = async () => {
       console.log('🔁 Starting token exchange with code:', code);
 
+      // Log what you're about to send
+      const debugPayload = {
+        code,
+      };
+      console.log('📦 Payload to /api/exchange-token:', debugPayload);
+
       try {
         const res = await fetch('/api/exchange-token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code }),
+          body: JSON.stringify(debugPayload),
         });
 
         const data = await res.json();
@@ -99,6 +105,7 @@ export default function Callback() {
         setErrorAndStop(err?.message || 'Token exchange failed. Please try again.');
       }
     };
+
 
     exchangeToken();
   }, [router.isReady]);
