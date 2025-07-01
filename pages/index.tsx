@@ -57,9 +57,10 @@ export default function Home() {
   const authURL =
     clientId && redirectUri
       ? `https://webflow.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(
-          redirectUri
-        )}&response_type=code&scope=custom_code:read custom_code:write sites:read pages:read pages:write authorized_user:read`
+        redirectUri
+      )}&response_type=code&scope=custom_code:read custom_code:write sites:read sites:write pages:read pages:write authorized_user:read`
       : '';
+
 
   const handleInjectClick = async () => {
     setInjecting(true);
