@@ -21,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const clientId = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID;
     const clientSecret = process.env.WEBFLOW_CLIENT_SECRET;
     // TEMP: Hardcoded redirect URI for debugging
-    const redirectUri = process.env.NEXT_PUBLIC_WEBFLOW_REDIRECT_URI || 'https://theme-toggle-webflow.vercel.app/callback';
+    const redirectUri = process.env.NEXT_PUBLIC_WEBFLOW_REDIRECT_URI;
 
     console.log('📤 Using hardcoded redirect_uri:', redirectUri);
 
