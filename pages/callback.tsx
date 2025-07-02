@@ -1,4 +1,4 @@
-// Token exchange – handles OAuth callback and token exchange with Webflow
+// pages/callback.tsx
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import en from '../locales/en';
@@ -99,7 +99,7 @@ export default function Callback() {
         if (warning) console.warn('⚠️ API Warning:', warning);
 
         hasResponded.current = true;
-        await router.replace(`/${isTest ? '?test=true' : ''}`);
+        await router.replace(isTest ? '/?test=true' : '/');
       } catch (err: any) {
         console.error('❌ Exchange error:', err);
         setErrorAndStop(err?.message || 'Token exchange failed. Please try again.');
