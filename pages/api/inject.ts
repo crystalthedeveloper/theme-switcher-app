@@ -39,9 +39,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const patchData = await patchRes.json();
 
     if (!patchRes.ok) {
-      console.error('❌ Failed to inject script:', patchData);
-      return sendError(500, patchData?.message || 'Script injection failed.');
+      const errorText = await patchRes.text(); // better than `.json()` fallback
+      console.error('❌ Webflow injection error:', patchRes.status, errorText);
+      return sendError(500, 'Webflow script injection failed.');
     }
+
 
     console.log('✅ Script injected directly for site:', siteId);
     return res.status(200).json({ success: true });
