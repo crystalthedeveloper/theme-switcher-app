@@ -19,11 +19,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return sendError(400, 'Missing siteId or token');
   }
 
-  const scriptURL = 'https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js';
+  const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
 
   try {
-    // 1️⃣ Try to find existing script first
-    const existingScriptsRes = await fetch('https://api.webflow.com/v2/scripts', {
+    // 1️⃣ Fetch existing custom code
+    const getRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom-code`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -31,42 +31,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
 
-    const existingScriptsData = await existingScriptsRes.json();
-    const existingScript = existingScriptsData.scripts?.find((s: any) => s.url === scriptURL);
-
-    let scriptId = existingScript?.id;
-
-    // 2️⃣ Register if not already present
-    if (!scriptId) {
-      const scriptRes = await fetch('https://api.webflow.com/v2/scripts', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'accept-version': '2.0.0',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: 'Theme Switcher',
-          url: scriptURL,
-          loadType: 'defer',
-          location: 'footer',
-        }),
-      });
-
-      const scriptData = await scriptRes.json();
-
-      if (!scriptRes.ok || !scriptData.id) {
-        console.error('❌ Script registration failed:', scriptData);
-        return sendError(500, 'Script registration failed');
-      }
-
-      scriptId = scriptData.id;
-      console.log('📌 Script registered:', scriptId);
-    } else {
-      console.log('♻️ Using existing script:', scriptId);
+    if (!getRes.ok) {
+      const errorText = await getRes.text();
+      console.error('❌ Failed to fetch existing footer:', getRes.status, errorText);
+      return sendError(500, 'Failed to read existing custom code.');
     }
 
-    // 3️⃣ Inject the script into the site
+    const currentData = await getRes.json();
+    const currentFooter = currentData.footer || '';
+    const currentHead = currentData.head || '';
+
+    // 2️⃣ Check if the script is already injected
+    if (currentFooter.includes(scriptTag)) {
+      console.log('♻️ Script already present in footer.');
+      return res.status(200).json({ success: true, message: 'Script already injected.' });
+    }
+
+    // 3️⃣ Append script safely
+    const updatedFooter = currentFooter + '\n' + scriptTag;
+
     const patchRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom-code`, {
       method: 'PATCH',
       headers: {
@@ -75,17 +58,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        scripts: [scriptId],
+        footer: updatedFooter,
+        head: currentHead, // preserve existing head
       }),
     });
 
     if (!patchRes.ok) {
       const errorText = await patchRes.text();
-      console.error('❌ Webflow injection error:', patchRes.status, errorText);
+      console.error('❌ Injection failed:', patchRes.status, errorText);
       return sendError(500, 'Webflow script injection failed.');
     }
 
-    console.log('✅ Script injected successfully for site:', siteId);
+    console.log('✅ Script successfully appended to footer for site:', siteId);
     return res.status(200).json({ success: true });
   } catch (err: any) {
     console.error('❌ Unexpected injection error:', err?.message || err);
