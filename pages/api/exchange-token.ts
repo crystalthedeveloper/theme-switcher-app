@@ -20,18 +20,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const clientId = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID;
   const clientSecret = process.env.WEBFLOW_CLIENT_SECRET;
-  const rawRedirectUri = process.env.NEXT_PUBLIC_WEBFLOW_REDIRECT_URI;
-  const redirectUri = rawRedirectUri?.split('?')[0];
+  const finalRedirectUri = process.env.NEXT_PUBLIC_WEBFLOW_REDIRECT_URI;
 
-  if (process.env.NODE_ENV === 'development') {
-    console.log('📥 Received code:', code);
-  }
-
-  console.log('📤 Using redirect_uri:', redirectUri);
-
-  if (!clientId || !clientSecret || !redirectUri) {
+  if (!clientId || !clientSecret || !finalRedirectUri) {
     return sendError(500, 'Missing environment variables');
   }
+
+  console.log('📤 Using redirect_uri:', finalRedirectUri);
+  console.log('📥 Received code:', code);
 
   try {
     const tokenRes = await fetch('https://api.webflow.com/oauth/access_token', {
@@ -45,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         client_secret: clientSecret,
         code,
         grant_type: 'authorization_code',
-        redirect_uri: redirectUri,
+        redirect_uri: finalRedirectUri, // ✅ MUST MATCH exactly what was used in /authorize
       }),
     });
 
