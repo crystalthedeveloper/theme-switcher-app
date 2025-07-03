@@ -23,21 +23,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const scriptName = 'Theme Switcher';
 
   try {
-    // 1️⃣ Check if script is already registered globally
+    // 1️⃣ Get existing registered scripts
     const listRes = await fetch('https://api.webflow.com/v2/scripts', {
+      method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
         'accept-version': '2.0.0',
       },
     });
 
-    const listData = await listRes.json();
+    if (!listRes.ok) {
+      const errText = await listRes.text();
+      console.error('❌ Failed to fetch registered scripts:', errText);
+      return sendError(500, 'Could not fetch script list');
+    }
 
+    const listData = await listRes.json();
     let scriptId = listData.scripts?.find(
       (s: any) => s.url === scriptUrl && s.name === scriptName
     )?.id;
 
-    // 2️⃣ Register new script if not found
+    // 2️⃣ Register the script if it doesn't exist
     if (!scriptId) {
       const registerRes = await fetch('https://api.webflow.com/v2/scripts', {
         method: 'POST',
@@ -49,8 +55,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         body: JSON.stringify({
           name: scriptName,
           url: scriptUrl,
-          loadType: 'defer',
           location: 'footer',
+          loadType: 'defer',
         }),
       });
 
@@ -67,7 +73,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.log('♻️ Script already registered:', scriptId);
     }
 
-    // 3️⃣ Attach script to site
+    // 3️⃣ Attach registered script to the site
     const attachRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/scripts`, {
       method: 'PATCH',
       headers: {

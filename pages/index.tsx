@@ -106,11 +106,14 @@ export default function Home() {
         {!loaded ? (
           <p style={{ fontStyle: 'italic' }}>Loading…</p>
         ) : !isAuthorized ? (
-          <a href={authURL}>
-            <button className={styles['main-button']} disabled={!authURL}>
-              {t.buttonInstall || 'Install App'}
-            </button>
-          </a>
+          <>
+            {console.log('🔐 Final OAuth URL:', authURL)}
+            <a href={authURL}>
+              <button className={styles['main-button']} disabled={!authURL}>
+                {t.buttonInstall || 'Install App'}
+              </button>
+            </a>
+          </>
         ) : (
           <>
             <button
