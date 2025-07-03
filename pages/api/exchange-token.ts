@@ -20,7 +20,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const clientId = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID;
   const clientSecret = process.env.WEBFLOW_CLIENT_SECRET;
-  const redirectUri = process.env.NEXT_PUBLIC_WEBFLOW_REDIRECT_URI;
+  const rawRedirectUri = process.env.NEXT_PUBLIC_WEBFLOW_REDIRECT_URI;
+  const redirectUri = rawRedirectUri?.split('?')[0];
 
   if (process.env.NODE_ENV === 'development') {
     console.log('📥 Received code:', code);

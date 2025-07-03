@@ -19,10 +19,54 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return sendError(400, 'Missing siteId or token');
   }
 
-  const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
+  const scriptURL = 'https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js';
 
   try {
-    // ✅ Try a PATCH directly without GET
+    // 1️⃣ Try to find existing script first
+    const existingScriptsRes = await fetch('https://api.webflow.com/v2/scripts', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'accept-version': '2.0.0',
+      },
+    });
+
+    const existingScriptsData = await existingScriptsRes.json();
+    const existingScript = existingScriptsData.scripts?.find((s: any) => s.url === scriptURL);
+
+    let scriptId = existingScript?.id;
+
+    // 2️⃣ Register if not already present
+    if (!scriptId) {
+      const scriptRes = await fetch('https://api.webflow.com/v2/scripts', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'accept-version': '2.0.0',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: 'Theme Switcher',
+          url: scriptURL,
+          loadType: 'defer',
+          location: 'footer',
+        }),
+      });
+
+      const scriptData = await scriptRes.json();
+
+      if (!scriptRes.ok || !scriptData.id) {
+        console.error('❌ Script registration failed:', scriptData);
+        return sendError(500, 'Script registration failed');
+      }
+
+      scriptId = scriptData.id;
+      console.log('📌 Script registered:', scriptId);
+    } else {
+      console.log('♻️ Using existing script:', scriptId);
+    }
+
+    // 3️⃣ Inject the script into the site
     const patchRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom-code`, {
       method: 'PATCH',
       headers: {
@@ -31,21 +75,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        footer: scriptTag, // If GET fails, we can’t preserve existing code
-        head: '', // Or provide your default head value here
+        scripts: [scriptId],
       }),
     });
 
-    const patchData = await patchRes.json();
-
     if (!patchRes.ok) {
-      const errorText = await patchRes.text(); // better than `.json()` fallback
+      const errorText = await patchRes.text();
       console.error('❌ Webflow injection error:', patchRes.status, errorText);
       return sendError(500, 'Webflow script injection failed.');
     }
 
-
-    console.log('✅ Script injected directly for site:', siteId);
+    console.log('✅ Script injected successfully for site:', siteId);
     return res.status(200).json({ success: true });
   } catch (err: any) {
     console.error('❌ Unexpected injection error:', err?.message || err);
