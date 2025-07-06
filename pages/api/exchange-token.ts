@@ -41,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         client_secret: clientSecret,
         code,
         grant_type: 'authorization_code',
-        redirect_uri: finalRedirectUri, // ✅ MUST MATCH exactly what was used in /authorize
+        redirect_uri: finalRedirectUri,
       }),
     });
 
