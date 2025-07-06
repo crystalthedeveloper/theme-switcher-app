@@ -20,29 +20,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const clientId = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID;
   const clientSecret = process.env.WEBFLOW_CLIENT_SECRET;
-  const finalRedirectUri = process.env.NEXT_PUBLIC_WEBFLOW_REDIRECT_URI;
+  const redirectUri = process.env.NEXT_PUBLIC_WEBFLOW_REDIRECT_URI;
 
-  if (!clientId || !clientSecret || !finalRedirectUri) {
+  if (!clientId || !clientSecret) {
     return sendError(500, 'Missing environment variables');
   }
 
-  console.log('📤 Using redirect_uri:', finalRedirectUri);
   console.log('📥 Received code:', code);
+  if (redirectUri) console.log('📤 Using redirect_uri:', redirectUri);
 
   try {
+    // Construct token request payload
+    const payload: any = {
+      client_id: clientId,
+      client_secret: clientSecret,
+      code,
+      grant_type: 'authorization_code',
+    };
+
+    // Only include redirect_uri if explicitly set (e.g. for custom installs)
+    if (redirectUri) {
+      payload.redirect_uri = redirectUri;
+    }
+
     const tokenRes = await fetch('https://api.webflow.com/oauth/access_token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: JSON.stringify({
-        client_id: clientId,
-        client_secret: clientSecret,
-        code,
-        grant_type: 'authorization_code',
-        redirect_uri: finalRedirectUri,
-      }),
+      body: JSON.stringify(payload),
     });
 
     const tokenData = await tokenRes.json();
