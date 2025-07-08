@@ -33,9 +33,11 @@ export default function Installed() {
     const t = storage?.getItem('webflow_token') || '';
     const s = storage?.getItem('webflow_site_id') || '';
 
-    // 🔧 Debug fallback — allow manual testing via query string
     const queryToken = router.query.token as string;
     const querySiteId = router.query.siteId as string;
+
+    console.log('🧾 Retrieved from sessionStorage:', { token: t, siteId: s });
+    console.log('🔍 Query params:', { queryToken, querySiteId });
 
     if (!t || !s) {
       if (queryToken && querySiteId) {
@@ -47,9 +49,8 @@ export default function Installed() {
         return;
       }
 
+      console.warn('🚫 Missing credentials. Redirecting...');
       setStorageAvailable(false);
-
-      // ⏱ Redirect after a short delay
       setTimeout(() => {
         router.push('/');
       }, 4000);
@@ -63,9 +64,12 @@ export default function Installed() {
 
   const handleInjectClick = async () => {
     if (!token || !siteId) {
+      console.warn('❌ Cannot inject — missing token or siteId:', { token, siteId });
       setMessage('❌ Missing token or site ID.');
       return;
     }
+
+    console.log('🚀 Injecting script with:', { tokenPresent: !!token, siteId });
 
     setInjecting(true);
     setMessage('');
@@ -81,6 +85,7 @@ export default function Installed() {
       });
 
       const data = await res.json();
+      console.log('📦 Inject response:', data);
       setMessage(data.success ? '✅ Script injected!' : `❌ ${data.message || 'Injection failed'}`);
     } catch (err) {
       console.error('❌ Injection error:', err);

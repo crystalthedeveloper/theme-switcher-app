@@ -28,13 +28,14 @@ export default function Callback() {
       hasResponded.current = true;
       setError(message);
       setLoading(false);
+      console.warn('🛑 Error set and loading stopped:', message);
     }
   };
 
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (loading && !hasResponded.current) {
-        console.warn('⚠️ Exchange timeout triggered');
+        console.warn('⏰ Exchange timeout triggered after 15 seconds');
         setErrorAndStop('Request timed out. Please try again.');
       }
     }, 15000);
@@ -48,41 +49,46 @@ export default function Callback() {
     const isTest = test === 'true';
     setTestMode(isTest);
 
-    console.log('🔍 Router query:', router.query);
+    console.log('🔍 Query params received on callback:', router.query);
 
     const storage = getStorage();
-    ['webflow_token', 'webflow_site_id', 'webflow_app_installed', 'webflow_test_mode'].forEach(key =>
-      storage.removeItem(key)
-    );
+    if (!storage) {
+      console.error('🚫 Session storage not available');
+      setErrorAndStop('Storage is unavailable. Please try again in a supported browser.');
+      return;
+    }
+
+    // Clear previous session data
+    ['webflow_token', 'webflow_site_id', 'webflow_app_installed', 'webflow_test_mode'].forEach(key => {
+      console.log(`🧹 Clearing storage key: ${key}`);
+      storage.removeItem(key);
+    });
 
     if (oauthError) {
-      console.error('❌ OAuth Error from Webflow:', oauthError, '|', error_description);
+      console.error('❌ OAuth error from Webflow:', oauthError, '|', error_description);
       return setErrorAndStop('Authorization failed. Please try again.');
     }
 
     if (!code || typeof code !== 'string') {
-      console.warn('⚠️ Invalid or missing `code` in query:', code);
+      console.warn('⚠️ Missing or invalid code in query:', code);
       return setErrorAndStop('Missing or invalid authorization code.');
     }
 
     const exchangeToken = async () => {
-      console.log('🔁 Starting token exchange with code:', code);
+      console.log('🔁 Attempting token exchange with code:', code);
 
-      // Log what you're about to send
-      const debugPayload = {
-        code,
-      };
-      console.log('📦 Payload to /api/exchange-token:', debugPayload);
+      const payload = { code };
+      console.log('📦 Sending payload to /api/exchange-token:', payload);
 
       try {
         const res = await fetch('/api/exchange-token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(debugPayload),
+          body: JSON.stringify(payload),
         });
 
         const data = await res.json();
-        console.log('📬 Exchange response:', res.status, data);
+        console.log('📬 Response from /api/exchange-token:', res.status, data);
 
         const { access_token, site_id, warning } = data;
 
@@ -91,21 +97,26 @@ export default function Callback() {
           throw new Error(data.error || 'Missing access token or site ID from Webflow.');
         }
 
+        console.log('🔐 Access token and site ID obtained:', { access_token, site_id });
+
         storage.setItem('webflow_token', access_token);
         storage.setItem('webflow_site_id', site_id);
         storage.setItem('webflow_app_installed', 'true');
         if (isTest) storage.setItem('webflow_test_mode', 'true');
 
-        if (warning) console.warn('⚠️ API Warning:', warning);
+        if (warning) {
+          console.warn('⚠️ API warning during exchange:', warning);
+        }
 
         hasResponded.current = true;
-        await router.replace(isTest ? '/installed?test=true' : '/installed');
+        const destination = isTest ? '/installed?test=true' : '/installed';
+        console.log('🚀 Redirecting to:', destination);
+        await router.replace(destination);
       } catch (err: any) {
-        console.error('❌ Exchange error:', err);
+        console.error('🔥 Error during token exchange:', err);
         setErrorAndStop(err?.message || 'Token exchange failed. Please try again.');
       }
     };
-
 
     exchangeToken();
   }, [router.isReady]);
