@@ -7,13 +7,15 @@ import Footer from '../components/Footer';
 import { useRouter } from 'next/router';
 
 export default function Installed() {
+  const router = useRouter();
+
   const [injecting, setInjecting] = useState(false);
   const [message, setMessage] = useState('');
   const [token, setToken] = useState('');
   const [siteId, setSiteId] = useState('');
   const [loaded, setLoaded] = useState(false);
   const [storageAvailable, setStorageAvailable] = useState(true);
-  const router = useRouter();
+  const [debugMode, setDebugMode] = useState(false);
 
   const getStorage = () => {
     try {
@@ -31,19 +33,33 @@ export default function Installed() {
     const t = storage?.getItem('webflow_token') || '';
     const s = storage?.getItem('webflow_site_id') || '';
 
+    // 🔧 Debug fallback — allow manual testing via query string
+    const queryToken = router.query.token as string;
+    const querySiteId = router.query.siteId as string;
+
     if (!t || !s) {
+      if (queryToken && querySiteId) {
+        console.log('⚙️ Debug mode enabled from query');
+        setToken(queryToken);
+        setSiteId(querySiteId);
+        setDebugMode(true);
+        setLoaded(true);
+        return;
+      }
+
       setStorageAvailable(false);
 
-      // Redirect after a short delay
+      // ⏱ Redirect after a short delay
       setTimeout(() => {
-        router.push('/'); // redirect to homepage or OAuth start
+        router.push('/');
       }, 4000);
+      return;
     }
 
     setToken(t);
     setSiteId(s);
     setLoaded(true);
-  }, []);
+  }, [router.query]);
 
   const handleInjectClick = async () => {
     if (!token || !siteId) {
@@ -92,10 +108,10 @@ export default function Installed() {
 
         {!loaded ? (
           <p style={{ fontStyle: 'italic' }}>Loading credentials…</p>
-        ) : !storageAvailable ? (
+        ) : !storageAvailable && !debugMode ? (
           <>
             <p style={{ color: 'red', marginBottom: '1rem' }}>
-              ⚠️ Unable to access credentials. Please try reinstalling the app from the Webflow App panel.
+              ⚠️ Unable to access credentials. Please open this page from the Webflow App panel.
             </p>
             <p style={{ color: 'red' }}>Redirecting you shortly…</p>
           </>
@@ -119,6 +135,12 @@ export default function Installed() {
             role="alert"
           >
             {message}
+          </p>
+        )}
+
+        {debugMode && (
+          <p style={{ marginTop: '2rem', fontSize: '0.9rem', color: '#666' }}>
+            ⚙️ Debug mode active (from query string)
           </p>
         )}
 
