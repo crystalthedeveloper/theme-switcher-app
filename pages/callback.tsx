@@ -52,22 +52,19 @@ export default function Callback() {
     const isTest = url.searchParams.get('test') === 'true';
 
     setTestMode(isTest);
-    console.log('🔍 Final query values:', { code, oauthError, error_description, isTest });
-
     const storage = getStorage();
+
     if (!storage) {
-      console.error('🚫 Session storage not available');
-      return setErrorAndStop('Storage is unavailable. Please try again in a supported browser.');
+      return setErrorAndStop('Storage is unavailable.');
     }
 
+    // Clear any existing values
     ['webflow_token', 'webflow_site_id', 'webflow_app_installed', 'webflow_test_mode'].forEach(key => {
-      console.log(`🧹 Clearing storage key: ${key}`);
       storage.removeItem(key);
     });
 
     if (oauthError) {
-      console.error('❌ OAuth error from Webflow:', oauthError, '|', error_description);
-      return setErrorAndStop('Authorization failed. Please try again.');
+      return setErrorAndStop('Authorization failed. ' + error_description);
     }
 
     if (!code) {
@@ -75,8 +72,6 @@ export default function Callback() {
     }
 
     const exchangeToken = async () => {
-      console.log('🔁 Attempting token exchange with code:', code);
-
       try {
         const res = await fetch('/api/exchange-token', {
           method: 'POST',
@@ -88,44 +83,23 @@ export default function Callback() {
         const { access_token, site_id, warning } = data;
 
         if (!res.ok || !access_token || !site_id) {
-          throw new Error(data.error || 'Missing access token or site ID.');
+          throw new Error(data.error || 'Exchange failed');
         }
 
-        console.log('🔐 Access token and site ID obtained:', { access_token, site_id });
-
+        // Save token + siteId
         storage.setItem('webflow_token', access_token);
         storage.setItem('webflow_site_id', site_id);
         storage.setItem('webflow_app_installed', 'true');
         if (isTest) storage.setItem('webflow_test_mode', 'true');
 
-        // ✅ Secure postMessage based on environment
-        const targetOrigin =
-          process.env.NODE_ENV === 'development'
-            ? 'http://localhost:3000'
-            : 'https://webflow.com';
+        console.log('✅ Token & site ID saved:', { access_token, site_id });
 
-        if (window.parent && window.parent !== window) {
-          console.log('📤 Sending postMessage to Webflow Designer...');
-          window.parent.postMessage(
-            {
-              type: 'WEBFLOW_APP_INSTALLED',
-              payload: {
-                token: access_token,
-                siteId: site_id,
-                installed: true,
-              },
-            },
-            targetOrigin
-          );
-        }
-
-        if (warning) console.warn('⚠️ API warning during exchange:', warning);
+        if (warning) console.warn('⚠️ Warning:', warning);
 
         hasResponded.current = true;
-        const destination = isTest ? '/installed?test=true' : '/installed';
-        await router.replace(destination);
+        router.replace(isTest ? '/installed?test=true' : '/installed');
       } catch (err: any) {
-        console.error('🔥 Exchange error:', err);
+        console.error('❌ Exchange error:', err);
         setErrorAndStop(err?.message || 'Token exchange failed.');
       }
     };

@@ -18,19 +18,8 @@ export default function Home() {
   const [siteId, setSiteId] = useState('');
   const [loaded, setLoaded] = useState(false);
 
-  const getStorage = () => {
-    try {
-      if (window.parent && window.parent !== window && window.parent.sessionStorage) {
-        return window.parent.sessionStorage;
-      }
-    } catch (err) {
-      console.warn('⚠️ Could not access parent.sessionStorage:', err);
-    }
-    return window.sessionStorage;
-  };
-
   useEffect(() => {
-    const storage = getStorage();
+    const storage = window.sessionStorage;
 
     const savedToken = storage.getItem('webflow_token') || '';
     const savedSiteId = storage.getItem('webflow_site_id') || '';
@@ -59,10 +48,7 @@ export default function Home() {
   const clientId = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID;
   const redirectUri = process.env.NEXT_PUBLIC_WEBFLOW_REDIRECT_URI;
 
-  const authURL = (() => {
-    const base = `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&scope=custom_code:read custom_code:write sites:read sites:write pages:read pages:write authorized_user:read`;
-    return redirectUri ? `${base}&redirect_uri=${encodeURIComponent(redirectUri)}` : base;
-  })();
+  const authURL = `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&scope=custom_code:read custom_code:write sites:read sites:write pages:read pages:write authorized_user:read${redirectUri ? `&redirect_uri=${encodeURIComponent(redirectUri)}` : ''}`;
 
   const handleInjectClick = async () => {
     setInjecting(true);
@@ -110,7 +96,6 @@ export default function Home() {
           <p style={{ fontStyle: 'italic' }}>Loading…</p>
         ) : !isAuthorized ? (
           <>
-            {console.log('🔐 Final OAuth URL:', authURL)}
             <a href={authURL}>
               <button className={styles['main-button']} disabled={!authURL}>
                 {t.buttonInstall || 'Install App'}

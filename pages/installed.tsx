@@ -15,7 +15,6 @@ export default function Installed() {
   const [siteId, setSiteId] = useState('');
   const [loaded, setLoaded] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
-  const [postMessageReceived, setPostMessageReceived] = useState(false);
 
   const getStorage = () => {
     try {
@@ -29,56 +28,25 @@ export default function Installed() {
   };
 
   useEffect(() => {
-    const handlePostMessage = (event: MessageEvent) => {
-      if (event?.data?.type === 'WEBFLOW_APP_INSTALLED') {
-        const { token, siteId } = event.data.payload || {};
-        console.log('📨 postMessage received:', { token, siteId });
-
-        if (token && siteId) {
-          setToken(token);
-          setSiteId(siteId);
-          setPostMessageReceived(true);
-          setLoaded(true);
-        }
-      }
-    };
-
-    window.addEventListener('message', handlePostMessage);
-    return () => window.removeEventListener('message', handlePostMessage);
-  }, []);
-
-  useEffect(() => {
-    if (postMessageReceived) return;
-
     const storage = getStorage();
+
     const t = storage?.getItem('webflow_token') || '';
     const s = storage?.getItem('webflow_site_id') || '';
 
     const queryToken = router.query.token as string;
     const querySiteId = router.query.siteId as string;
 
-    console.log('🧾 Retrieved from sessionStorage:', { token: t, siteId: s });
-    console.log('🔍 Query params:', { queryToken, querySiteId });
-
-    if (!t || !s) {
-      if (queryToken && querySiteId) {
-        console.log('⚙️ Debug mode enabled from query');
-        setToken(queryToken);
-        setSiteId(querySiteId);
-        setDebugMode(true);
-        setLoaded(true);
-        return;
-      }
-
-      console.warn('⚠️ Missing credentials — manual input may be required.');
-      setLoaded(true);
-      return;
+    if (queryToken && querySiteId) {
+      setToken(queryToken);
+      setSiteId(querySiteId);
+      setDebugMode(true);
+    } else if (t && s) {
+      setToken(t);
+      setSiteId(s);
     }
 
-    setToken(t);
-    setSiteId(s);
     setLoaded(true);
-  }, [router.query, postMessageReceived]);
+  }, [router.query]);
 
   const handleInjectClick = async () => {
     if (!token || !siteId) {
@@ -86,8 +54,6 @@ export default function Installed() {
       setMessage('❌ Missing token or site ID.');
       return;
     }
-
-    console.log('🚀 Injecting script with:', { tokenPresent: !!token, siteId });
 
     setInjecting(true);
     setMessage('');
@@ -103,7 +69,6 @@ export default function Installed() {
       });
 
       const data = await res.json();
-      console.log('📦 Inject response:', data);
       setMessage(data.success ? '✅ Script injected!' : `❌ ${data.message || 'Injection failed'}`);
     } catch (err) {
       console.error('❌ Injection error:', err);
@@ -163,12 +128,6 @@ export default function Installed() {
             >
               {injecting ? 'Injecting…' : 'Inject Script to Webflow Footer'}
             </button>
-
-            {postMessageReceived && (
-              <p style={{ marginTop: '1rem', color: '#0a0', fontWeight: 'bold' }}>
-                ✅ Credentials received via postMessage.
-              </p>
-            )}
           </>
         )}
 

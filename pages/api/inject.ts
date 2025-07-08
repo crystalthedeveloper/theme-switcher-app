@@ -4,7 +4,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const sendError = (status: number, message: string, extra?: any) => {
     console.warn(`⚠️ ${status} – ${message}`);
-    if (extra) console.error(extra);
+    if (extra) console.error('🔎 Extra Info:', extra);
     return res.status(status).json({ success: false, message });
   };
 
@@ -14,25 +14,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { siteId } = req.body;
 
-  // ✅ Webflow's official App Token for Designer
-  const token =
-    req.headers['x-webflow-app-token'] ||
-    (req.headers.authorization?.startsWith('Bearer ')
-      ? req.headers.authorization.slice(7)
-      : '');
+  // ✅ Get access token from Authorization header
+  const token = req.headers.authorization?.startsWith('Bearer ')
+    ? req.headers.authorization.slice(7)
+    : '';
 
-  const fromDesigner = !!req.headers['x-webflow-app-token'];
-
-  console.log('📩 Incoming request:', {
+  console.log('📩 Incoming injection request:', {
     siteId,
     tokenPresent: !!token,
-    fromDesigner,
   });
-
-  // ✅ Webflow approval requirement: must come from Designer
-  if (!fromDesigner) {
-    return sendError(403, 'This action is only allowed from inside the Webflow Designer App.');
-  }
 
   if (!token || !siteId) {
     return sendError(400, 'Missing siteId or token');
@@ -41,7 +31,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const scriptUrl = 'https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js';
 
   try {
-    // 🔄 Inject script into Webflow site footer
     const updateRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
       method: 'PATCH',
       headers: {
@@ -55,16 +44,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     const updateText = await updateRes.text();
-    console.log('🔧 Update custom code response:', updateText);
+    console.log('🔧 Webflow API response:', updateText);
 
     if (!updateRes.ok) {
       return sendError(500, 'Failed to inject script', updateText);
     }
 
-    console.log(`✅ Theme Switcher script injected into site ${siteId}`);
+    console.log(`✅ Script injected successfully into site ${siteId}`);
     return res.status(200).json({ success: true });
   } catch (err: any) {
-    console.error('🔥 Unexpected error:', err);
+    console.error('🔥 Unexpected injection error:', err);
     return sendError(500, 'Internal Server Error', err?.message || err);
   }
 }

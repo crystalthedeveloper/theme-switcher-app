@@ -12,12 +12,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   console.log('📡 Incoming request to /api/exchange-token');
 
   if (req.method !== 'POST') {
-    console.warn('❌ Invalid HTTP method:', req.method);
     return sendError(405, 'Method Not Allowed');
   }
 
   const { code } = req.body;
-  console.log('📥 Received code in body:', code);
+
+  console.log('📥 Received code:', code);
 
   if (!code || typeof code !== 'string') {
     return sendError(400, 'Missing or invalid authorization code', req.body);
@@ -27,14 +27,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const clientSecret = process.env.WEBFLOW_CLIENT_SECRET;
   const redirectUri = process.env.NEXT_PUBLIC_WEBFLOW_REDIRECT_URI;
 
-  console.log('🔐 Loaded environment variables:', {
+  console.log('🔐 Environment:', {
     clientIdPresent: !!clientId,
     clientSecretPresent: !!clientSecret,
     redirectUri,
   });
 
   if (!clientId || !clientSecret || !redirectUri) {
-    return sendError(500, 'Missing environment variables', {
+    return sendError(500, 'Missing required environment variables', {
       clientId,
       clientSecret,
       redirectUri,
@@ -50,7 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       redirect_uri: redirectUri,
     };
 
-    console.log('📤 Sending payload to Webflow token endpoint:', payload);
+    console.log('📤 Sending token request to Webflow...');
 
     const tokenRes = await fetch('https://api.webflow.com/oauth/access_token', {
       method: 'POST',
@@ -63,8 +63,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const tokenData = await tokenRes.json();
 
-    console.log('📬 Token response status:', tokenRes.status);
-    console.log('📬 Token response body:', tokenData);
+    console.log('📬 Webflow token response:', tokenRes.status, tokenData);
 
     if (!tokenRes.ok || !tokenData.access_token) {
       return sendError(500, tokenData.error_description || 'Token exchange failed', tokenData);
@@ -73,6 +72,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const access_token = tokenData.access_token;
 
     console.log('🌐 Fetching authorized sites...');
+
     const siteRes = await fetch('https://api.webflow.com/v2/sites', {
       headers: {
         Authorization: `Bearer ${access_token}`,
@@ -88,7 +88,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const site_id = siteData.sites[0].id;
 
-    console.log('✅ OAuth complete:', { site_id });
+    console.log('✅ Success:', { site_id });
     return res.status(200).json({ access_token, site_id });
 
   } catch (err: any) {
