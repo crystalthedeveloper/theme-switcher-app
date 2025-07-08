@@ -1,4 +1,3 @@
-// pages/api/inject.ts
 // /pages/api/inject.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 
