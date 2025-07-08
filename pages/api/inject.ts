@@ -13,10 +13,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const { siteId } = req.body;
-  const authHeader = req.headers.authorization || '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
 
-  console.log('📩 Incoming request:', { siteId, tokenPresent: !!token });
+  // ✅ Webflow's official App Token for Designer
+  const token =
+    req.headers['x-webflow-app-token'] ||
+    (req.headers.authorization?.startsWith('Bearer ')
+      ? req.headers.authorization.slice(7)
+      : '');
+
+  const fromDesigner = !!req.headers['x-webflow-app-token'];
+
+  console.log('📩 Incoming request:', {
+    siteId,
+    tokenPresent: !!token,
+    fromDesigner,
+  });
+
+  // ✅ Webflow approval requirement: must come from Designer
+  if (!fromDesigner) {
+    return sendError(403, 'This action is only allowed from inside the Webflow Designer App.');
+  }
 
   if (!token || !siteId) {
     return sendError(400, 'Missing siteId or token');
@@ -25,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const scriptUrl = 'https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js';
 
   try {
-    // 🔄 Overwrite footer code with theme switcher script
+    // 🔄 Inject script into Webflow site footer
     const updateRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
       method: 'PATCH',
       headers: {
