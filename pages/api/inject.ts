@@ -1,31 +1,31 @@
-// /pages/api/inject.ts
+// pages/api/inject.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const sendError = (status: number, message: string, extra?: any) => {
     console.warn(`⚠️ ${status} – ${message}`);
-    if (extra) console.error('🔎 Extra Info:', extra);
+    if (extra) console.error(extra);
     return res.status(status).json({ success: false, message });
   };
 
-  if (req.method !== 'POST') {
-    return sendError(405, 'Method Not Allowed');
-  }
+  if (req.method !== 'POST') return sendError(405, 'Method Not Allowed');
 
   const { siteId } = req.body;
 
-  // ✅ Get access token from Authorization header
-  const token = req.headers.authorization?.startsWith('Bearer ')
-    ? req.headers.authorization.slice(7)
-    : '';
+  const token =
+    req.headers['x-webflow-app-token'] ||
+    (req.headers.authorization?.startsWith('Bearer ')
+      ? req.headers.authorization.slice(7)
+      : '');
 
-  console.log('📩 Incoming injection request:', {
-    siteId,
-    tokenPresent: !!token,
-  });
+  const fromDesigner = !!req.headers['x-webflow-app-token'];
 
   if (!token || !siteId) {
     return sendError(400, 'Missing siteId or token');
+  }
+
+  if (!fromDesigner) {
+    return sendError(403, 'This action is only allowed from inside the Webflow Designer App.');
   }
 
   const scriptUrl = 'https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js';
@@ -39,21 +39,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        footer: `<script src="${scriptUrl}" defer></script>`,
+        headCode: '', // optional — only include if you're injecting in <head>
+        footerCode: `<script src="${scriptUrl}" defer></script>`,
       }),
     });
 
-    const updateText = await updateRes.text();
-    console.log('🔧 Webflow API response:', updateText);
+    const updateData = await updateRes.json();
 
     if (!updateRes.ok) {
-      return sendError(500, 'Failed to inject script', updateText);
+      return sendError(500, 'Failed to inject footer script', updateData);
     }
 
-    console.log(`✅ Script injected successfully into site ${siteId}`);
-    return res.status(200).json({ success: true });
+    console.log(`✅ Script injected into footer for site ${siteId}`);
+    return res.status(200).json({ success: true, response: updateData });
   } catch (err: any) {
-    console.error('🔥 Unexpected injection error:', err);
+    console.error('🔥 Unexpected error:', err);
     return sendError(500, 'Internal Server Error', err?.message || err);
   }
 }

@@ -1,0 +1,22 @@
+{
+  "name": "Theme Switcher",
+  "slug": "theme-switcher",
+  "description": "A Webflow app that allows users to toggle between light and dark themes.",
+  "website": "https://theme-toggle-webflow.vercel.app",
+  "redirect_uri": "https://theme-toggle-webflow.vercel.app/callback",
+  "oauth": {
+    "scopes": [
+      "sites:read",
+      "sites:write",
+      "custom_code:read",
+      "custom_code:write"
+    ]
+  },
+  "developer": {
+    "name": "Crystal The Developer Inc.",
+    "email": "crystalthedeveloper@gmail.com",
+    "url": "https://www.crystalthedeveloper.ca"
+  },
+  "location": "external",
+  "source": "https://theme-toggle-webflow.vercel.app/installed"
+}
