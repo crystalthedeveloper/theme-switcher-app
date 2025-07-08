@@ -47,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       client_secret: clientSecret,
       code,
       grant_type: 'authorization_code',
-      redirect_uri: redirectUri, // ✅ REQUIRED and must match Webflow settings
+      redirect_uri: redirectUri,
     };
 
     console.log('📤 Sending payload to Webflow token endpoint:', payload);
