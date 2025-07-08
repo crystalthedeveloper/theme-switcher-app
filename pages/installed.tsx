@@ -30,13 +30,18 @@ export default function Installed() {
     const t = storage?.getItem('webflow_token') || '';
     const s = storage?.getItem('webflow_site_id') || '';
 
-    if (!t || !s) {
-      setStorageAvailable(false);
-    }
-
     setToken(t);
     setSiteId(s);
     setLoaded(true);
+
+    if (!t || !s) {
+      setStorageAvailable(false);
+
+      // Optional redirect after delay
+      setTimeout(() => {
+        window.location.href = 'https://webflow.com/apps';
+      }, 10000);
+    }
   }, []);
 
   const handleInjectClick = async () => {
@@ -89,6 +94,8 @@ export default function Installed() {
         ) : !storageAvailable ? (
           <p style={{ color: 'red' }}>
             ⚠️ Unable to access credentials. Please try reinstalling the app from the Webflow App panel.
+            <br />
+            Redirecting you shortly…
           </p>
         ) : (
           <button
