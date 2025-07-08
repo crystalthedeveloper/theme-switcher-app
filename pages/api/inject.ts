@@ -18,21 +18,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const scriptTag = `<script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>`;
 
   try {
-    const res2 = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom-code`, {
-      method: 'POST',
+    const apiRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom-code/settings`, {
+      method: 'PATCH',
       headers: {
         Authorization: `Bearer ${token}`,
-        'accept-version': '2.0.0',
+        'accept-version': '1.0.0',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        head: "",
-        footer: scriptTag,
+        code: {
+          head: "",
+          footer: scriptTag,
+        }
       }),
     });
 
-    const data = await res2.json();
-    if (!res2.ok) return sendError(500, 'Failed to inject footer script', data);
+    const data = await apiRes.json();
+    if (!apiRes.ok) return sendError(apiRes.status, 'Failed to inject footer script', data);
 
     return res.status(200).json({ success: true, data });
   } catch (err: any) {
