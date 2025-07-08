@@ -1,4 +1,5 @@
 // pages/callback.tsx
+// pages/callback.tsx
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import en from '../locales/en';
@@ -45,7 +46,6 @@ export default function Callback() {
   useEffect(() => {
     if (!router.isReady) return;
 
-    // ✅ Extract query values or fallback to URL parsing
     let code = router.query.code as string;
     let oauthError = router.query.error as string;
     let error_description = router.query.error_description as string;
@@ -54,13 +54,13 @@ export default function Callback() {
     if (!code) {
       const url = new URL(window.location.href);
       code = url.searchParams.get('code') || '';
-      oauthError = oauthError || url.searchParams.get('error') || '';
-      error_description = error_description || url.searchParams.get('error_description') || '';
-      isTest = isTest || url.searchParams.get('test') === 'true';
+      oauthError ||= url.searchParams.get('error') || '';
+      error_description ||= url.searchParams.get('error_description') || '';
+      isTest ||= url.searchParams.get('test') === 'true';
     }
 
     setTestMode(isTest);
-    console.log('🔍 Final resolved query values:', { code, oauthError, error_description, isTest });
+    console.log('🔍 Final query values:', { code, oauthError, error_description, isTest });
 
     const storage = getStorage();
     if (!storage) {
@@ -78,44 +78,37 @@ export default function Callback() {
       return setErrorAndStop('Authorization failed. Please try again.');
     }
 
-    if (!code || typeof code !== 'string') {
-      console.warn('⚠️ Missing or invalid code:', code);
+    if (!code) {
       return setErrorAndStop('Missing or invalid authorization code.');
     }
 
     const exchangeToken = async () => {
       console.log('🔁 Attempting token exchange with code:', code);
-      const payload = { code };
-      console.log('📦 Sending payload to /api/exchange-token:', payload);
 
       try {
         const res = await fetch('/api/exchange-token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({ code }),
         });
 
         const data = await res.json();
-        console.log('📬 Response from /api/exchange-token:', res.status, data);
-
         const { access_token, site_id, warning } = data;
 
         if (!res.ok || !access_token || !site_id) {
-          console.error('❌ Token exchange failed:', data);
-          throw new Error(data.error || 'Missing access token or site ID from Webflow.');
+          throw new Error(data.error || 'Missing access token or site ID.');
         }
 
         console.log('🔐 Access token and site ID obtained:', { access_token, site_id });
 
-        // 🧠 Save to sessionStorage
         storage.setItem('webflow_token', access_token);
         storage.setItem('webflow_site_id', site_id);
         storage.setItem('webflow_app_installed', 'true');
         if (isTest) storage.setItem('webflow_test_mode', 'true');
 
-        // 🧭 Send credentials to Webflow Designer (iframe)
+        // ✅ Send credentials via postMessage
         if (window.parent && window.parent !== window) {
-          console.log('📤 Sending credentials to Webflow parent via postMessage...');
+          console.log('📤 Sending postMessage to Webflow Designer...');
           window.parent.postMessage(
             {
               type: 'WEBFLOW_APP_INSTALLED',
@@ -125,21 +118,18 @@ export default function Callback() {
                 installed: true,
               },
             },
-            '*'
+            '*' // ⛔ You can replace * with 'https://webflow.com' for added security
           );
         }
 
-        if (warning) {
-          console.warn('⚠️ API warning during exchange:', warning);
-        }
+        if (warning) console.warn('⚠️ API warning during exchange:', warning);
 
         hasResponded.current = true;
         const destination = isTest ? '/installed?test=true' : '/installed';
-        console.log('🚀 Redirecting to:', destination);
         await router.replace(destination);
       } catch (err: any) {
-        console.error('🔥 Error during token exchange:', err);
-        setErrorAndStop(err?.message || 'Token exchange failed. Please try again.');
+        console.error('🔥 Exchange error:', err);
+        setErrorAndStop(err?.message || 'Token exchange failed.');
       }
     };
 

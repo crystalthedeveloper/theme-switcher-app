@@ -71,13 +71,12 @@ export default function Installed() {
         return;
       }
 
-      console.warn('🚫 Missing credentials. Redirecting...');
+      console.warn('⚠️ Missing credentials, but not redirecting to homepage.');
       setStorageAvailable(false);
-      setTimeout(() => {
-        router.push('/');
-      }, 4000);
+      setLoaded(true); // allow page to show message
       return;
     }
+
 
     setToken(t);
     setSiteId(s);
