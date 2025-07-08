@@ -31,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const scriptUrl = 'https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js';
 
   try {
-    const updateRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom_code`, {
+    const updateRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom-code`, {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${token}`,
