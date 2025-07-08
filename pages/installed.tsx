@@ -16,6 +16,7 @@ export default function Installed() {
   const [loaded, setLoaded] = useState(false);
   const [storageAvailable, setStorageAvailable] = useState(true);
   const [debugMode, setDebugMode] = useState(false);
+  const [postMessageReceived, setPostMessageReceived] = useState(false);
 
   const getStorage = () => {
     try {
@@ -29,6 +30,27 @@ export default function Installed() {
   };
 
   useEffect(() => {
+    const handlePostMessage = (event: MessageEvent) => {
+      if (event?.data?.type === 'WEBFLOW_APP_INSTALLED') {
+        const { token, siteId } = event.data.payload || {};
+        console.log('📨 postMessage received:', { token, siteId });
+
+        if (token && siteId) {
+          setToken(token);
+          setSiteId(siteId);
+          setPostMessageReceived(true);
+          setLoaded(true);
+        }
+      }
+    };
+
+    window.addEventListener('message', handlePostMessage);
+    return () => window.removeEventListener('message', handlePostMessage);
+  }, []);
+
+  useEffect(() => {
+    if (postMessageReceived) return; // Skip if we already got credentials via postMessage
+
     const storage = getStorage();
     const t = storage?.getItem('webflow_token') || '';
     const s = storage?.getItem('webflow_site_id') || '';
@@ -60,7 +82,7 @@ export default function Installed() {
     setToken(t);
     setSiteId(s);
     setLoaded(true);
-  }, [router.query]);
+  }, [router.query, postMessageReceived]);
 
   const handleInjectClick = async () => {
     if (!token || !siteId) {
@@ -121,13 +143,20 @@ export default function Installed() {
             <p style={{ color: 'red' }}>Redirecting you shortly…</p>
           </>
         ) : (
-          <button
-            className={styles['main-button']}
-            onClick={handleInjectClick}
-            disabled={injecting || !token || !siteId}
-          >
-            {injecting ? 'Injecting…' : 'Inject Script to Webflow Footer'}
-          </button>
+          <>
+            <button
+              className={styles['main-button']}
+              onClick={handleInjectClick}
+              disabled={injecting || !token || !siteId}
+            >
+              {injecting ? 'Injecting…' : 'Inject Script to Webflow Footer'}
+            </button>
+            {postMessageReceived && (
+              <p style={{ marginTop: '1rem', color: '#0a0', fontWeight: 'bold' }}>
+                ✅ Credentials received via postMessage.
+              </p>
+            )}
+          </>
         )}
 
         {message && (

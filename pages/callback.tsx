@@ -45,13 +45,12 @@ export default function Callback() {
   useEffect(() => {
     if (!router.isReady) return;
 
-    // ✅ Try reading from router.query first
+    // ✅ Extract query values or fallback to URL parsing
     let code = router.query.code as string;
     let oauthError = router.query.error as string;
     let error_description = router.query.error_description as string;
     let isTest = router.query.test === 'true';
 
-    // 🧯 Fallback to URL parsing if router.query is missing (Webflow iframe bug)
     if (!code) {
       const url = new URL(window.location.href);
       code = url.searchParams.get('code') || '';
@@ -61,7 +60,6 @@ export default function Callback() {
     }
 
     setTestMode(isTest);
-
     console.log('🔍 Final resolved query values:', { code, oauthError, error_description, isTest });
 
     const storage = getStorage();
@@ -109,10 +107,27 @@ export default function Callback() {
 
         console.log('🔐 Access token and site ID obtained:', { access_token, site_id });
 
+        // 🧠 Save to sessionStorage
         storage.setItem('webflow_token', access_token);
         storage.setItem('webflow_site_id', site_id);
         storage.setItem('webflow_app_installed', 'true');
         if (isTest) storage.setItem('webflow_test_mode', 'true');
+
+        // 🧭 Send credentials to Webflow Designer (iframe)
+        if (window.parent && window.parent !== window) {
+          console.log('📤 Sending credentials to Webflow parent via postMessage...');
+          window.parent.postMessage(
+            {
+              type: 'WEBFLOW_APP_INSTALLED',
+              payload: {
+                token: access_token,
+                siteId: site_id,
+                installed: true,
+              },
+            },
+            '*'
+          );
+        }
 
         if (warning) {
           console.warn('⚠️ API warning during exchange:', warning);
