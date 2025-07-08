@@ -3,8 +3,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const sendError = (status: number, message: string) => {
+  const sendError = (status: number, message: string, extra?: any) => {
     console.warn(`⚠️ ${status} – ${message}`);
+    if (extra) console.error(extra);
     return res.status(status).json({ error: message });
   };
 
@@ -30,15 +31,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (redirectUri) console.log('📤 Using redirect_uri:', redirectUri);
 
   try {
-    // Construct token request payload
-    const payload: any = {
+    const payload: Record<string, string> = {
       client_id: clientId,
       client_secret: clientSecret,
       code,
       grant_type: 'authorization_code',
     };
 
-    // Only include redirect_uri if explicitly set (e.g. for custom installs)
     if (redirectUri) {
       payload.redirect_uri = redirectUri;
     }
@@ -55,11 +54,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const tokenData = await tokenRes.json();
 
     if (!tokenRes.ok || !tokenData.access_token) {
-      console.error('❌ Token exchange failed:', tokenData);
-      return sendError(500, tokenData.error_description || 'Token exchange failed');
+      return sendError(500, tokenData.error_description || 'Token exchange failed', tokenData);
     }
 
     const access_token = tokenData.access_token;
+
+    // ✅ Log granted scopes for debug
+    console.log('✅ Granted scopes:', tokenData.scope || '(no scope returned)');
 
     const siteRes = await fetch('https://api.webflow.com/v2/sites', {
       headers: {
@@ -71,20 +72,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const siteData = await siteRes.json();
 
     if (!Array.isArray(siteData.sites) || siteData.sites.length === 0) {
-      console.error('❌ No sites returned:', siteData);
-      return sendError(500, 'No authorized sites found for this user');
+      return sendError(500, 'No authorized sites found for this user', siteData);
     }
 
     const site_id = siteData.sites[0].id;
 
-    console.log('✅ OAuth success:', {
-      access_token: '[REDACTED]',
+    console.log('✅ OAuth exchange complete:', {
+      token: '[REDACTED]',
       site_id,
     });
 
     return res.status(200).json({ access_token, site_id });
   } catch (err: any) {
-    console.error('❌ Unexpected error:', err.message || err);
-    return sendError(500, 'Unexpected error during token exchange');
+    return sendError(500, 'Unexpected error during token exchange', err?.message || err);
   }
 }
