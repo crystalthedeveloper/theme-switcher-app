@@ -1,5 +1,4 @@
 // pages/callback.tsx
-// pages/callback.tsx
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import en from '../locales/en';
@@ -46,18 +45,11 @@ export default function Callback() {
   useEffect(() => {
     if (!router.isReady) return;
 
-    let code = router.query.code as string;
-    let oauthError = router.query.error as string;
-    let error_description = router.query.error_description as string;
-    let isTest = router.query.test === 'true';
-
-    if (!code) {
-      const url = new URL(window.location.href);
-      code = url.searchParams.get('code') || '';
-      oauthError ||= url.searchParams.get('error') || '';
-      error_description ||= url.searchParams.get('error_description') || '';
-      isTest ||= url.searchParams.get('test') === 'true';
-    }
+    const url = new URL(window.location.href);
+    const code = url.searchParams.get('code') || '';
+    const oauthError = url.searchParams.get('error') || '';
+    const error_description = url.searchParams.get('error_description') || '';
+    const isTest = url.searchParams.get('test') === 'true';
 
     setTestMode(isTest);
     console.log('🔍 Final query values:', { code, oauthError, error_description, isTest });
@@ -106,7 +98,12 @@ export default function Callback() {
         storage.setItem('webflow_app_installed', 'true');
         if (isTest) storage.setItem('webflow_test_mode', 'true');
 
-        // ✅ Send credentials via postMessage
+        // ✅ Secure postMessage based on environment
+        const targetOrigin =
+          process.env.NODE_ENV === 'development'
+            ? 'http://localhost:3000'
+            : 'https://webflow.com';
+
         if (window.parent && window.parent !== window) {
           console.log('📤 Sending postMessage to Webflow Designer...');
           window.parent.postMessage(
@@ -118,7 +115,7 @@ export default function Callback() {
                 installed: true,
               },
             },
-            '*' // ⛔ You can replace * with 'https://webflow.com' for added security
+            targetOrigin
           );
         }
 
