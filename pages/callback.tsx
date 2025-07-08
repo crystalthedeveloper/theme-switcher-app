@@ -99,7 +99,7 @@ export default function Callback() {
         if (warning) console.warn('⚠️ API Warning:', warning);
 
         hasResponded.current = true;
-        await router.replace(isTest ? '/?test=true' : '/');
+        await router.replace(isTest ? '/installed?test=true' : '/installed');
       } catch (err: any) {
         console.error('❌ Exchange error:', err);
         setErrorAndStop(err?.message || 'Token exchange failed. Please try again.');

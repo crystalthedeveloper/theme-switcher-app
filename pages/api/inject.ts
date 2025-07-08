@@ -34,9 +34,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!listRes.ok) {
       const errText = await listRes.text();
+      const isNotApproved = listRes.status === 403 || errText.includes('route not found');
+
       console.error('❌ Failed to fetch registered scripts:', errText);
+
+      if (isNotApproved) {
+        return sendError(403, 'Custom Code API is not yet available for this app. Awaiting Webflow approval.');
+      }
+
       return sendError(500, 'Could not fetch script list');
     }
+
 
     const listData = await listRes.json();
     let scriptId = listData.scripts?.find(
