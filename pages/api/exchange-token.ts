@@ -20,7 +20,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   console.log('📥 Received code in body:', code);
 
   if (!code || typeof code !== 'string') {
-    console.warn('❌ Missing or invalid authorization code in request body');
     return sendError(400, 'Missing or invalid authorization code', req.body);
   }
 
@@ -34,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     redirectUri,
   });
 
-  if (!clientId || !clientSecret) {
+  if (!clientId || !clientSecret || !redirectUri) {
     return sendError(500, 'Missing environment variables', {
       clientId,
       clientSecret,
@@ -43,16 +42,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const payload: Record<string, string> = {
+    const payload = {
       client_id: clientId,
       client_secret: clientSecret,
       code,
       grant_type: 'authorization_code',
+      redirect_uri: redirectUri, // ✅ REQUIRED and must match Webflow settings
     };
-
-    if (redirectUri) {
-      payload.redirect_uri = redirectUri;
-    }
 
     console.log('📤 Sending payload to Webflow token endpoint:', payload);
 
@@ -71,16 +67,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log('📬 Token response body:', tokenData);
 
     if (!tokenRes.ok || !tokenData.access_token) {
-      console.error('❌ Token exchange failed:', tokenData);
       return sendError(500, tokenData.error_description || 'Token exchange failed', tokenData);
     }
 
     const access_token = tokenData.access_token;
 
-    console.log('✅ Access token retrieved (REDACTED)');
-    console.log('🛡️ Granted scopes:', tokenData.scope || '(none)');
-
-    console.log('🌐 Fetching authorized sites with access_token…');
+    console.log('🌐 Fetching authorized sites...');
     const siteRes = await fetch('https://api.webflow.com/v2/sites', {
       headers: {
         Authorization: `Bearer ${access_token}`,
@@ -90,22 +82,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const siteData = await siteRes.json();
 
-    console.log('📬 Sites API response:', siteData);
-
     if (!Array.isArray(siteData.sites) || siteData.sites.length === 0) {
-      console.error('❌ No authorized sites returned from Webflow API');
-      return sendError(500, 'No authorized sites found for this user', siteData);
+      return sendError(500, 'No authorized sites found', siteData);
     }
 
     const site_id = siteData.sites[0].id;
 
-    console.log('✅ OAuth exchange complete. Returning to client:', {
-      site_id,
-    });
-
+    console.log('✅ OAuth complete:', { site_id });
     return res.status(200).json({ access_token, site_id });
+
   } catch (err: any) {
-    console.error('🔥 Unexpected error during token exchange:', err);
     return sendError(500, 'Unexpected error during token exchange', err?.message || err);
   }
 }
