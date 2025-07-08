@@ -2,9 +2,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const sendError = (status: number, message: string) => {
+  const sendError = (status: number, message: string, extra?: any) => {
     console.warn(`⚠️ ${status} – ${message}`);
-    return res.status(status).json({ error: message });
+    if (extra) console.error(extra);
+    return res.status(status).json({ success: false, message });
   };
 
   if (req.method !== 'POST') {
@@ -23,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const scriptName = 'Theme Switcher';
 
   try {
-    // 1️⃣ Get existing registered scripts
+    // 🔍 Step 1: List current scripts
     const listRes = await fetch('https://api.webflow.com/v2/scripts', {
       method: 'GET',
       headers: {
@@ -34,24 +35,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!listRes.ok) {
       const errText = await listRes.text();
-      const isNotApproved = listRes.status === 403 || errText.includes('route not found');
-
-      console.error('❌ Failed to fetch registered scripts:', errText);
-
-      if (isNotApproved) {
-        return sendError(403, 'Custom Code API is not yet available for this app. Awaiting Webflow approval.');
+      if (listRes.status === 403 || errText.includes('route not found')) {
+        return sendError(403, 'Custom Code API not available for this app yet. Awaiting Webflow approval.', errText);
       }
-
-      return sendError(500, 'Could not fetch script list');
+      return sendError(500, 'Could not fetch script list', errText);
     }
 
-
     const listData = await listRes.json();
-    let scriptId = listData.scripts?.find(
+    const existingScript = listData?.scripts?.find(
       (s: any) => s.url === scriptUrl && s.name === scriptName
-    )?.id;
+    );
+    let scriptId = existingScript?.id;
 
-    // 2️⃣ Register the script if it doesn't exist
+    // 🧱 Step 2: Register the script if not found
     if (!scriptId) {
       const registerRes = await fetch('https://api.webflow.com/v2/scripts', {
         method: 'POST',
@@ -70,18 +66,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const registerData = await registerRes.json();
 
-      if (!registerRes.ok || !registerData.id) {
-        console.error('❌ Failed to register script:', registerData);
-        return sendError(500, 'Failed to register script');
+      if (!registerRes.ok || !registerData?.id) {
+        return sendError(500, 'Failed to register script', registerData);
       }
 
       scriptId = registerData.id;
-      console.log('✅ Script registered:', scriptId);
+      console.log('✅ Registered new script ID:', scriptId);
     } else {
-      console.log('♻️ Script already registered:', scriptId);
+      console.log('♻️ Script already exists:', scriptId);
     }
 
-    // 3️⃣ Attach registered script to the site
+    // 🔗 Step 3: Attach script to the given site
     const attachRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/scripts`, {
       method: 'PATCH',
       headers: {
@@ -95,15 +90,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     if (!attachRes.ok) {
-      const errorText = await attachRes.text();
-      console.error('❌ Failed to attach script to site:', errorText);
-      return sendError(500, 'Failed to attach script to site');
+      const attachText = await attachRes.text();
+      return sendError(500, 'Failed to attach script to site', attachText);
     }
 
-    console.log('✅ Script successfully attached to site:', siteId);
+    console.log(`✅ Script successfully attached to site ${siteId}`);
     return res.status(200).json({ success: true });
   } catch (err: any) {
-    console.error('❌ Unexpected injection error:', err?.message || err);
-    return sendError(500, 'Internal Server Error');
+    return sendError(500, 'Internal Server Error', err?.message || err);
   }
 }

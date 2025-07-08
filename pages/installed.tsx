@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import styles from './css/index.module.css';
 import Logo from '../components/Logo';
 import Footer from '../components/Footer';
+import { useRouter } from 'next/router';
 
 export default function Installed() {
   const [injecting, setInjecting] = useState(false);
@@ -12,6 +13,7 @@ export default function Installed() {
   const [siteId, setSiteId] = useState('');
   const [loaded, setLoaded] = useState(false);
   const [storageAvailable, setStorageAvailable] = useState(true);
+  const router = useRouter();
 
   const getStorage = () => {
     try {
@@ -20,7 +22,6 @@ export default function Installed() {
       }
     } catch (err) {
       console.warn('⚠️ Could not access parent.sessionStorage:', err);
-      setStorageAvailable(false);
     }
     return window.sessionStorage;
   };
@@ -30,18 +31,18 @@ export default function Installed() {
     const t = storage?.getItem('webflow_token') || '';
     const s = storage?.getItem('webflow_site_id') || '';
 
-    setToken(t);
-    setSiteId(s);
-    setLoaded(true);
-
     if (!t || !s) {
       setStorageAvailable(false);
 
-      // Optional redirect after delay
+      // Redirect after a short delay
       setTimeout(() => {
-        window.location.href = 'https://webflow.com/apps';
-      }, 10000);
+        router.push('/'); // redirect to homepage or OAuth start
+      }, 4000);
     }
+
+    setToken(t);
+    setSiteId(s);
+    setLoaded(true);
   }, []);
 
   const handleInjectClick = async () => {
@@ -92,11 +93,12 @@ export default function Installed() {
         {!loaded ? (
           <p style={{ fontStyle: 'italic' }}>Loading credentials…</p>
         ) : !storageAvailable ? (
-          <p style={{ color: 'red' }}>
-            ⚠️ Unable to access credentials. Please try reinstalling the app from the Webflow App panel.
-            <br />
-            Redirecting you shortly…
-          </p>
+          <>
+            <p style={{ color: 'red', marginBottom: '1rem' }}>
+              ⚠️ Unable to access credentials. Please try reinstalling the app from the Webflow App panel.
+            </p>
+            <p style={{ color: 'red' }}>Redirecting you shortly…</p>
+          </>
         ) : (
           <button
             className={styles['main-button']}
