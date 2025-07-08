@@ -14,7 +14,6 @@ export default function Installed() {
   const [token, setToken] = useState('');
   const [siteId, setSiteId] = useState('');
   const [loaded, setLoaded] = useState(false);
-  const [storageAvailable, setStorageAvailable] = useState(true);
   const [debugMode, setDebugMode] = useState(false);
   const [postMessageReceived, setPostMessageReceived] = useState(false);
 
@@ -49,7 +48,7 @@ export default function Installed() {
   }, []);
 
   useEffect(() => {
-    if (postMessageReceived) return; // Skip if we already got credentials via postMessage
+    if (postMessageReceived) return;
 
     const storage = getStorage();
     const t = storage?.getItem('webflow_token') || '';
@@ -71,12 +70,10 @@ export default function Installed() {
         return;
       }
 
-      console.warn('⚠️ Missing credentials, but not redirecting to homepage.');
-      setStorageAvailable(false);
-      setLoaded(true); // allow page to show message
+      console.warn('⚠️ Missing credentials — manual input may be required.');
+      setLoaded(true);
       return;
     }
-
 
     setToken(t);
     setSiteId(s);
@@ -134,15 +131,31 @@ export default function Installed() {
 
         {!loaded ? (
           <p style={{ fontStyle: 'italic' }}>Loading credentials…</p>
-        ) : !storageAvailable && !debugMode ? (
-          <>
-            <p style={{ color: 'red', marginBottom: '1rem' }}>
-              ⚠️ Unable to access credentials. Please open this page from the Webflow App panel.
-            </p>
-            <p style={{ color: 'red' }}>Redirecting you shortly…</p>
-          </>
         ) : (
           <>
+            {!token || !siteId ? (
+              <div style={{ color: 'red', marginBottom: '1rem' }}>
+                ⚠️ Unable to access credentials. Please open from the Webflow App panel or enter manually:
+              </div>
+            ) : null}
+
+            <div style={{ marginBottom: '1rem' }}>
+              <input
+                type="text"
+                placeholder="Webflow token"
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+                style={{ padding: '0.5rem', width: '100%', maxWidth: 400, marginBottom: '0.5rem' }}
+              />
+              <input
+                type="text"
+                placeholder="Site ID"
+                value={siteId}
+                onChange={(e) => setSiteId(e.target.value)}
+                style={{ padding: '0.5rem', width: '100%', maxWidth: 400 }}
+              />
+            </div>
+
             <button
               className={styles['main-button']}
               onClick={handleInjectClick}
@@ -150,6 +163,7 @@ export default function Installed() {
             >
               {injecting ? 'Injecting…' : 'Inject Script to Webflow Footer'}
             </button>
+
             {postMessageReceived && (
               <p style={{ marginTop: '1rem', color: '#0a0', fontWeight: 'bold' }}>
                 ✅ Credentials received via postMessage.
