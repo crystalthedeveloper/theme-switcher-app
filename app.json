@@ -1,34 +1,27 @@
 {
-    "name": "Theme Switcher",
-    "slug": "theme-switcher",
-    "description": "A Webflow app that allows users to toggle between light and dark themes.",
-    "website": "https://theme-toggle-webflow.vercel.app",
-    "redirect_uri": "https://theme-toggle-webflow.vercel.app/callback",
-    "oauth": {
-        "scopes": [
-            "sites:read",
-            "scripts:read",
-            "scripts:write"
-        ],
-        "data_access": {
-            "access_type": "data_client"
-        },
-        "redirect_uris": [
-            "https://theme-toggle-webflow.vercel.app/callback"
-        ],
-        "webhook": {
-            "url": "https://theme-toggle-webflow.vercel.app/api/webhook"
-        },
-        "name": "Theme Switcher",
-        "description": "Add a light/dark mode toggle to any Webflow site with one click.",
-        "logo": "https://theme-toggle-webflow.vercel.app/logo.png",
-        "homepage": "https://theme-toggle-webflow.vercel.app",
-        "extensions": [
-            {
-                "id": "theme-switcher-panel",
-                "location": "designer",
-                "source": "https://theme-toggle-webflow.vercel.app/installed"
-            }
-        ]
-    }
+  "name": "Theme Switcher",
+  "slug": "theme-switcher",
+  "description": "A Webflow app that allows users to toggle between light and dark themes.",
+  "website": "https://theme-toggle-webflow.vercel.app",
+  "redirect_uri": "https://theme-toggle-webflow.vercel.app/callback",
+  "oauth": {
+    "scopes": [
+      "sites:read",
+      "sites:write",
+      "custom_code:read",
+      "custom_code:write",
+      "pages:read",
+      "pages:write",
+      "authorized_user:read"
+    ]
+  },
+  "extension": {
+    "location": "designer",
+    "source": "https://theme-toggle-webflow.vercel.app/installed"
+  },
+  "developer": {
+    "name": "Crystal The Developer Inc.",
+    "email": "crystalthedeveloper@gmail.com",
+    "url": "https://www.crystalthedeveloper.ca"
+  }
 }
