@@ -35,19 +35,24 @@ export default function Home() {
     const savedToken = storage.getItem('webflow_token') || '';
     const savedSiteId = storage.getItem('webflow_site_id') || '';
     const installed = storage.getItem('webflow_app_installed') === 'true';
-
     const authorized = !!savedToken && !!savedSiteId && installed;
+
+    const query = new URLSearchParams(window.location.search);
+    const code = query.get('code');
 
     setToken(savedToken);
     setSiteId(savedSiteId);
     setIsAuthorized(authorized);
     setLoaded(true);
 
-    if (authorized && router.pathname !== '/installed') {
-      console.log('✅ Authorized. Redirecting to /installed...');
+    if (code) {
+      console.log('🧭 Found code in query — redirecting to /callback...');
+      router.replace(`/callback?code=${code}`);
+    } else if (authorized && router.pathname !== '/installed') {
+      console.log('✅ Authorized — redirecting to /installed...');
       router.replace('/installed');
     } else {
-      console.log('🚫 Not authorized yet');
+      console.log('🚫 Not authorized yet. Showing install option.');
     }
   }, [router]);
 
@@ -56,11 +61,8 @@ export default function Home() {
 
   const authURL = (() => {
     const base = `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&scope=custom_code:read custom_code:write sites:read sites:write pages:read pages:write authorized_user:read`;
-
-    // Webflow Marketplace install flow omits redirect_uri — add it manually to ensure consistency
     return redirectUri ? `${base}&redirect_uri=${encodeURIComponent(redirectUri)}` : base;
   })();
-
 
   const handleInjectClick = async () => {
     setInjecting(true);

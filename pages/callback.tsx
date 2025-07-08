@@ -45,20 +45,31 @@ export default function Callback() {
   useEffect(() => {
     if (!router.isReady) return;
 
-    const { code, error: oauthError, error_description, test } = router.query;
-    const isTest = test === 'true';
+    // ✅ Try reading from router.query first
+    let code = router.query.code as string;
+    let oauthError = router.query.error as string;
+    let error_description = router.query.error_description as string;
+    let isTest = router.query.test === 'true';
+
+    // 🧯 Fallback to URL parsing if router.query is missing (Webflow iframe bug)
+    if (!code) {
+      const url = new URL(window.location.href);
+      code = url.searchParams.get('code') || '';
+      oauthError = oauthError || url.searchParams.get('error') || '';
+      error_description = error_description || url.searchParams.get('error_description') || '';
+      isTest = isTest || url.searchParams.get('test') === 'true';
+    }
+
     setTestMode(isTest);
 
-    console.log('🔍 Query params received on callback:', router.query);
+    console.log('🔍 Final resolved query values:', { code, oauthError, error_description, isTest });
 
     const storage = getStorage();
     if (!storage) {
       console.error('🚫 Session storage not available');
-      setErrorAndStop('Storage is unavailable. Please try again in a supported browser.');
-      return;
+      return setErrorAndStop('Storage is unavailable. Please try again in a supported browser.');
     }
 
-    // Clear previous session data
     ['webflow_token', 'webflow_site_id', 'webflow_app_installed', 'webflow_test_mode'].forEach(key => {
       console.log(`🧹 Clearing storage key: ${key}`);
       storage.removeItem(key);
@@ -70,13 +81,12 @@ export default function Callback() {
     }
 
     if (!code || typeof code !== 'string') {
-      console.warn('⚠️ Missing or invalid code in query:', code);
+      console.warn('⚠️ Missing or invalid code:', code);
       return setErrorAndStop('Missing or invalid authorization code.');
     }
 
     const exchangeToken = async () => {
       console.log('🔁 Attempting token exchange with code:', code);
-
       const payload = { code };
       console.log('📦 Sending payload to /api/exchange-token:', payload);
 
