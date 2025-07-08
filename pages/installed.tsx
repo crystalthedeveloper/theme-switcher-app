@@ -11,6 +11,7 @@ export default function Installed() {
   const [token, setToken] = useState('');
   const [siteId, setSiteId] = useState('');
   const [loaded, setLoaded] = useState(false);
+  const [storageAvailable, setStorageAvailable] = useState(true);
 
   const getStorage = () => {
     try {
@@ -19,14 +20,20 @@ export default function Installed() {
       }
     } catch (err) {
       console.warn('⚠️ Could not access parent.sessionStorage:', err);
+      setStorageAvailable(false);
     }
     return window.sessionStorage;
   };
 
   useEffect(() => {
     const storage = getStorage();
-    const t = storage.getItem('webflow_token') || '';
-    const s = storage.getItem('webflow_site_id') || '';
+    const t = storage?.getItem('webflow_token') || '';
+    const s = storage?.getItem('webflow_site_id') || '';
+
+    if (!t || !s) {
+      setStorageAvailable(false);
+    }
+
     setToken(t);
     setSiteId(s);
     setLoaded(true);
@@ -77,7 +84,13 @@ export default function Installed() {
           Let your visitors toggle between dark and light mode — no coding required.
         </p>
 
-        {loaded ? (
+        {!loaded ? (
+          <p style={{ fontStyle: 'italic' }}>Loading credentials…</p>
+        ) : !storageAvailable ? (
+          <p style={{ color: 'red' }}>
+            ⚠️ Unable to access credentials. Please try reinstalling the app from the Webflow App panel.
+          </p>
+        ) : (
           <button
             className={styles['main-button']}
             onClick={handleInjectClick}
@@ -85,8 +98,6 @@ export default function Installed() {
           >
             {injecting ? 'Injecting…' : 'Inject Script to Webflow Footer'}
           </button>
-        ) : (
-          <p style={{ fontStyle: 'italic' }}>Loading credentials…</p>
         )}
 
         {message && (
