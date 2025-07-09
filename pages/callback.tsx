@@ -12,17 +12,6 @@ export default function Callback() {
   const [error, setError] = useState('');
   const hasResponded = useRef(false);
 
-  const getStorage = () => {
-    try {
-      if (window.parent && window.parent !== window && window.parent.sessionStorage) {
-        return window.parent.sessionStorage;
-      }
-    } catch (e) {
-      console.warn('⚠️ Cannot access parent.sessionStorage:', e);
-    }
-    return window.sessionStorage;
-  };
-
   const setErrorAndStop = (message: string) => {
     if (!hasResponded.current) {
       hasResponded.current = true;
@@ -52,16 +41,6 @@ export default function Callback() {
     const isTest = url.searchParams.get('test') === 'true';
 
     setTestMode(isTest);
-    const storage = getStorage();
-
-    if (!storage) {
-      return setErrorAndStop('Storage is unavailable.');
-    }
-
-    // Clear any existing values
-    ['webflow_token', 'webflow_site_id', 'webflow_app_installed', 'webflow_test_mode'].forEach(key => {
-      storage.removeItem(key);
-    });
 
     if (oauthError) {
       return setErrorAndStop('Authorization failed. ' + error_description);
@@ -86,18 +65,20 @@ export default function Callback() {
           throw new Error(data.error || 'Exchange failed');
         }
 
-        // Save token + siteId
-        storage.setItem('webflow_token', access_token);
-        storage.setItem('webflow_site_id', site_id);
-        storage.setItem('webflow_app_installed', 'true');
-        if (isTest) storage.setItem('webflow_test_mode', 'true');
+        // Inject script that saves credentials + redirects
+        const redirectUrl = isTest
+          ? `/installed?test=true&token=${access_token}&siteId=${site_id}`
+          : `/installed?token=${access_token}&siteId=${site_id}`;
 
-        console.log('✅ Token & site ID saved:', { access_token, site_id });
-
-        if (warning) console.warn('⚠️ Warning:', warning);
-
-        hasResponded.current = true;
-        router.replace(isTest ? '/installed?test=true' : '/installed');
+        document.body.innerHTML = `
+          <script>
+            sessionStorage.setItem('webflow_token', '${access_token}');
+            sessionStorage.setItem('webflow_site_id', '${site_id}');
+            sessionStorage.setItem('webflow_app_installed', 'true');
+            ${isTest ? "sessionStorage.setItem('webflow_test_mode', 'true');" : ''}
+            window.location.href = '${redirectUrl}';
+          </script>
+        `;
       } catch (err: any) {
         console.error('❌ Exchange error:', err);
         setErrorAndStop(err?.message || 'Token exchange failed.');
