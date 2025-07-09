@@ -16,22 +16,8 @@ export default function Installed() {
   const [loaded, setLoaded] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
 
-  const getStorage = () => {
-    try {
-      if (window.parent && window.parent !== window && window.parent.sessionStorage) {
-        return window.parent.sessionStorage;
-      }
-    } catch (err) {
-      console.warn('⚠️ Could not access parent.sessionStorage:', err);
-    }
-    return window.sessionStorage;
-  };
-
   useEffect(() => {
-    const storage = getStorage();
-
-    const t = storage?.getItem('webflow_token') || '';
-    const s = storage?.getItem('webflow_site_id') || '';
+    const storage = window.sessionStorage;
 
     const queryToken = router.query.token as string;
     const querySiteId = router.query.siteId as string;
@@ -40,9 +26,14 @@ export default function Installed() {
       setToken(queryToken);
       setSiteId(querySiteId);
       setDebugMode(true);
-    } else if (t && s) {
-      setToken(t);
-      setSiteId(s);
+    } else {
+      const t = storage?.getItem('webflow_token') || '';
+      const s = storage?.getItem('webflow_site_id') || '';
+
+      if (t && s) {
+        setToken(t);
+        setSiteId(s);
+      }
     }
 
     setLoaded(true);
