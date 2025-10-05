@@ -10,12 +10,16 @@ export default function Callback() {
   const [loading, setLoading] = useState(true);
   const [testMode, setTestMode] = useState(false);
   const [error, setError] = useState('');
+  const [errorDetail, setErrorDetail] = useState('');
+  const [statusMessage, setStatusMessage] = useState('');
   const hasResponded = useRef(false);
 
-  const setErrorAndStop = (message: string) => {
+  const setErrorAndStop = (message: string, detail = '') => {
     if (!hasResponded.current) {
       hasResponded.current = true;
       setError(message);
+      setErrorDetail(detail);
+      setStatusMessage('');
       setLoading(false);
       console.warn('🛑 Error set and loading stopped:', message);
     }
@@ -43,15 +47,24 @@ export default function Callback() {
     setTestMode(isTest);
 
     if (oauthError) {
-      return setErrorAndStop('Authorization failed. ' + error_description);
+      const userCancelled = oauthError === 'access_denied';
+      const friendlyMessage = userCancelled
+        ? 'Authorization canceled — Theme Switcher was not connected.'
+        : 'Authorization failed.';
+      const friendlyDetail = userCancelled
+        ? 'No changes were made to your Webflow site. To finish installing later, return to Webflow and approve the Theme Switcher permissions. You can close this tab safely if you changed your mind.'
+        : error_description || 'Webflow returned an error. Please try again.';
+
+      return setErrorAndStop(friendlyMessage, friendlyDetail);
     }
 
     if (!code) {
-      return setErrorAndStop('Missing or invalid authorization code.');
+      return setErrorAndStop('Missing or invalid authorization code.', 'Please restart the install from the Webflow App panel.');
     }
 
     const exchangeToken = async () => {
       try {
+        setStatusMessage('Contacting Webflow…');
         const res = await fetch('/api/exchange-token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -65,23 +78,46 @@ export default function Callback() {
           throw new Error(data.error || 'Exchange failed');
         }
 
-        // Inject script that saves credentials + redirects
-        const redirectUrl = isTest
-          ? `/installed?test=true&token=${access_token}&siteId=${site_id}`
-          : `/installed?token=${access_token}&siteId=${site_id}`;
+        const storage = window.sessionStorage;
+        storage.setItem('webflow_token', access_token);
+        storage.setItem('webflow_site_id', site_id);
+        storage.setItem('webflow_app_installed', 'true');
+        if (isTest) {
+          storage.setItem('webflow_test_mode', 'true');
+        }
 
-        document.body.innerHTML = `
-          <script>
-            sessionStorage.setItem('webflow_token', '${access_token}');
-            sessionStorage.setItem('webflow_site_id', '${site_id}');
-            sessionStorage.setItem('webflow_app_installed', 'true');
-            ${isTest ? "sessionStorage.setItem('webflow_test_mode', 'true');" : ''}
-            window.location.href = '${redirectUrl}';
-          </script>
-        `;
+        if (warning) {
+          console.warn('⚠️ Webflow warning:', warning);
+        }
+
+        setStatusMessage('Registering Theme Switcher in Webflow…');
+        const injectResponse = await fetch('/api/inject', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${access_token}`,
+          },
+          body: JSON.stringify({ siteId: site_id }),
+        });
+
+        const injectData = await injectResponse.json();
+        if (!injectResponse.ok || !injectData?.success) {
+          throw new Error(injectData?.message || 'Script registration failed');
+        }
+
+        storage.setItem('webflow_last_registration', 'success');
+
+        hasResponded.current = true;
+        setStatusMessage('Finishing setup…');
+
+        const redirectUrl = isTest
+          ? `/installed?test=true`
+          : `/installed`;
+
+        router.replace(redirectUrl);
       } catch (err: any) {
         console.error('❌ Exchange error:', err);
-        setErrorAndStop(err?.message || 'Token exchange failed.');
+        setErrorAndStop(err?.message || 'Token exchange failed.', 'Please confirm your Webflow credentials and try again.');
       }
     };
 
@@ -95,12 +131,14 @@ export default function Callback() {
       <Logo />
       <h1>{t.connecting || 'Connecting to Webflow...'}</h1>
       <p aria-live="polite">
-        {loading ? t.exchanging || 'Exchanging code...' : error || t.tryAgainFallback || 'Something went wrong.'}
+        {loading
+          ? statusMessage || t.exchanging || 'Exchanging code...'
+          : error || t.tryAgainFallback || 'Something went wrong.'}
       </p>
 
       {error && (
         <p style={{ color: 'red', marginTop: '1rem' }} aria-live="assertive">
-          {error}
+          {errorDetail || error}
         </p>
       )}
 

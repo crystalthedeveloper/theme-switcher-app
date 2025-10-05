@@ -65,7 +65,7 @@ export default function Home() {
       });
 
       const data = await res.json();
-      setMessage(data.success ? '✅ Script injected!' : `❌ ${data.message || 'Injection failed'}`);
+      setMessage(data.success ? '✅ Theme Switcher script refreshed!' : `❌ ${data.message || 'Injection failed'}`);
     } catch (err) {
       console.error('❌ Injection error:', err);
       setMessage('❌ Script injection error.');
@@ -104,12 +104,15 @@ export default function Home() {
           </>
         ) : (
           <>
+            <p style={{ marginBottom: '1rem', color: '#555' }}>
+              The Theme Switcher script is registered automatically after install. Use the button below if you ever need to refresh it manually.
+            </p>
             <button
               className={styles['main-button']}
               onClick={handleInjectClick}
               disabled={injecting || !token || !siteId}
             >
-              {injecting ? 'Injecting…' : 'Inject Script to Webflow Footer'}
+              {injecting ? 'Refreshing…' : 'Re-register Theme Switcher Script'}
             </button>
             {message && (
               <p style={{ marginTop: '1rem', color: message.startsWith('✅') ? 'green' : 'red' }} role="alert">

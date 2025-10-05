@@ -15,6 +15,7 @@ export default function Installed() {
   const [siteId, setSiteId] = useState('');
   const [loaded, setLoaded] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
+  const [autoMessage, setAutoMessage] = useState('');
 
   useEffect(() => {
     const storage = window.sessionStorage;
@@ -34,6 +35,11 @@ export default function Installed() {
         setToken(t);
         setSiteId(s);
       }
+      const registrationStatus = storage?.getItem('webflow_last_registration');
+      if (registrationStatus === 'success') {
+        setAutoMessage('✅ Theme Switcher script was registered automatically.');
+        storage.removeItem('webflow_last_registration');
+      }
     }
 
     setLoaded(true);
@@ -48,6 +54,7 @@ export default function Installed() {
 
     setInjecting(true);
     setMessage('');
+    setAutoMessage('');
 
     try {
       const res = await fetch('/api/inject', {
@@ -60,7 +67,7 @@ export default function Installed() {
       });
 
       const data = await res.json();
-      setMessage(data.success ? '✅ Script injected!' : `❌ ${data.message || 'Injection failed'}`);
+      setMessage(data.success ? '✅ Theme Switcher script refreshed!' : `❌ ${data.message || 'Injection failed'}`);
     } catch (err) {
       console.error('❌ Injection error:', err);
       setMessage('❌ Script injection error.');
@@ -117,9 +124,22 @@ export default function Installed() {
               onClick={handleInjectClick}
               disabled={injecting || !token || !siteId}
             >
-              {injecting ? 'Injecting…' : 'Inject Script to Webflow Footer'}
+              {injecting ? 'Refreshing…' : 'Re-register Theme Switcher Script'}
             </button>
           </>
+        )}
+
+        {autoMessage && !message && (
+          <p
+            style={{
+              marginTop: '1rem',
+              color: 'green',
+              fontWeight: 'bold',
+            }}
+            role="status"
+          >
+            {autoMessage}
+          </p>
         )}
 
         {message && (
