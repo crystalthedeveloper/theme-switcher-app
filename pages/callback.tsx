@@ -14,11 +14,33 @@ export default function Callback() {
   const [statusMessage, setStatusMessage] = useState('');
   const hasResponded = useRef(false);
 
+  const defaultDetailFor = (message: string) => {
+    if (!message) {
+      return 'Please try again or contact support if the issue continues.';
+    }
+
+    const normalized = message.toLowerCase();
+
+    if (normalized.includes('script registration') || normalized.includes('inject footer')) {
+      return 'Webflow could not update your Custom Code settings. Confirm the site has Custom Code access (paid plan) and that the Theme Switcher app still has permission.';
+    }
+
+    if (normalized.includes('token exchange')) {
+      return 'Please confirm your Webflow credentials and try again.';
+    }
+
+    if (normalized.includes('authorization')) {
+      return 'Return to the Webflow App panel to restart the install when you are ready.';
+    }
+
+    return 'Please try again or contact support if the issue continues.';
+  };
+
   const setErrorAndStop = (message: string, detail = '') => {
     if (!hasResponded.current) {
       hasResponded.current = true;
       setError(message);
-      setErrorDetail(detail);
+      setErrorDetail(detail || defaultDetailFor(message));
       setStatusMessage('');
       setLoading(false);
       console.warn('🛑 Error set and loading stopped:', message);
@@ -100,9 +122,17 @@ export default function Callback() {
           body: JSON.stringify({ siteId: site_id }),
         });
 
-        const injectData = await injectResponse.json();
+        let injectData: any = null;
+        try {
+          injectData = await injectResponse.json();
+        } catch (jsonErr) {
+          console.warn('⚠️ Unable to parse inject response JSON', jsonErr);
+        }
+
         if (!injectResponse.ok || !injectData?.success) {
-          throw new Error(injectData?.message || 'Script registration failed');
+          const error = new Error(injectData?.message || 'Script registration failed');
+          (error as any).detail = injectData?.detail;
+          throw error;
         }
 
         storage.setItem('webflow_last_registration', 'success');
@@ -117,7 +147,9 @@ export default function Callback() {
         router.replace(redirectUrl);
       } catch (err: any) {
         console.error('❌ Exchange error:', err);
-        setErrorAndStop(err?.message || 'Token exchange failed.', 'Please confirm your Webflow credentials and try again.');
+        const message = err?.message || 'Token exchange failed.';
+        const detail = err?.detail || defaultDetailFor(message);
+        setErrorAndStop(message, detail);
       }
     };
 

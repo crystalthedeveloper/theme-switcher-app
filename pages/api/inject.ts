@@ -15,15 +15,40 @@ type CustomCodeSettingsResponse = {
   };
 };
 
+const extractDetail = (extra: unknown): string | undefined => {
+  if (!extra) return undefined;
+  if (typeof extra === 'string') return extra;
+  if (typeof extra === 'number' || typeof extra === 'boolean') return String(extra);
+  if (extra instanceof Error) return extra.message;
+  if (typeof extra === 'object') {
+    const record = extra as Record<string, unknown>;
+    const maybeMessage = record.message;
+    if (typeof maybeMessage === 'string') return maybeMessage;
+    const items = record.items;
+    if (Array.isArray(items) && items.length > 0) {
+      const first = items[0] as Record<string, unknown> | undefined;
+      const firstItemMessage = first?.message;
+      if (typeof firstItemMessage === 'string') return firstItemMessage;
+    }
+  }
+  try {
+    return JSON.stringify(extra);
+  } catch (err) {
+    console.warn('⚠️ Unable to serialize error detail', err);
+    return undefined;
+  }
+};
+
 const sendError = (
   res: NextApiResponse,
   status: number,
   message: string,
   extra?: unknown,
 ) => {
-  console.warn(`⚠️ ${status} – ${message}`);
-  if (extra) console.error(extra);
-  return res.status(status).json({ success: false, message });
+  const detail = extractDetail(extra);
+  console.warn(`⚠️ ${status} – ${message}${detail ? ` (${detail})` : ''}`);
+  if (extra && typeof extra !== 'string') console.error(extra);
+  return res.status(status).json({ success: false, message, detail });
 };
 
 const fetchCustomDomains = async (siteId: string, token: string): Promise<string[]> => {
