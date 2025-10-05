@@ -3,9 +3,8 @@ import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import en from '../locales/en';
-import styles from './css/index.module.css';
+import styles from './css/app-shell.module.css';
 import Logo from '../components/Logo';
-import Footer from '../components/Footer';
 
 export default function Home() {
   const t = en;
@@ -75,54 +74,61 @@ export default function Home() {
   };
 
   return (
-    <div>
+    <div className={styles.shell}>
       <Head>
         <title>{t.title}</title>
         <meta name="description" content={t.description} />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className={styles['main-content']} aria-busy={injecting}>
-        <Logo />
-        <h1 className={styles['main-heading']}>
+      <main className={styles.card} aria-busy={injecting}>
+        <div className={styles.logoWrap} aria-hidden="true">
+          <Logo />
+        </div>
+        <h1 className={styles.heading}>
           Theme Switcher
-          {isAuthorized && <span style={{ fontSize: '1rem', marginLeft: '0.5rem' }}>✅ Installed</span>}
+          {isAuthorized && <span className={styles.badgeInstalled}>Installed</span>}
         </h1>
-        <p className={styles['main-subheading']}>
-          Let your visitors switch between dark and light mode — no coding required.
+        <p className={styles.subheading}>
+          Let your visitors switch between dark and light mode — no custom code edits required.
         </p>
 
         {!loaded ? (
-          <p style={{ fontStyle: 'italic' }}>Loading…</p>
+          <p className={styles.statusText}>Loading…</p>
         ) : !isAuthorized ? (
-          <>
+          <div className={styles.controls}>
             <a href={authURL}>
-              <button className={styles['main-button']} disabled={!authURL}>
+              <button className={styles.buttonPrimary} disabled={!authURL}>
                 {t.buttonInstall || 'Install App'}
               </button>
             </a>
-          </>
+          </div>
         ) : (
           <>
-            <p style={{ marginBottom: '1rem', color: '#555' }}>
-              The Theme Switcher script is registered automatically after install. Use the button below if you ever need to refresh it manually.
+            <p className={styles.subheading} style={{ maxWidth: '460px', marginBottom: '1.5rem' }}>
+              The Theme Switcher script is registered automatically after install. Use the button below if you need to refresh it manually.
             </p>
-            <button
-              className={styles['main-button']}
-              onClick={handleInjectClick}
-              disabled={injecting || !token || !siteId}
-            >
-              {injecting ? 'Refreshing…' : 'Re-register Theme Switcher Script'}
-            </button>
+            <div className={styles.controls}>
+              <button
+                className={styles.buttonPrimary}
+                onClick={handleInjectClick}
+                disabled={injecting || !token || !siteId}
+              >
+                {injecting ? 'Refreshing…' : 'Re-register Theme Switcher Script'}
+              </button>
+            </div>
             {message && (
-              <p style={{ marginTop: '1rem', color: message.startsWith('✅') ? 'green' : 'red' }} role="alert">
+              <p
+                className={message.startsWith('✅') ? styles.autoMessage : styles.errorMessage}
+                role="alert"
+              >
                 {message}
               </p>
             )}
           </>
         )}
 
-        <Footer />
+        <p className={styles.footer}>© 2025 Crystal The Developer Inc. All rights reserved.</p>
       </main>
     </div>
   );

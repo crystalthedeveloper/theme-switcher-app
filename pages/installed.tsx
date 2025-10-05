@@ -1,9 +1,8 @@
 // pages/installed.tsx
 import Head from 'next/head';
 import { useEffect, useState } from 'react';
-import styles from './css/index.module.css';
+import styles from './css/app-shell.module.css';
 import Logo from '../components/Logo';
-import Footer from '../components/Footer';
 import { useRouter } from 'next/router';
 
 export default function Installed() {
@@ -77,91 +76,80 @@ export default function Installed() {
   };
 
   return (
-    <div>
+    <div className={styles.shell}>
       <Head>
         <title>Theme Switcher Installed</title>
         <meta name="description" content="Theme Switcher has been successfully installed in Webflow." />
       </Head>
 
-      <main className={styles['main-content']} aria-busy={injecting}>
-        <Logo />
-        <h1 className={styles['main-heading']}>
-          Theme Switcher <span style={{ fontSize: '1rem', marginLeft: '0.5rem' }}>✅ Installed</span>
+      <main className={styles.card} aria-busy={injecting}>
+        <div className={styles.logoWrap} aria-hidden="true">
+          <Logo />
+        </div>
+        <h1 className={styles.heading}>
+          Theme Switcher
+          <span className={styles.badgeInstalled}>Installed</span>
         </h1>
-        <p className={styles['main-subheading']}>
-          Let your visitors toggle between dark and light mode — no coding required.
+        <p className={styles.subheading}>
+          Your Webflow site now ships with Theme Switcher. Manage credentials or refresh the script below.
         </p>
 
         {!loaded ? (
-          <p style={{ fontStyle: 'italic' }}>Loading credentials…</p>
+          <p className={styles.statusText}>Loading credentials…</p>
         ) : (
           <>
             {!token || !siteId ? (
-              <div style={{ color: 'red', marginBottom: '1rem' }}>
-                ⚠️ Unable to access credentials. Please open from the Webflow App panel or enter manually:
-              </div>
+              <p className={styles.errorMessage} role="alert" style={{ marginTop: 0 }}>
+                Unable to access credentials. Open the app in Webflow or paste them manually:
+              </p>
             ) : null}
 
-            <div style={{ marginBottom: '1rem' }}>
+            <div className={styles.inputs}>
               <input
                 type="text"
                 placeholder="Webflow token"
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
-                style={{ padding: '0.5rem', width: '100%', maxWidth: 400, marginBottom: '0.5rem' }}
               />
               <input
                 type="text"
                 placeholder="Site ID"
                 value={siteId}
                 onChange={(e) => setSiteId(e.target.value)}
-                style={{ padding: '0.5rem', width: '100%', maxWidth: 400 }}
               />
             </div>
 
-            <button
-              className={styles['main-button']}
-              onClick={handleInjectClick}
-              disabled={injecting || !token || !siteId}
-            >
-              {injecting ? 'Refreshing…' : 'Re-register Theme Switcher Script'}
-            </button>
+            <div className={styles.controls}>
+              <button
+                className={styles.buttonPrimary}
+                onClick={handleInjectClick}
+                disabled={injecting || !token || !siteId}
+              >
+                {injecting ? 'Refreshing…' : 'Re-register Theme Switcher Script'}
+              </button>
+            </div>
           </>
         )}
 
         {autoMessage && !message && (
-          <p
-            style={{
-              marginTop: '1rem',
-              color: 'green',
-              fontWeight: 'bold',
-            }}
-            role="status"
-          >
+          <p className={styles.autoMessage} role="status">
             {autoMessage}
           </p>
         )}
 
         {message && (
-          <p
-            style={{
-              marginTop: '1rem',
-              color: message.startsWith('✅') ? 'green' : 'red',
-              fontWeight: 'bold',
-            }}
-            role="alert"
-          >
+          <p className={message.startsWith('✅') ? styles.autoMessage : styles.errorMessage} role="alert">
             {message}
           </p>
         )}
 
         {debugMode && (
-          <p style={{ marginTop: '2rem', fontSize: '0.9rem', color: '#666' }}>
+          <div className={styles.testBadge}>
             ⚙️ Debug mode active (from query string)
-          </p>
+          </div>
         )}
 
-        <Footer />
+        <p className={styles.footer}>© 2025 Crystal The Developer Inc. All rights reserved.</p>
       </main>
     </div>
   );

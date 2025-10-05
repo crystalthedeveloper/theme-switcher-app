@@ -1,0 +1,33 @@
+.spinner {
+  margin: 2rem auto 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 24px;
+  background: linear-gradient(145deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0));
+  position: relative;
+  box-shadow: inset -4px -6px 12px rgba(0, 0, 0, 0.08), inset 6px 10px 12px rgba(255, 255, 255, 0.9);
+  animation: float 3.4s ease-in-out infinite;
+}
+
+.spinner::after {
+  content: '';
+  position: absolute;
+  inset: 18px;
+  border-radius: 16px;
+  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0));
+  opacity: 0.7;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0) rotate3d(1, 1, 0, 0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate3d(1, 1, 0, 6deg);
+  }
+}
+
+.tryAgain {
+  margin-top: 2.25rem;
+}

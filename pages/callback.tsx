@@ -1,9 +1,11 @@
 // pages/callback.tsx
-import { useEffect, useState, useRef } from 'react';
+import Head from 'next/head';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import en from '../locales/en';
 import Logo from '../components/Logo';
-import Footer from '../components/Footer';
+import shellStyles from './css/app-shell.module.css';
+import styles from './css/callback.module.css';
 
 export default function Callback() {
   const router = useRouter();
@@ -158,41 +160,58 @@ export default function Callback() {
 
   const t = en;
 
+  const statusVariant = useMemo(() => {
+    if (!loading && error) return 'warning';
+    if (!loading && !error) return 'success';
+    if (loading && /finishing/i.test(statusMessage)) return 'success';
+    return undefined;
+  }, [loading, error, statusMessage]);
+
   return (
-    <main style={{ textAlign: 'center', marginTop: '5rem', padding: '0 1.5rem' }} aria-busy={loading}>
-      <Logo />
-      <h1>{t.connecting || 'Connecting to Webflow...'}</h1>
-      <p aria-live="polite">
-        {loading
-          ? statusMessage || t.exchanging || 'Exchanging code...'
-          : error || t.tryAgainFallback || 'Something went wrong.'}
-      </p>
-
-      {error && (
-        <p style={{ color: 'red', marginTop: '1rem' }} aria-live="assertive">
-          {errorDetail || error}
-        </p>
-      )}
-
-      {loading && <div style={{ fontSize: '2rem', marginTop: '1.5rem' }}>⏳</div>}
-
-      {!loading && (
-        <div style={{ marginTop: '2rem' }}>
-          <a href="/" aria-label="Try again from the start">
-            <button type="button" style={{ padding: '10px 20px', fontSize: '1rem', cursor: 'pointer' }}>
-              ← {t.tryAgain || 'Try Again'}
-            </button>
-          </a>
+    <div className={shellStyles.shell}>
+      <Head>
+        <title>{t.connecting || 'Connecting to Webflow...'}</title>
+        <meta name="robots" content="noindex" />
+      </Head>
+      <main className={shellStyles.card} aria-busy={loading}>
+        <div className={shellStyles.logoWrap} aria-hidden="true">
+          <Logo />
         </div>
-      )}
 
-      {testMode && (
-        <p style={{ marginTop: '2rem', fontSize: '0.9rem', color: '#999' }}>
-          {t.testModeNotice || 'Test mode is enabled. Debug messages are shown in the console.'}
+        <h1 className={shellStyles.heading}>{t.connecting || 'Connecting to Webflow...'}</h1>
+
+        <p className={shellStyles.statusText} aria-live="polite" data-variant={statusVariant}>
+          {loading
+            ? statusMessage || t.exchanging || 'Exchanging code...'
+            : error || t.tryAgainFallback || 'Something went wrong.'}
         </p>
-      )}
 
-      <Footer />
-    </main>
+        {!loading && errorDetail && (
+          <p className={shellStyles.errorMessage} role="alert">
+            {errorDetail}
+          </p>
+        )}
+
+        {loading ? (
+          <div className={styles.spinner} aria-hidden="true" />
+        ) : (
+          <div className={styles.tryAgain}>
+            <a href="/" aria-label="Try again from the start">
+              <button type="button" className={shellStyles.buttonPrimary}>
+                ← {t.tryAgain || 'Try Again'}
+              </button>
+            </a>
+          </div>
+        )}
+
+        {testMode && (
+          <div className={shellStyles.testBadge}>
+            🧪 {t.testModeNotice || 'Test mode is enabled. Debug messages are shown in the console.'}
+          </div>
+        )}
+
+        <p className={shellStyles.footer}>© 2025 Crystal The Developer Inc. All rights reserved.</p>
+      </main>
+    </div>
   );
 }
