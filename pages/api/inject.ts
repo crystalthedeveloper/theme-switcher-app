@@ -1,14 +1,22 @@
 // /pages/api/inject.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const THEME_SWITCHER_MARKER = 'data-theme-switcher="true"';
+const MARKER_START = '<!-- THEME-SWITCHER-START -->';
+const MARKER_END = '<!-- THEME-SWITCHER-END -->';
+const SCRIPT_BLOCK = [
+  MARKER_START,
+  '<script>',
+  '  // Theme Switcher loader (inserted by app)',
+  '  try {',
+  "    const theme = localStorage.getItem('theme');",
+  '    if (theme) document.documentElement.dataset.theme = theme;',
+  '  } catch(e) {}',
+  '</script>',
+  MARKER_END,
+].join('\n');
+
 const API_BASE_PATHS = ['sites', 'dev-sites'] as const;
 type ApiBasePath = typeof API_BASE_PATHS[number];
-
-type WebflowDomainResponse = {
-  domains?: Array<{ name?: string; value?: string; domain?: string }>;
-  items?: Array<{ name?: string; value?: string; domain?: string }>;
-};
 
 type CustomCodeSettingsResponse = {
   code?: {
@@ -126,193 +134,20 @@ const loadCurrentCustomCode = async (
   }
 };
 
-const fetchCustomDomains = async (
-  siteId: string,
-  token: string,
-  preferredBasePath: ApiBasePath,
-): Promise<string[]> => {
-  try {
-    const result = await tryFetchWithFallback(siteId, token, 'domains', { method: 'GET' }, preferredBasePath);
-
-    if (!result) return [];
-
-    if (!result.response.ok) {
-      console.warn('⚠️ Unable to load Webflow domains', result.response.status, result.data);
-      return [];
-    }
-
-    const payload = (result.data as WebflowDomainResponse | null) || null;
-    const collection = payload?.domains || payload?.items;
-
-    if (!Array.isArray(collection)) return [];
-
-    return collection
-      .map((entry) => (entry?.domain || entry?.name || entry?.value || '').trim().toLowerCase())
-      .filter(Boolean);
-  } catch (err) {
-    console.warn('⚠️ Domain fetch failed', err);
-    return [];
-  }
-};
-
-const removeExistingThemeScript = (footer: string): string => {
-  if (!footer) return '';
-  const pattern = /<script[^>]*data-theme-switcher=["']true["'][^>]*>[\s\S]*?<\/script>/gi;
-  const cleaned = footer.replace(pattern, '');
-  return cleaned.trim();
-};
-
-const buildThemeSwitcherInlineScript = (customDomains: string[]): string => {
-  const domainsJson = JSON.stringify(customDomains);
-  return `
-<script ${THEME_SWITCHER_MARKER}>
-(function () {
-  'use strict';
-
-  const hostname = (window.location.hostname || '').toLowerCase();
-  const allowedSuffixes = ['.webflow.io', '.canvas.webflow.com'];
-  const allowedDomains = new Set(${domainsJson});
-  const isSuffixMatch = allowedSuffixes.some((suffix) => hostname === suffix.replace(/^\./, '') || hostname.endsWith(suffix));
-  const isCustomMatch = allowedDomains.has(hostname);
-
-  if (!isSuffixMatch && !isCustomMatch) {
-    console.warn('[Theme Switcher] Skipping init on unauthorized domain:', hostname);
-    return;
+const upsertThemeSwitcherScript = (head: string): string => {
+  const existingHead = head || '';
+  const hasMarkers = existingHead.includes(MARKER_START) && existingHead.includes(MARKER_END);
+  if (hasMarkers) {
+    const markerPattern = /<!-- THEME-SWITCHER-START -->[\s\S]*?<!-- THEME-SWITCHER-END -->/g;
+    return existingHead.replace(markerPattern, SCRIPT_BLOCK);
   }
 
-  const safeStorage = () => {
-    try {
-      const storage = window.localStorage;
-      const probeKey = '__theme_switcher_probe__';
-      storage.setItem(probeKey, '1');
-      storage.removeItem(probeKey);
-      return storage;
-    } catch (err) {
-      console.warn('[Theme Switcher] localStorage unavailable', err);
-      return null;
-    }
-  };
-
-  const run = () => {
-    const root = document.documentElement;
-    if (!root) {
-      console.warn('[Theme Switcher] Missing documentElement; aborting init.');
-      return;
-    }
-
-    const storage = safeStorage();
-    const storageKey = 'theme-switcher-mode';
-    const systemMedia = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
-    const getSystemTheme = () => (systemMedia && systemMedia.matches ? 'dark' : 'light');
-
-    const defaultTheme = (root.getAttribute('data-theme-default') || root.getAttribute('data-theme') || 'light').trim() || 'light';
-
-    const resolveTheme = (mode) => {
-      if (mode === 'auto') return getSystemTheme();
-      if (!mode || mode === 'default') return defaultTheme;
-      return mode;
-    };
-
-    let currentMode = (storage && storage.getItem(storageKey)) || defaultTheme;
-
-    const applyTheme = (mode, persist = true) => {
-      currentMode = mode;
-      const theme = resolveTheme(mode);
-      root.setAttribute('data-theme', theme);
-      if (document.body) {
-        document.body.setAttribute('data-theme', theme);
-      }
-      if (persist && storage) {
-        storage.setItem(storageKey, mode);
-      }
-    };
-
-    applyTheme(currentMode, false);
-
-    const toggles = Array.prototype.slice.call(document.querySelectorAll('[data-switcher], [data-toggle], [data-theme-target]'));
-
-    const getTargetMode = (el) => {
-      const attr = (el.getAttribute('data-theme-target') || el.getAttribute('data-theme') || el.getAttribute('data-toggle') || el.getAttribute('data-switcher') || '').trim().toLowerCase();
-      if (!attr) return null;
-      if (attr === 'toggle') {
-        const activeTheme = root.getAttribute('data-theme') || defaultTheme;
-        return activeTheme === 'dark' ? 'light' : 'dark';
-      }
-      return attr;
-    };
-
-    const syncToggleState = () => {
-      toggles.forEach((el) => {
-        const attr = (el.getAttribute('data-theme-target') || el.getAttribute('data-theme') || el.getAttribute('data-toggle') || el.getAttribute('data-switcher') || '').trim().toLowerCase();
-        const theme = resolveTheme(currentMode);
-        const isActive = attr === currentMode || (attr === theme && currentMode !== 'auto');
-        if (isActive) {
-          el.setAttribute('aria-pressed', 'true');
-          if (typeof el.classList !== 'undefined') {
-            el.classList.add('theme-switcher-active');
-          }
-        } else {
-          el.setAttribute('aria-pressed', 'false');
-          if (typeof el.classList !== 'undefined') {
-            el.classList.remove('theme-switcher-active');
-          }
-        }
-      });
-    };
-
-    toggles.forEach((el) => {
-      el.addEventListener('click', (event) => {
-        try {
-          event.preventDefault();
-        } catch (err) {
-          // Ignore if preventDefault fails
-        }
-
-        const targetMode = getTargetMode(el);
-        if (!targetMode) {
-          console.warn('[Theme Switcher] Toggle missing target mode');
-          return;
-        }
-
-        if (targetMode === 'auto') {
-          applyTheme('auto');
-        } else if (targetMode === 'light' || targetMode === 'dark') {
-          applyTheme(targetMode);
-        } else {
-          applyTheme(defaultTheme);
-        }
-
-        syncToggleState();
-      });
-    });
-
-    if (systemMedia && typeof systemMedia.addEventListener === 'function') {
-      systemMedia.addEventListener('change', () => {
-        if (currentMode === 'auto') {
-          applyTheme('auto', false);
-          syncToggleState();
-        }
-      });
-    } else if (systemMedia && typeof systemMedia.addListener === 'function') {
-      systemMedia.addListener(() => {
-        if (currentMode === 'auto') {
-          applyTheme('auto', false);
-          syncToggleState();
-        }
-      });
-    }
-
-    syncToggleState();
-  };
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', run, { once: true });
-  } else {
-    run();
+  const trimmedHead = existingHead.replace(/\s*$/, '');
+  if (!trimmedHead) {
+    return SCRIPT_BLOCK;
   }
-})();
-</script>
-`.trim();
+
+  return `${trimmedHead}\n\n${SCRIPT_BLOCK}`;
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -330,18 +165,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return sendError(
         res,
         404,
-        'Failed to load Existing Custom Code settings',
+        'Failed to load existing Custom Code settings',
         customCodeResult.error || 'Custom Code endpoint unavailable',
       );
     }
 
     const { code: customCode, basePath } = customCodeResult;
-    const customDomains = await fetchCustomDomains(siteId, token, basePath);
-
-    const scriptTag = buildThemeSwitcherInlineScript(customDomains);
-    const existingFooter = customCode.footer || '';
-    const sanitizedFooter = removeExistingThemeScript(existingFooter);
-    const nextFooter = [sanitizedFooter, scriptTag].filter(Boolean).join('\n\n').trim();
+    const existingHead = customCode.head || '';
+    const nextHead = upsertThemeSwitcherScript(existingHead);
 
     const apiRes = await fetch(buildApiUrl(basePath, siteId, 'custom-code/settings'), {
       method: 'PATCH',
@@ -352,14 +183,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
       body: JSON.stringify({
         code: {
-          head: customCode.head || '',
-          footer: nextFooter,
+          head: nextHead,
+          footer: customCode.footer || '',
         },
       }),
     });
 
-    const data = await apiRes.json();
-    if (!apiRes.ok) return sendError(res, apiRes.status, 'Failed to inject footer script', data);
+    const data = await safeJson(apiRes);
+    if (!apiRes.ok) return sendError(res, apiRes.status, 'Failed to update head custom code', data);
 
     return res.status(200).json({ success: true, data });
   } catch (err: any) {

@@ -12,9 +12,17 @@ export default function Installed() {
   const [message, setMessage] = useState('');
   const [token, setToken] = useState('');
   const [siteId, setSiteId] = useState('');
+  const [selectedSiteId, setSelectedSiteId] = useState('');
   const [loaded, setLoaded] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
   const [autoMessage, setAutoMessage] = useState('');
+  const [sites, setSites] = useState<Array<{ id: string; name: string }>>([]);
+  const [workspaceGroups, setWorkspaceGroups] = useState<
+    Array<{ id: string; name: string; sites: Array<{ id: string; name: string }> }>
+  >([]);
+  const [ungroupedSites, setUngroupedSites] = useState<Array<{ id: string; name: string }>>([]);
+  const [sitesLoading, setSitesLoading] = useState(false);
+  const [sitesError, setSitesError] = useState('');
 
   useEffect(() => {
     const storage = window.sessionStorage;
@@ -25,6 +33,7 @@ export default function Installed() {
     if (queryToken && querySiteId) {
       setToken(queryToken);
       setSiteId(querySiteId);
+      setSelectedSiteId(querySiteId);
       setDebugMode(true);
     } else {
       const t = storage?.getItem('webflow_token') || '';
@@ -33,6 +42,7 @@ export default function Installed() {
       if (t && s) {
         setToken(t);
         setSiteId(s);
+        setSelectedSiteId(s);
       }
       const registrationStatus = storage?.getItem('webflow_last_registration');
       if (registrationStatus === 'success') {
@@ -44,9 +54,65 @@ export default function Installed() {
     setLoaded(true);
   }, [router.query]);
 
+  useEffect(() => {
+    if (!token) return;
+
+    const loadSites = async () => {
+      try {
+        setSitesLoading(true);
+        setSitesError('');
+        const response = await fetch('/api/sites', {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data?.success) {
+          throw new Error(data?.message || 'Unable to load sites');
+        }
+
+        const list = Array.isArray(data.sites) ? data.sites : [];
+        const workspaceList = Array.isArray(data.workspaces) ? data.workspaces : [];
+        const ungroupedList = Array.isArray(data.ungrouped) ? data.ungrouped : [];
+
+        setSites(list.map((item: any) => ({ id: item.id, name: item.name })));
+        setWorkspaceGroups(
+          workspaceList.map((workspace: any) => ({
+            id: workspace.id,
+            name: workspace.name,
+            sites: Array.isArray(workspace.sites)
+              ? workspace.sites.map((site: any) => ({ id: site.id, name: site.name }))
+              : [],
+          })),
+        );
+        setUngroupedSites(ungroupedList.map((item: any) => ({ id: item.id, name: item.name })));
+
+        const flattenedPreferredList = (
+          workspaceList.flatMap((workspace: any) => workspace.sites || []).concat(ungroupedList)
+        );
+
+        if (!flattenedPreferredList.some((item: any) => item.id === selectedSiteId) && flattenedPreferredList.length > 0) {
+          const preferred = flattenedPreferredList.find((item: any) => item.id === siteId) || flattenedPreferredList[0];
+          setSelectedSiteId(preferred.id);
+          window.sessionStorage?.setItem('webflow_site_id', preferred.id);
+        }
+      } catch (err: any) {
+        console.warn('⚠️ Failed to fetch sites:', err);
+        setSitesError(err?.message || 'Unable to load accessible sites');
+      } finally {
+        setSitesLoading(false);
+      }
+    };
+
+    loadSites();
+  }, [token, siteId]);
+
   const handleInjectClick = async () => {
-    if (!token || !siteId) {
-      console.warn('❌ Cannot inject — missing token or siteId:', { token, siteId });
+    const targetSiteId = selectedSiteId || siteId;
+    if (!token || !targetSiteId) {
+      console.warn('❌ Cannot inject — missing token or siteId:', { token, targetSiteId });
       setMessage('❌ Missing token or site ID.');
       return;
     }
@@ -62,7 +128,7 @@ export default function Installed() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ siteId }),
+        body: JSON.stringify({ siteId: targetSiteId }),
       });
 
       const data = await res.json();
@@ -111,19 +177,54 @@ export default function Installed() {
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
               />
-              <input
-                type="text"
-                placeholder="Site ID"
-                value={siteId}
-                onChange={(e) => setSiteId(e.target.value)}
-              />
+              <select
+                value={selectedSiteId}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setSelectedSiteId(next);
+                  setSiteId(next);
+                  window.sessionStorage?.setItem('webflow_site_id', next);
+                }}
+              >
+                <option value="">Select a Webflow site…</option>
+                {workspaceGroups.map((workspace) => (
+                  <optgroup key={workspace.id} label={workspace.name}>
+                    {workspace.sites.map((site) => (
+                      <option key={site.id} value={site.id}>
+                        {site.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+                {workspaceGroups.length > 0 && ungroupedSites.length > 0 ? (
+                  <optgroup label="Other Sites">
+                    {ungroupedSites.map((site) => (
+                      <option key={site.id} value={site.id}>
+                        {site.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                ) : (
+                  ungroupedSites.map((site) => (
+                    <option key={site.id} value={site.id}>
+                      {site.name}
+                    </option>
+                  ))
+                )}
+              </select>
+              {sitesLoading && <p style={{ color: '#555', fontSize: '0.9rem' }}>Loading sites…</p>}
+              {sitesError && (
+                <p style={{ color: '#b00000', fontSize: '0.9rem' }} role="alert">
+                  {sitesError}
+                </p>
+              )}
             </div>
 
             <div className={styles.controls}>
               <button
                 className={styles.buttonPrimary}
                 onClick={handleInjectClick}
-                disabled={injecting || !token || !siteId}
+                disabled={injecting || !token || !selectedSiteId}
               >
                 {injecting ? 'Refreshing…' : 'Re-register Theme Switcher Script'}
               </button>
