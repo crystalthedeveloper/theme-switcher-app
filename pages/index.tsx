@@ -90,7 +90,7 @@ export default function Home() {
           {isAuthorized && <span className={styles.badgeInstalled}>Installed</span>}
         </h1>
         <p className={styles.subheading}>
-          Let your visitors switch between dark and light mode — no custom code edits required.
+          Let your visitors switch between dark and light mode, no custom code edits required.
         </p>
 
         {!loaded ? (

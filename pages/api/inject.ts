@@ -2,6 +2,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 const THEME_SWITCHER_MARKER = 'data-theme-switcher="true"';
+const API_BASE_PATHS = ['sites', 'dev-sites'] as const;
+type ApiBasePath = typeof API_BASE_PATHS[number];
 
 type WebflowDomainResponse = {
   domains?: Array<{ name?: string; value?: string; domain?: string }>;
@@ -51,22 +53,95 @@ const sendError = (
   return res.status(status).json({ success: false, message, detail });
 };
 
-const fetchCustomDomains = async (siteId: string, token: string): Promise<string[]> => {
+const buildApiUrl = (basePath: ApiBasePath, siteId: string, endpoint: string) =>
+  `https://api.webflow.com/v2/${basePath}/${siteId}/${endpoint}`.replace(/\/+$/, '');
+
+const safeJson = async (response: Response) => {
   try {
-    const response = await fetch(`https://api.webflow.com/v2/sites/${siteId}/domains`, {
-      method: 'GET',
+    return await response.json();
+  } catch (err) {
+    return null;
+  }
+};
+
+const tryFetchWithFallback = async (
+  siteId: string,
+  token: string,
+  endpoint: string,
+  init: RequestInit,
+  preferredBasePath?: ApiBasePath,
+) => {
+  const order: ApiBasePath[] = preferredBasePath
+    ? [preferredBasePath, ...API_BASE_PATHS.filter((path) => path !== preferredBasePath)]
+    : [...API_BASE_PATHS];
+
+  let lastResult: { response: Response; data: any; basePath: ApiBasePath } | null = null;
+
+  for (const basePath of order) {
+    const response = await fetch(buildApiUrl(basePath, siteId, endpoint), {
+      ...init,
       headers: {
         Authorization: `Bearer ${token}`,
         'accept-version': '1.0.0',
+        ...(init.headers || {}),
       },
     });
 
-    if (!response.ok) {
-      console.warn('⚠️ Unable to load Webflow domains', response.status, response.statusText);
+    const data = await safeJson(response);
+    lastResult = { response, data, basePath };
+
+    if (response.status === 404 && basePath !== order[order.length - 1]) {
+      console.warn(`⚠️ ${endpoint} not found on ${basePath}; trying alternate path.`);
+      continue;
+    }
+
+    return lastResult;
+  }
+
+  return lastResult;
+};
+
+const loadCurrentCustomCode = async (
+  siteId: string,
+  token: string,
+) => {
+  try {
+    const result = await tryFetchWithFallback(siteId, token, 'custom-code/settings', { method: 'GET' });
+
+    if (!result) {
+      console.warn('⚠️ Custom code fetch returned no result');
+      return { code: { head: '', footer: '' }, basePath: API_BASE_PATHS[0] };
+    }
+
+    if (!result.response.ok) {
+      console.warn('⚠️ Failed to load custom code settings', result.response.status, result.data);
+      return { code: undefined, basePath: result.basePath, error: result.data };
+    }
+
+    const payload = (result.data as CustomCodeSettingsResponse | null) || null;
+    return { code: payload?.code || { head: '', footer: '' }, basePath: result.basePath };
+  } catch (err) {
+    console.warn('⚠️ Custom code fetch errored', err);
+    return { code: { head: '', footer: '' }, basePath: API_BASE_PATHS[0], error: err };
+  }
+};
+
+const fetchCustomDomains = async (
+  siteId: string,
+  token: string,
+  preferredBasePath: ApiBasePath,
+): Promise<string[]> => {
+  try {
+    const result = await tryFetchWithFallback(siteId, token, 'domains', { method: 'GET' }, preferredBasePath);
+
+    if (!result) return [];
+
+    if (!result.response.ok) {
+      console.warn('⚠️ Unable to load Webflow domains', result.response.status, result.data);
       return [];
     }
 
-    const payload = (await response.json()) as WebflowDomainResponse | null;
+    const payload = (result.data as WebflowDomainResponse | null) || null;
     const collection = payload?.domains || payload?.items;
 
     if (!Array.isArray(collection)) return [];
@@ -77,32 +152,6 @@ const fetchCustomDomains = async (siteId: string, token: string): Promise<string
   } catch (err) {
     console.warn('⚠️ Domain fetch failed', err);
     return [];
-  }
-};
-
-const loadCurrentCustomCode = async (
-  siteId: string,
-  token: string,
-): Promise<CustomCodeSettingsResponse['code']> => {
-  try {
-    const response = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom-code/settings`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'accept-version': '1.0.0',
-      },
-    });
-
-    if (!response.ok) {
-      console.warn('⚠️ Failed to load existing custom code settings', response.status, response.statusText);
-      return undefined;
-    }
-
-    const payload = (await response.json()) as CustomCodeSettingsResponse | null;
-    return payload?.code || { head: '', footer: '' };
-  } catch (err) {
-    console.warn('⚠️ Custom code fetch errored', err);
-    return { head: '', footer: '' };
   }
 };
 
@@ -275,17 +324,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!siteId || !token) return sendError(res, 400, 'Missing siteId or token');
 
   try {
-    const [customCode, customDomains] = await Promise.all([
-      loadCurrentCustomCode(siteId, token),
-      fetchCustomDomains(siteId, token),
-    ]);
+    const customCodeResult = await loadCurrentCustomCode(siteId, token);
+
+    if (!customCodeResult.code) {
+      return sendError(
+        res,
+        404,
+        'Failed to load Existing Custom Code settings',
+        customCodeResult.error || 'Custom Code endpoint unavailable',
+      );
+    }
+
+    const { code: customCode, basePath } = customCodeResult;
+    const customDomains = await fetchCustomDomains(siteId, token, basePath);
 
     const scriptTag = buildThemeSwitcherInlineScript(customDomains);
-    const existingFooter = customCode?.footer || '';
+    const existingFooter = customCode.footer || '';
     const sanitizedFooter = removeExistingThemeScript(existingFooter);
     const nextFooter = [sanitizedFooter, scriptTag].filter(Boolean).join('\n\n').trim();
 
-    const apiRes = await fetch(`https://api.webflow.com/v2/sites/${siteId}/custom-code/settings`, {
+    const apiRes = await fetch(buildApiUrl(basePath, siteId, 'custom-code/settings'), {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -294,7 +352,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
       body: JSON.stringify({
         code: {
-          head: customCode?.head || '',
+          head: customCode.head || '',
           footer: nextFooter,
         },
       }),
