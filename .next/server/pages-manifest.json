@@ -1,13 +1,6 @@
 {
-  "/api/exchange-token": "pages/api/exchange-token.js",
-  "/api/sites": "pages/api/sites.js",
-  "/api/inject": "pages/api/inject.js",
-  "/": "pages/index.html",
-  "/installed": "pages/installed.html",
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
-  "/success": "pages/success.html",
-  "/callback": "pages/callback.html",
   "/_document": "pages/_document.js",
-  "/404": "pages/404.html"
+  "/": "pages/index.js"
 }
