@@ -6,63 +6,51 @@ const MARKER_END = '<!-- THEME-SWITCHER-END -->';
 const SCRIPT_BLOCK = [
   MARKER_START,
   '<script>',
-  '  // Theme Switcher loader (inserted by app)',
   '  try {',
-  "    const theme = localStorage.getItem('theme');",
-  '    if (theme) document.documentElement.dataset.theme = theme;',
-  '  } catch(e) {}',
+  "    const t = localStorage.getItem('theme');",
+  '    if (t) document.documentElement.dataset.theme = t;',
+  "    window.__themeSwitcherInstalled = true;",
+  "  } catch(e) { console.warn('theme loader', e); }",
   '</script>',
   MARKER_END,
 ].join('\n');
 
-const API_BASE_PATHS = ['sites', 'dev-sites'] as const;
-type ApiBasePath = typeof API_BASE_PATHS[number];
+const SITE_PATHS = ['sites', 'dev-sites'] as const;
+const ACCEPT_VERSION = '1.0.0';
+const HEAD_SIZE_LIMIT_BYTES = 200 * 1024;
+const RETRY_DELAYS = [0, 300, 1000, 3000];
 
-type CustomCodeSettingsResponse = {
-  code?: {
-    head?: string;
-    footer?: string;
-  };
-};
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-const extractDetail = (extra: unknown): string | undefined => {
-  if (!extra) return undefined;
-  if (typeof extra === 'string') return extra;
-  if (typeof extra === 'number' || typeof extra === 'boolean') return String(extra);
-  if (extra instanceof Error) return extra.message;
-  if (typeof extra === 'object') {
-    const record = extra as Record<string, unknown>;
-    const maybeMessage = record.message;
-    if (typeof maybeMessage === 'string') return maybeMessage;
-    const items = record.items;
-    if (Array.isArray(items) && items.length > 0) {
-      const first = items[0] as Record<string, unknown> | undefined;
-      const firstItemMessage = first?.message;
-      if (typeof firstItemMessage === 'string') return firstItemMessage;
-    }
+const mergeHead = (currentHead: string): string => {
+  const existingHead = currentHead || '';
+  const pattern = new RegExp(`${escapeRegExp(MARKER_START)}[\\s\\S]*?${escapeRegExp(MARKER_END)}`, 'g');
+
+  if (pattern.test(existingHead)) {
+    return existingHead.replace(pattern, SCRIPT_BLOCK);
   }
-  try {
-    return JSON.stringify(extra);
-  } catch (err) {
-    console.warn('⚠️ Unable to serialize error detail', err);
-    return undefined;
+
+  if (!existingHead.trim()) {
+    return SCRIPT_BLOCK;
   }
+
+  return `${existingHead.replace(/\s*$/, '')}\n\n${SCRIPT_BLOCK}`;
 };
 
-const sendError = (
-  res: NextApiResponse,
-  status: number,
-  message: string,
-  extra?: unknown,
-) => {
-  const detail = extractDetail(extra);
-  console.warn(`⚠️ ${status} – ${message}${detail ? ` (${detail})` : ''}`);
-  if (extra && typeof extra !== 'string') console.error(extra);
-  return res.status(status).json({ success: false, message, detail });
+const truncateToken = (token: string) => {
+  if (!token) return '';
+  if (token.length <= 12) return token;
+  return `${token.slice(0, 6)}...${token.slice(-6)}`;
 };
 
-const buildApiUrl = (basePath: ApiBasePath, siteId: string, endpoint: string) =>
-  `https://api.webflow.com/v2/${basePath}/${siteId}/${endpoint}`.replace(/\/+$/, '');
+const maskHeaders = (headers: Record<string, string>, token: string) => ({
+  ...headers,
+  Authorization: `Bearer ${truncateToken(token)}`,
+});
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const shouldRetry = (status: number) => status === 429 || status >= 500;
 
 const safeJson = async (response: Response) => {
   try {
@@ -72,128 +60,187 @@ const safeJson = async (response: Response) => {
   }
 };
 
-const tryFetchWithFallback = async (
+const logExchange = async (
   siteId: string,
   token: string,
-  endpoint: string,
-  init: RequestInit,
-  preferredBasePath?: ApiBasePath,
+  url: string,
+  method: string,
+  headers: Record<string, string>,
+  bodySize: number,
+  response: Response,
+  responseBody: string,
+  attempt: number,
 ) => {
-  const order: ApiBasePath[] = preferredBasePath
-    ? [preferredBasePath, ...API_BASE_PATHS.filter((path) => path !== preferredBasePath)]
-    : [...API_BASE_PATHS];
+  const headerEntries = Array.from(response.headers.entries());
+  const requestId = response.headers.get('x-request-id') || response.headers.get('x-amzn-trace-id');
 
-  let lastResult: { response: Response; data: any; basePath: ApiBasePath } | null = null;
+  const entry: Record<string, unknown> = {
+    timestamp: new Date().toISOString(),
+    site_id: siteId,
+    request_url: url,
+    method,
+    attempt,
+    request_headers: maskHeaders(headers, token),
+    request_body_size_bytes: bodySize,
+    response_status: response.status,
+    response_headers: headerEntries,
+    response_body: responseBody,
+    token_truncated: truncateToken(token),
+  };
 
-  for (const basePath of order) {
-    const response = await fetch(buildApiUrl(basePath, siteId, endpoint), {
-      ...init,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'accept-version': '1.0.0',
-        ...(init.headers || {}),
-      },
-    });
+  if (requestId) entry.request_id = requestId;
 
-    const data = await safeJson(response);
-    lastResult = { response, data, basePath };
+  console.log(JSON.stringify(entry));
+};
 
-    if (response.status === 404 && basePath !== order[order.length - 1]) {
-      console.warn(`⚠️ ${endpoint} not found on ${basePath}; trying alternate path.`);
+const fetchWithRetries = async (
+  siteId: string,
+  token: string,
+  url: string,
+  init: RequestInit,
+) => {
+  let lastResponse: Response | null = null;
+  let lastBody = '';
+  for (let attempt = 0; attempt < RETRY_DELAYS.length; attempt += 1) {
+    if (attempt > 0) await wait(RETRY_DELAYS[attempt]);
+
+    const headers = { ...(init.headers as Record<string, string>) };
+    const bodySize = init.body ? Buffer.byteLength(String(init.body), 'utf8') : 0;
+    try {
+      const response = await fetch(url, init);
+      const text = await response.text();
+      await logExchange(siteId, token, url, init.method || 'GET', headers, bodySize, response, text, attempt + 1);
+
+      lastResponse = response;
+      lastBody = text;
+
+      if (!shouldRetry(response.status)) {
+        return { response, text };
+      }
+    } catch (err: any) {
+      console.warn('⚠️ Fetch error', { url, attempt: attempt + 1, message: err?.message || err });
+      if (attempt === RETRY_DELAYS.length - 1) throw err;
+    }
+  }
+
+  if (!lastResponse) {
+    throw new Error('Request failed without response');
+  }
+
+  return { response: lastResponse, text: lastBody };
+};
+
+const fetchCustomCode = async (siteId: string, token: string) => {
+  for (const path of SITE_PATHS) {
+    const url = `https://api.webflow.com/${path}/${siteId}/custom-code/settings`;
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+      'Accept-Version': ACCEPT_VERSION,
+    };
+
+    const { response, text } = await fetchWithRetries(siteId, token, url, { method: 'GET', headers });
+
+    if (response.status === 404) {
       continue;
     }
 
-    return lastResult;
+    if (!response.ok) {
+      return { error: { status: response.status, body: text, path } };
+    }
+
+    const payload = (await safeJson(
+      new Response(text, { headers: { 'Content-Type': 'application/json' } }),
+    )) as { head?: string; footer?: string } | null;
+    return { code: payload || {}, basePath: path };
   }
 
-  return lastResult;
+  return { error: { status: 404, body: 'RouteNotFound: Custom Code API not enabled for this site/workspace' } };
 };
 
-const loadCurrentCustomCode = async (
-  siteId: string,
-  token: string,
+const patchHead = async (siteId: string, token: string, basePath: string, head: string) => {
+  const url = `https://api.webflow.com/${basePath}/${siteId}/custom-code/settings`;
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    'Accept-Version': ACCEPT_VERSION,
+    'Content-Type': 'application/json',
+  };
+
+  const body = JSON.stringify({ head });
+  const { response, text } = await fetchWithRetries(siteId, token, url, {
+    method: 'PATCH',
+    headers,
+    body,
+  });
+
+  return { response, text };
+};
+
+const sendError = (
+  res: NextApiResponse,
+  status: number,
+  message: string,
+  detail?: unknown,
 ) => {
-  try {
-    const result = await tryFetchWithFallback(siteId, token, 'custom-code/settings', { method: 'GET' });
-
-    if (!result) {
-      console.warn('⚠️ Custom code fetch returned no result');
-      return { code: { head: '', footer: '' }, basePath: API_BASE_PATHS[0] };
-    }
-
-    if (!result.response.ok) {
-      console.warn('⚠️ Failed to load custom code settings', result.response.status, result.data);
-      return { code: undefined, basePath: result.basePath, error: result.data };
-    }
-
-    const payload = (result.data as CustomCodeSettingsResponse | null) || null;
-    return { code: payload?.code || { head: '', footer: '' }, basePath: result.basePath };
-  } catch (err) {
-    console.warn('⚠️ Custom code fetch errored', err);
-    return { code: { head: '', footer: '' }, basePath: API_BASE_PATHS[0], error: err };
-  }
-};
-
-const upsertThemeSwitcherScript = (head: string): string => {
-  const existingHead = head || '';
-  const hasMarkers = existingHead.includes(MARKER_START) && existingHead.includes(MARKER_END);
-  if (hasMarkers) {
-    const markerPattern = /<!-- THEME-SWITCHER-START -->[\s\S]*?<!-- THEME-SWITCHER-END -->/g;
-    return existingHead.replace(markerPattern, SCRIPT_BLOCK);
-  }
-
-  const trimmedHead = existingHead.replace(/\s*$/, '');
-  if (!trimmedHead) {
-    return SCRIPT_BLOCK;
-  }
-
-  return `${trimmedHead}\n\n${SCRIPT_BLOCK}`;
+  return res.status(status).json({ success: false, message, detail, status });
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') return sendError(res, 405, 'Method Not Allowed');
+  if (req.method !== 'POST') {
+    return sendError(res, 405, 'Method Not Allowed');
+  }
 
-  const { siteId } = req.body as { siteId?: string };
-  const token = req.headers.authorization?.replace('Bearer ', '');
+  const siteId = req.body?.siteId as string | undefined;
+  const isTest = req.query.test === 'true' || req.body?.test === true;
+  const token = req.headers.authorization?.replace('Bearer ', '') || process.env.SERVICE_TOKEN || '';
 
-  if (!siteId || !token) return sendError(res, 400, 'Missing siteId or token');
+  if (!siteId) return sendError(res, 400, 'Missing siteId');
+  if (!token) return sendError(res, 401, 'Missing access token');
 
   try {
-    const customCodeResult = await loadCurrentCustomCode(siteId, token);
+    const customCodeResult = await fetchCustomCode(siteId, token);
 
-    if (!customCodeResult.code) {
+    if ('error' in customCodeResult) {
+      const { status, body } = customCodeResult.error;
+      if (status === 404) {
+        return sendError(res, 404, 'RouteNotFound: Custom Code API not enabled for this site/workspace');
+      }
+      return sendError(res, status || 500, 'Failed to load custom code settings', body);
+    }
+
+    const { code, basePath } = customCodeResult;
+    const currentHead = code.head || '';
+    const mergedHead = mergeHead(currentHead);
+
+    if (Buffer.byteLength(mergedHead, 'utf8') > HEAD_SIZE_LIMIT_BYTES) {
       return sendError(
         res,
-        404,
-        'Failed to load existing Custom Code settings',
-        customCodeResult.error || 'Custom Code endpoint unavailable',
+        413,
+        'Merged head exceeds 200KB limit. Host larger scripts externally and keep loader minimal.'
       );
     }
 
-    const { code: customCode, basePath } = customCodeResult;
-    const existingHead = customCode.head || '';
-    const nextHead = upsertThemeSwitcherScript(existingHead);
+    if (isTest) {
+      return res.status(200).json({ success: true, simulated: true, previewHtml: mergedHead });
+    }
 
-    const apiRes = await fetch(buildApiUrl(basePath, siteId, 'custom-code/settings'), {
-      method: 'PATCH',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'accept-version': '1.0.0',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        code: {
-          head: nextHead,
-          footer: customCode.footer || '',
-        },
-      }),
-    });
+    if (mergedHead === currentHead) {
+      return res.status(200).json({ success: true, message: 'No change; marker already present' });
+    }
 
-    const data = await safeJson(apiRes);
-    if (!apiRes.ok) return sendError(res, apiRes.status, 'Failed to update head custom code', data);
+    const { response: patchResponse, text: patchText } = await patchHead(siteId, token, basePath, mergedHead);
 
-    return res.status(200).json({ success: true, data });
+    if (!patchResponse.ok) {
+      const detail = patchText || 'Unknown error';
+      return sendError(res, patchResponse.status, 'Script registration failed', detail);
+    }
+
+    const parsedPatch =
+      (await safeJson(new Response(patchText, { headers: { 'Content-Type': 'application/json' } }))) || patchText;
+
+    return res
+      .status(200)
+      .json({ success: true, message: 'Injected/updated script', result: parsedPatch });
   } catch (err: any) {
-    return sendError(res, 500, 'Unexpected error', err?.message || err);
+    return sendError(res, 500, 'Script registration failed', err?.message || err);
   }
 }

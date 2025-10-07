@@ -16,7 +16,6 @@ export default function Installed() {
   const [loaded, setLoaded] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
   const [autoMessage, setAutoMessage] = useState('');
-  const [sites, setSites] = useState<Array<{ id: string; name: string }>>([]);
   const [workspaceGroups, setWorkspaceGroups] = useState<
     Array<{ id: string; name: string; sites: Array<{ id: string; name: string }> }>
   >([]);
@@ -73,11 +72,9 @@ export default function Installed() {
           throw new Error(data?.message || 'Unable to load sites');
         }
 
-        const list = Array.isArray(data.sites) ? data.sites : [];
         const workspaceList = Array.isArray(data.workspaces) ? data.workspaces : [];
         const ungroupedList = Array.isArray(data.ungrouped) ? data.ungrouped : [];
 
-        setSites(list.map((item: any) => ({ id: item.id, name: item.name })));
         setWorkspaceGroups(
           workspaceList.map((workspace: any) => ({
             id: workspace.id,
@@ -89,9 +86,9 @@ export default function Installed() {
         );
         setUngroupedSites(ungroupedList.map((item: any) => ({ id: item.id, name: item.name })));
 
-        const flattenedPreferredList = (
-          workspaceList.flatMap((workspace: any) => workspace.sites || []).concat(ungroupedList)
-        );
+        const flattenedPreferredList = workspaceList
+          .flatMap((workspace: any) => workspace.sites || [])
+          .concat(ungroupedList);
 
         if (!flattenedPreferredList.some((item: any) => item.id === selectedSiteId) && flattenedPreferredList.length > 0) {
           const preferred = flattenedPreferredList.find((item: any) => item.id === siteId) || flattenedPreferredList[0];
