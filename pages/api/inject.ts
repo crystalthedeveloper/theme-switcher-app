@@ -130,7 +130,20 @@ const fetchWithRetries = async (
   return { response: lastResponse, text: lastBody };
 };
 
-const fetchCustomCode = async (siteId: string, token: string) => {
+type CustomCodeSuccess = {
+  code: { head?: string; footer?: string };
+  basePath: typeof SITE_PATHS[number];
+};
+
+type CustomCodeError = {
+  error: {
+    status: number;
+    body: string;
+    path?: typeof SITE_PATHS[number];
+  };
+};
+
+const fetchCustomCode = async (siteId: string, token: string): Promise<CustomCodeSuccess | CustomCodeError> => {
   for (const path of SITE_PATHS) {
     const url = `https://api.webflow.com/${path}/${siteId}/custom-code/settings`;
     const headers: Record<string, string> = {
