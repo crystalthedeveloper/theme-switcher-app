@@ -1,24 +1,35 @@
-//pages/success.tsx
+// pages/success.tsx
 import Head from 'next/head';
-import styles from './css/success.module.css';
+import shellStyles from './css/app-shell.module.css';
 import Logo from '../components/Logo';
-import Footer from '../components/Footer';
 
 export default function Success() {
   return (
-    <>
+    <div className={shellStyles.shell}>
       <Head>
-        <title>Installed Successfully</title>
+        <title>Theme Switcher Installed</title>
+        <meta name="robots" content="noindex" />
       </Head>
-      <main className={styles.success}>
-        <Logo />
-        <h1>🎉 Theme Switcher Installed!</h1>
-        <p>Your script was successfully added to the Webflow footer.</p>
-        <a href="https://webflow.com/dashboard/sites" target="_blank" rel="noopener noreferrer">
-          <button>Go to Webflow Dashboard</button>
-        </a>
-        <Footer />
+
+      <main className={shellStyles.card}>
+        <div className={shellStyles.logoWrap} aria-hidden="true">
+          <Logo />
+        </div>
+
+        <h1 className={shellStyles.heading}>Theme Switcher Installed</h1>
+        <p className={shellStyles.subheading}>
+          Your Webflow site is now powered by Theme Switcher. Reopen the app anytime to refresh the script or update
+          your settings.
+        </p>
+
+        <div className={shellStyles.controls}>
+          <a href="https://webflow.com/dashboard/sites" target="_blank" rel="noopener noreferrer">
+            <button className={shellStyles.buttonPrimary}>Go to Webflow Dashboard</button>
+          </a>
+        </div>
+
+        <p className={shellStyles.footer}>© 2025 Crystal The Developer Inc. All rights reserved.</p>
       </main>
-    </>
+    </div>
   );
 }

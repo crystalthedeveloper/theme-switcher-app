@@ -2,7 +2,8 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
+  "/": "pages/index.js",
+  "/success": "pages/success.js",
   "/installed": "pages/installed.js",
-  "/callback": "pages/callback.js",
-  "/": "pages/index.js"
+  "/callback": "pages/callback.js"
 }
