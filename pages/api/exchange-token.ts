@@ -11,6 +11,11 @@ const REDIRECT_URI = process.env.NEXT_PUBLIC_WEBFLOW_REDIRECT_URI || 'https://th
 const CLIENT_ID = process.env.WEBFLOW_CLIENT_ID || process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID || '';
 const CLIENT_SECRET = process.env.WEBFLOW_CLIENT_SECRET || '';
 
+const isPlaceholder = (value: string) =>
+  !value ||
+  value === 'your_webflow_client_id' ||
+  value === 'your_webflow_client_secret';
+
 const truncate = (value: string) => {
   if (!value) return '';
   if (value.length <= 12) return value;
@@ -72,8 +77,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return sendError(res, 405, 'Method Not Allowed');
   }
 
-  if (!CLIENT_ID || !CLIENT_SECRET) {
-    return sendError(res, 500, 'Server misconfiguration: missing Webflow client credentials.');
+  if (isPlaceholder(CLIENT_ID) || isPlaceholder(CLIENT_SECRET)) {
+    return sendError(res, 500, 'Server misconfiguration: missing Webflow client credentials. Set WEBFLOW_CLIENT_ID and WEBFLOW_CLIENT_SECRET in the environment.');
   }
 
   if (!REDIRECT_URI) {
