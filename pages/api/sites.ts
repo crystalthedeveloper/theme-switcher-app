@@ -158,8 +158,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       workspaceMap.set(workspace.id, { ...workspace, sites: [] });
     });
 
-    const ungrouped: typeof sites = [];
-    sites.forEach((site) => {
+    const sitesArray = Array.from(uniqueSiteMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+
+    const ungrouped: SiteEntry[] = [];
+    sitesArray.forEach((site) => {
       if (site.workspaceId && workspaceMap.has(site.workspaceId)) {
         const ws = workspaceMap.get(site.workspaceId)!;
         ws.sites.push({ ...site, supportsCustomCodeApi: ws.supportsCustomCodeApi });

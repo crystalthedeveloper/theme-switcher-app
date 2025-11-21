@@ -280,7 +280,7 @@ export default function Installed() {
                   injecting ||
                   !token ||
                   !selectedSiteId ||
-                  (selectedSiteId && findSelectedSite(selectedSiteId)?.supportsCustomCodeApi === false)
+                  (selectedSiteId ? findSelectedSite(selectedSiteId)?.supportsCustomCodeApi === false : false)
                 }
               >
                 {injecting ? 'Refreshing…' : 'Re-register Theme Switcher Script'}

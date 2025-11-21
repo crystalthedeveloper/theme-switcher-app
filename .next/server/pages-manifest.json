@@ -1,6 +1,15 @@
 {
-  "/_app": "pages/_app.js",
+  "/api/exchange-token": "pages/api/exchange-token.js",
+  "/api/inject": "pages/api/inject.js",
+  "/": "pages/index.html",
+  "/callback": "pages/callback.html",
+  "/privacy": "pages/privacy.html",
+  "/installed": "pages/installed.html",
+  "/api/sites": "pages/api/sites.js",
+  "/success": "pages/success.html",
+  "/terms": "pages/terms.html",
   "/_error": "pages/_error.js",
+  "/_app": "pages/_app.js",
   "/_document": "pages/_document.js",
-  "/": "pages/index.js"
+  "/404": "pages/404.html"
 }
