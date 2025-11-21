@@ -29,17 +29,21 @@ export default function Installed() {
     const queryToken = router.query.token as string;
     const querySiteId = router.query.siteId as string;
 
-    if (queryToken && querySiteId) {
+    if (queryToken) {
       setToken(queryToken);
-      setSiteId(querySiteId);
-      setSelectedSiteId(querySiteId);
+      if (querySiteId) {
+        setSiteId(querySiteId);
+        setSelectedSiteId(querySiteId);
+      }
       setDebugMode(true);
     } else {
       const t = storage?.getItem('webflow_token') || '';
       const s = storage?.getItem('webflow_site_id') || '';
 
-      if (t && s) {
+      if (t) {
         setToken(t);
+      }
+      if (s) {
         setSiteId(s);
         setSelectedSiteId(s);
       }
@@ -161,12 +165,6 @@ export default function Installed() {
           <p className={styles.statusText}>Loading credentials…</p>
         ) : (
           <>
-            {!token || !siteId ? (
-              <p className={styles.errorMessage} role="alert" style={{ marginTop: 0 }}>
-                Unable to access credentials. Open the app in Webflow or paste them manually:
-              </p>
-            ) : null}
-
             <div className={styles.inputs}>
               <input
                 type="text"

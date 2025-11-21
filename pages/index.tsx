@@ -23,7 +23,7 @@ export default function Home() {
     const savedToken = storage.getItem('webflow_token') || '';
     const savedSiteId = storage.getItem('webflow_site_id') || '';
     const installed = storage.getItem('webflow_app_installed') === 'true';
-    const authorized = !!savedToken && !!savedSiteId && installed;
+    const authorized = !!savedToken && installed;
 
     const query = new URLSearchParams(window.location.search);
     const code = query.get('code');
