@@ -72,6 +72,40 @@ const sendError = (
 const invalidGrantMessage = () =>
   'invalid_grant received from Webflow. Likely causes: redirect_uri mismatch, expired or reused authorization code, incorrect client_id/client_secret, or double-encoded code parameter.';
 
+const fetchAuthorizedUserSiteId = async (token: string) => {
+  try {
+    const url = 'https://api.webflow.com/authorized-user?include=sites';
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Accept-Version': '1.0.0',
+      },
+    });
+
+    const text = await response.text();
+    let json: any = {};
+    try {
+      json = text ? JSON.parse(text) : {};
+    } catch {
+      // ignore parse error; will return empty
+    }
+
+    const site_id =
+      json?.site?.id ||
+      json?.site_id ||
+      json?.authorized_user?.site?.id ||
+      json?.authorized_user?.site_id ||
+      json?.authorized_user?.sites?.[0]?.id ||
+      json?.sites?.[0]?.id ||
+      '';
+
+    return { site_id, detail: json };
+  } catch (err) {
+    return { site_id: '', detail: err };
+  }
+};
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return sendError(res, 405, 'Method Not Allowed');
@@ -133,13 +167,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const { access_token, refresh_token, ...rest } = json || {};
-    const site_id =
+    let site_id =
       json?.authorized_user?.site?.id ||
       json?.authorized_user?.site_id ||
       json?.authorized_user?.sites?.[0]?.id ||
       json?.site_id ||
       '';
-    const warning = site_id ? undefined : 'Webflow did not return a site_id (check authorized_user scopes/includes).';
+
+    let warning: string | undefined;
+
+    if (!site_id && access_token) {
+      const fallback = await fetchAuthorizedUserSiteId(access_token);
+      site_id = fallback.site_id;
+      if (!site_id) {
+        warning = 'Webflow did not return a site_id; ensure include=authorized_user&include=site in OAuth and that a site was selected.';
+      }
+    }
+
+    if (!site_id) {
+      return sendError(res, 400, 'Missing site_id from Webflow token exchange.', {
+        site_id,
+        warning: warning || null,
+      });
+    }
 
     return res.status(200).json({
       success: true,
