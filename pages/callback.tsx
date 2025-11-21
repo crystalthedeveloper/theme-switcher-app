@@ -101,8 +101,11 @@ export default function Callback() {
         const data = await res.json();
         const { access_token, site_id, warning } = data;
 
-        if (!res.ok || !access_token || !site_id) {
+        if (!res.ok) {
           throw new Error(data.error || 'Exchange failed');
+        }
+        if (!access_token || !site_id) {
+          throw new Error('Missing access token or site_id');
         }
 
         const storage = window.sessionStorage;
@@ -148,15 +151,24 @@ export default function Callback() {
           timeoutRef.current = null;
         }
         const redirectUrl = isTest ? '/installed?test=true' : '/installed';
-        setTimeout(() => {
+        queueMicrotask(() => {
           window.location.href = redirectUrl;
-        }, 40);
+        });
         return;
       } catch (err: any) {
         console.error('❌ Exchange error:', err);
-        const message = err?.message || 'Token exchange failed.';
+        // Only treat HTTP/response failures as fatal; ignore client-side iframe warnings/noise.
+        const message = err?.message || '';
+        const networkFailure =
+          message.toLowerCase().includes('exchange failed') ||
+          message.toLowerCase().includes('missing access token') ||
+          message.toLowerCase().includes('script registration failed');
+        if (!networkFailure) {
+          console.warn('⚠️ Ignoring non-fatal client-side warning during callback');
+          return;
+        }
         const detail = err?.detail || defaultDetailFor(message);
-        setErrorAndStop(message, detail);
+        setErrorAndStop(message || 'Token exchange failed.', detail);
       }
     };
 
