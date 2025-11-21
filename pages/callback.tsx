@@ -99,14 +99,10 @@ export default function Callback() {
         });
 
         const data = await res.json();
-        const { access_token, site_id, warning } = data;
-
         if (!res.ok) {
           throw new Error(data.error || 'Exchange failed');
         }
-        if (!access_token || !site_id) {
-          throw new Error('Missing access token or site_id');
-        }
+        const { access_token, site_id, warning } = data;
 
         const storage = window.sessionStorage;
         storage.setItem('webflow_token', access_token);
@@ -161,7 +157,6 @@ export default function Callback() {
         const message = err?.message || '';
         const networkFailure =
           message.toLowerCase().includes('exchange failed') ||
-          message.toLowerCase().includes('missing access token') ||
           message.toLowerCase().includes('script registration failed');
         if (!networkFailure) {
           console.warn('⚠️ Ignoring non-fatal client-side warning during callback');
