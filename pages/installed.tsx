@@ -241,6 +241,15 @@ export default function Installed() {
           </p>
         )}
 
+        <div style={{ marginTop: '2rem', fontSize: '0.95rem', color: '#444' }}>
+          <p>
+            Need help? <a href="mailto:support@crystalthedeveloper.com">Email support</a>.
+          </p>
+          <p style={{ marginTop: '0.25rem' }}>
+            <a href="/privacy">Privacy Policy</a> · <a href="/terms">Terms of Use</a>
+          </p>
+        </div>
+
         {debugMode && (
           <div className={styles.testBadge}>
             ⚙️ Debug mode active (from query string)

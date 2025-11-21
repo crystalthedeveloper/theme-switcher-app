@@ -13,7 +13,6 @@ export default function Callback() {
   const [testMode, setTestMode] = useState(false);
   const [error, setError] = useState('');
   const [errorDetail, setErrorDetail] = useState('');
-  const [statusMessage, setStatusMessage] = useState('');
   const hasResponded = useRef(false);
 
   const defaultDetailFor = (message: string) => {
@@ -43,7 +42,6 @@ export default function Callback() {
       hasResponded.current = true;
       setError(message);
       setErrorDetail(detail || defaultDetailFor(message));
-      setStatusMessage('');
       setLoading(false);
       console.warn('🛑 Error set and loading stopped:', message);
     }
@@ -86,9 +84,8 @@ export default function Callback() {
       return setErrorAndStop('Missing or invalid authorization code.', 'Please restart the install from the Webflow App panel.');
     }
 
-    const exchangeToken = async () => {
+    const exchangeAndInject = async () => {
       try {
-        setStatusMessage('Contacting Webflow…');
         const res = await fetch('/api/exchange-token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -114,7 +111,6 @@ export default function Callback() {
           console.warn('⚠️ Webflow warning:', warning);
         }
 
-        setStatusMessage('Registering Theme Switcher in Webflow…');
         const injectResponse = await fetch('/api/inject', {
           method: 'POST',
           headers: {
@@ -140,13 +136,8 @@ export default function Callback() {
         storage.setItem('webflow_last_registration', 'success');
 
         hasResponded.current = true;
-        setStatusMessage('Finishing setup…');
-
-        const redirectUrl = isTest
-          ? `/installed?test=true`
-          : `/installed`;
-
-        router.replace(redirectUrl);
+        const redirectUrl = isTest ? '/installed?test=true' : '/installed';
+        window.location.replace(redirectUrl);
       } catch (err: any) {
         console.error('❌ Exchange error:', err);
         const message = err?.message || 'Token exchange failed.';
@@ -155,7 +146,7 @@ export default function Callback() {
       }
     };
 
-    exchangeToken();
+    exchangeAndInject();
   }, [router.isReady]);
 
   const t = en;
@@ -163,9 +154,8 @@ export default function Callback() {
   const statusVariant = useMemo(() => {
     if (!loading && error) return 'warning';
     if (!loading && !error) return 'success';
-    if (loading && /finishing/i.test(statusMessage)) return 'success';
     return undefined;
-  }, [loading, error, statusMessage]);
+  }, [loading, error]);
 
   return (
     <div className={shellStyles.shell}>
@@ -181,9 +171,7 @@ export default function Callback() {
         <h1 className={shellStyles.heading}>{t.connecting || 'Connecting to Webflow...'}</h1>
 
         <p className={shellStyles.statusText} aria-live="polite" data-variant={statusVariant}>
-          {loading
-            ? statusMessage || t.exchanging || 'Exchanging code...'
-            : error || t.tryAgainFallback || 'Something went wrong.'}
+          {loading ? t.exchanging || 'Exchanging code...' : error || t.tryAgainFallback || 'Something went wrong.'}
         </p>
 
         {!loading && errorDetail && (

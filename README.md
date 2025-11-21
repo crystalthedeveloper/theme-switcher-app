@@ -81,6 +81,17 @@ WEBFLOW_REDIRECT_URI=https://theme-toggle-webflow.vercel.app/callback
 
 ---
 
+## ✅ Review Checklist (Webflow)
+
+- **Scopes requested**: `custom_code:read custom_code:write sites:read sites:write pages:read pages:write authorized_user:read` (drop `pages:write` if not required).
+- **Redirect URI**: `https://theme-toggle-webflow.vercel.app/callback` (must match in Webflow app settings).
+- **Paid-plan note**: Custom Code requires a paid/hosted Webflow site; free sites will not auto-inject.
+- **Success callback**: `/callback` performs exchange → injection → redirects to `/installed` (no visible error page on success).
+- **Uninstall**: Users can remove access in Webflow Apps & Integrations; tokens are stored only in `sessionStorage` and not persisted server-side.
+- **Policies**: Privacy Policy at `/privacy`; Terms of Use at `/terms`; support link `mailto:support@crystalthedeveloper.com`.
+
+---
+
 ## 🧼 Uninstall Instructions
 
 1. Go to **Webflow → Site Settings → Custom Code**
