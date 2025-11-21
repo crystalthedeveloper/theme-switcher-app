@@ -17,11 +17,24 @@ export default function Installed() {
   const [debugMode, setDebugMode] = useState(false);
   const [autoMessage, setAutoMessage] = useState('');
   const [workspaceGroups, setWorkspaceGroups] = useState<
-    Array<{ id: string; name: string; sites: Array<{ id: string; name: string }> }>
+    Array<{
+      id: string;
+      name: string;
+      supportsCustomCodeApi: boolean;
+      sites: Array<{ id: string; name: string; supportsCustomCodeApi?: boolean }>;
+    }>
   >([]);
-  const [ungroupedSites, setUngroupedSites] = useState<Array<{ id: string; name: string }>>([]);
+  const [ungroupedSites, setUngroupedSites] = useState<Array<{ id: string; name: string; supportsCustomCodeApi?: boolean }>>([]);
   const [sitesLoading, setSitesLoading] = useState(false);
   const [sitesError, setSitesError] = useState('');
+
+  const findSelectedSite = (id: string) => {
+    for (const ws of workspaceGroups) {
+      const found = ws.sites.find((s) => s.id === id);
+      if (found) return found;
+    }
+    return ungroupedSites.find((s) => s.id === id);
+  };
 
   useEffect(() => {
     const storage = window.sessionStorage;
@@ -83,21 +96,48 @@ export default function Installed() {
           workspaceList.map((workspace: any) => ({
             id: workspace.id,
             name: workspace.name,
+            supportsCustomCodeApi: !!workspace.supportsCustomCodeApi,
             sites: Array.isArray(workspace.sites)
-              ? workspace.sites.map((site: any) => ({ id: site.id, name: site.name }))
+              ? workspace.sites.map((site: any) => ({
+                  id: site.id,
+                  name: site.name,
+                  supportsCustomCodeApi: site.supportsCustomCodeApi ?? workspace.supportsCustomCodeApi,
+                }))
               : [],
           })),
         );
-        setUngroupedSites(ungroupedList.map((item: any) => ({ id: item.id, name: item.name })));
+        setUngroupedSites(
+          ungroupedList.map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            supportsCustomCodeApi: item.supportsCustomCodeApi ?? false,
+          })),
+        );
 
         const flattenedPreferredList = workspaceList
           .flatMap((workspace: any) => workspace.sites || [])
           .concat(ungroupedList);
 
-        if (!flattenedPreferredList.some((item: any) => item.id === selectedSiteId) && flattenedPreferredList.length > 0) {
-          const preferred = flattenedPreferredList.find((item: any) => item.id === siteId) || flattenedPreferredList[0];
-          setSelectedSiteId(preferred.id);
-          window.sessionStorage?.setItem('webflow_site_id', preferred.id);
+        const eligibleSites = flattenedPreferredList.filter(
+          (item: any) => item.supportsCustomCodeApi ?? workspaceList.find((w: any) => w.id === item.workspaceId)?.supportsCustomCodeApi,
+        );
+
+        if (
+          !flattenedPreferredList.some((item: any) => item.id === selectedSiteId) &&
+          flattenedPreferredList.length > 0
+        ) {
+          const preferred =
+            eligibleSites.find((item: any) => item.id === siteId) ||
+            eligibleSites[0] ||
+            flattenedPreferredList.find((item: any) => item.id === siteId) ||
+            flattenedPreferredList[0];
+          if (preferred) {
+            setSelectedSiteId(preferred.id);
+            if (preferred.id) {
+              setSiteId(preferred.id);
+              window.sessionStorage?.setItem('webflow_site_id', preferred.id);
+            }
+          }
         }
       } catch (err: any) {
         console.warn('⚠️ Failed to fetch sites:', err);
@@ -112,9 +152,15 @@ export default function Installed() {
 
   const handleInjectClick = async () => {
     const targetSiteId = selectedSiteId || siteId;
+    const selectedSite = findSelectedSite(targetSiteId);
     if (!token || !targetSiteId) {
       console.warn('❌ Cannot inject — missing token or siteId:', { token, targetSiteId });
       setMessage('❌ Missing token or site ID.');
+      return;
+    }
+
+    if (selectedSite && selectedSite.supportsCustomCodeApi === false) {
+      setMessage('❌ Custom Code API is not enabled for this workspace. Pick another site.');
       return;
     }
 
@@ -183,10 +229,14 @@ export default function Installed() {
               >
                 <option value="">Select a Webflow site…</option>
                 {workspaceGroups.map((workspace) => (
-                  <optgroup key={workspace.id} label={workspace.name}>
+                  <optgroup
+                    key={workspace.id}
+                    label={`${workspace.name}${workspace.supportsCustomCodeApi ? '' : ' (no Custom Code API)'}`}
+                  >
                     {workspace.sites.map((site) => (
-                      <option key={site.id} value={site.id}>
+                      <option key={site.id} value={site.id} disabled={site.supportsCustomCodeApi === false}>
                         {site.name}
+                        {site.supportsCustomCodeApi === false ? ' — not eligible' : ''}
                       </option>
                     ))}
                   </optgroup>
@@ -194,15 +244,17 @@ export default function Installed() {
                 {workspaceGroups.length > 0 && ungroupedSites.length > 0 ? (
                   <optgroup label="Other Sites">
                     {ungroupedSites.map((site) => (
-                      <option key={site.id} value={site.id}>
+                      <option key={site.id} value={site.id} disabled={site.supportsCustomCodeApi === false}>
                         {site.name}
+                        {site.supportsCustomCodeApi === false ? ' — not eligible' : ''}
                       </option>
                     ))}
                   </optgroup>
                 ) : (
                   ungroupedSites.map((site) => (
-                    <option key={site.id} value={site.id}>
+                    <option key={site.id} value={site.id} disabled={site.supportsCustomCodeApi === false}>
                       {site.name}
+                      {site.supportsCustomCodeApi === false ? ' — not eligible' : ''}
                     </option>
                   ))
                 )}
@@ -213,13 +265,23 @@ export default function Installed() {
                   {sitesError}
                 </p>
               )}
+              {selectedSiteId && findSelectedSite(selectedSiteId)?.supportsCustomCodeApi === false && (
+                <p style={{ color: '#b00000', fontSize: '0.9rem' }} role="alert">
+                  Custom Code API is not enabled for this workspace. Choose a site from another workspace.
+                </p>
+              )}
             </div>
 
             <div className={styles.controls}>
               <button
                 className={styles.buttonPrimary}
                 onClick={handleInjectClick}
-                disabled={injecting || !token || !selectedSiteId}
+                disabled={
+                  injecting ||
+                  !token ||
+                  !selectedSiteId ||
+                  (selectedSiteId && findSelectedSite(selectedSiteId)?.supportsCustomCodeApi === false)
+                }
               >
                 {injecting ? 'Refreshing…' : 'Re-register Theme Switcher Script'}
               </button>

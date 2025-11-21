@@ -15,11 +15,24 @@ type WebflowWorkspace = {
   id?: string;
   name?: string;
   displayName?: string;
+  capabilities?: {
+    customCodeApiAccess?: boolean;
+    custom_code_api_access?: boolean;
+    customCode?: { enabled?: boolean };
+  };
 };
 
 type WebflowListResponse<T> = {
   items?: T[];
   sites?: T[];
+};
+
+type SiteEntry = {
+  id: string;
+  name: string;
+  workspaceId: string;
+  source: ApiBasePath;
+  supportsCustomCodeApi?: boolean;
 };
 
 const API_BASE_PATHS: ApiBasePath[] = ['sites', 'dev-sites'];
@@ -35,7 +48,7 @@ const safeJson = async (response: Response) => {
   }
 };
 
-const fetchSitesForPath = async (token: string, basePath: ApiBasePath) => {
+const fetchSitesForPath = async (token: string, basePath: ApiBasePath): Promise<SiteEntry[]> => {
   try {
     const response = await fetch(buildApiUrl(basePath), {
       method: 'GET',
@@ -94,10 +107,18 @@ const fetchWorkspaces = async (token: string) => {
     if (!Array.isArray(collection)) return [];
 
     return collection
-      .map((workspace) => ({
-        id: workspace.id || '',
-        name: workspace.displayName || workspace.name || 'Workspace',
-      }))
+      .map((workspace) => {
+        const supportsCustomCode =
+          !!workspace.capabilities?.customCodeApiAccess ||
+          !!workspace.capabilities?.custom_code_api_access ||
+          !!workspace.capabilities?.customCode?.enabled;
+
+        return {
+          id: workspace.id || '',
+          name: workspace.displayName || workspace.name || 'Workspace',
+          supportsCustomCodeApi: supportsCustomCode,
+        };
+      })
       .filter((workspace) => workspace.id);
   } catch (err) {
     console.warn('⚠️ Workspace list fetch failed', err);
@@ -129,9 +150,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     });
 
-    const sites = Array.from(uniqueSiteMap.values()).sort((a, b) => a.name.localeCompare(b.name));
-
-    const workspaceMap = new Map<string, { id: string; name: string; sites: typeof sites }>();
+    const workspaceMap = new Map<
+      string,
+      { id: string; name: string; supportsCustomCodeApi: boolean; sites: SiteEntry[] }
+      >();
     workspaceResults.forEach((workspace) => {
       workspaceMap.set(workspace.id, { ...workspace, sites: [] });
     });
@@ -139,15 +161,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const ungrouped: typeof sites = [];
     sites.forEach((site) => {
       if (site.workspaceId && workspaceMap.has(site.workspaceId)) {
-        workspaceMap.get(site.workspaceId)!.sites.push(site);
+        const ws = workspaceMap.get(site.workspaceId)!;
+        ws.sites.push({ ...site, supportsCustomCodeApi: ws.supportsCustomCodeApi });
       } else {
-        ungrouped.push(site);
+        ungrouped.push({ ...site, supportsCustomCodeApi: false });
       }
     });
 
     const workspaces = Array.from(workspaceMap.values()).filter((workspace) => workspace.sites.length > 0);
+    const enrichedSites = [
+      ...workspaces.flatMap((ws) => ws.sites),
+      ...ungrouped,
+    ].sort((a, b) => a.name.localeCompare(b.name));
 
-    return res.status(200).json({ success: true, sites, workspaces, ungrouped });
+    return res.status(200).json({ success: true, sites: enrichedSites, workspaces, ungrouped });
   } catch (err: any) {
     console.error('⚠️ Unexpected site list error', err);
     return res.status(500).json({ success: false, message: 'Failed to load sites', detail: err?.message || err });
