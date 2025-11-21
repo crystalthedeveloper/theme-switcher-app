@@ -15,6 +15,7 @@ export default function Callback() {
 
   // Prevents double execution in React Strict Mode
   const didStart = useRef(false);
+  const retriedForCode = useRef(false);
 
   // Safety timeout
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -24,23 +25,32 @@ export default function Callback() {
     if (didStart.current) return; // Prevent double-run
     didStart.current = true;
 
-    const url = new URL(window.location.href);
-    const code = url.searchParams.get('code') || '';
-    const oauthErr = url.searchParams.get('error') || '';
+    const attemptStart = (isRetry = false) => {
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get('code') || '';
+      const oauthErr = url.searchParams.get('error') || '';
 
-    if (!code) {
-      console.error("❌ Missing authorization code.");
-      fail("Missing authorization code.");
-      return;
-    }
+      if (oauthErr) {
+        console.error("❌ OAuth error:", oauthErr);
+        fail("Authorization failed.");
+        return;
+      }
 
-    if (oauthErr) {
-      console.error("❌ OAuth error:", oauthErr);
-      fail("Authorization failed.");
-      return;
-    }
+      if (!code) {
+        if (!isRetry && !retriedForCode.current) {
+          retriedForCode.current = true;
+          setTimeout(() => attemptStart(true), 300);
+          return;
+        }
+        console.error("❌ Missing authorization code.");
+        fail("Missing authorization code.");
+        return;
+      }
 
-    runFlow(code);
+      runFlow(code);
+    };
+
+    attemptStart(false);
   }, [router.isReady]);
 
   /**

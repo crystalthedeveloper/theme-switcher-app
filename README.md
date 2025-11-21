@@ -84,6 +84,7 @@ WEBFLOW_REDIRECT_URI=https://theme-toggle-webflow.vercel.app/callback
 ## ✅ Review Checklist (Webflow)
 
 - **Scopes requested**: `custom_code:read custom_code:write sites:read sites:write pages:read pages:write authorized_user:read workspaces:read` (drop `pages:write` if not required).
+- **Includes**: `include=authorized_user&include=site&include=workspaces` in the authorize URL to fetch workspace context.
 - **Redirect URI**: `https://theme-toggle-webflow.vercel.app/callback` (must match in Webflow app settings).
 - **Paid-plan note**: Custom Code requires a paid/hosted Webflow site; free sites will not auto-inject.
 - **Success callback**: `/callback` performs exchange → injection → redirects to `/installed` (no visible error page on success).
