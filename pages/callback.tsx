@@ -92,17 +92,29 @@ export default function Callback() {
 
     const exchangeAndInject = async () => {
       try {
-        const res = await fetch('/api/exchange-token', {
+        // Exchange
+        const exchangeRes = await fetch('/api/exchange-token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code }),
         });
-
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error || 'Exchange failed');
+        if (!exchangeRes.ok) {
+          const errText = await exchangeRes.text();
+          const fatal = new Error('Exchange failed');
+          (fatal as any).detail = errText || undefined;
+          (fatal as any).__fatal = true;
+          throw fatal;
         }
-        const { access_token, site_id, warning } = data;
+        const exchangeJson: any = await exchangeRes.json();
+        const access_token = exchangeJson?.access_token;
+        const site_id = exchangeJson?.site_id;
+        const warning = exchangeJson?.warning;
+
+        if (!access_token || !site_id) {
+          const fatal = new Error('Missing access token or site_id');
+          (fatal as any).__fatal = true;
+          throw fatal;
+        }
 
         const storage = window.sessionStorage;
         storage.setItem('webflow_token', access_token);
@@ -116,7 +128,8 @@ export default function Callback() {
           console.warn('⚠️ Webflow warning:', warning);
         }
 
-        const injectResponse = await fetch('/api/inject', {
+        // Inject
+        const injectRes = await fetch('/api/inject', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -125,23 +138,23 @@ export default function Callback() {
           body: JSON.stringify({ siteId: site_id }),
         });
 
-        let injectData: any = null;
+        let injectJson: any = null;
         try {
-          injectData = await injectResponse.json();
+          injectJson = await injectRes.json();
         } catch (jsonErr) {
           console.warn('⚠️ Unable to parse inject response JSON', jsonErr);
         }
 
-        if (!injectResponse.ok || !injectData?.success) {
-          const error = new Error(injectData?.message || 'Script registration failed');
-          (error as any).detail = injectData?.detail;
-          throw error;
+        if (!injectRes.ok || !injectJson?.success) {
+          const fatal = new Error(injectJson?.message || 'Script registration failed');
+          (fatal as any).detail = injectJson?.detail;
+          (fatal as any).__fatal = true;
+          throw fatal;
         }
 
         storage.setItem('webflow_last_registration', 'success');
 
         hasResponded.current = true;
-        setLoading(false);
         if (timeoutRef.current) {
           clearTimeout(timeoutRef.current);
           timeoutRef.current = null;
@@ -153,17 +166,13 @@ export default function Callback() {
         return;
       } catch (err: any) {
         console.error('❌ Exchange error:', err);
-        // Only treat HTTP/response failures as fatal; ignore client-side iframe warnings/noise.
-        const message = err?.message || '';
-        const networkFailure =
-          message.toLowerCase().includes('exchange failed') ||
-          message.toLowerCase().includes('script registration failed');
-        if (!networkFailure) {
+        if (!err?.__fatal) {
           console.warn('⚠️ Ignoring non-fatal client-side warning during callback');
           return;
         }
+        const message = err?.message || 'Token exchange failed.';
         const detail = err?.detail || defaultDetailFor(message);
-        setErrorAndStop(message || 'Token exchange failed.', detail);
+        setErrorAndStop(message, detail);
       }
     };
 
