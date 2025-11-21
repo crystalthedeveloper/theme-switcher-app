@@ -15,6 +15,7 @@ export default function Callback() {
   const [errorDetail, setErrorDetail] = useState('');
   const hasResponded = useRef(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const retriedMissingTokenRef = useRef(false);
 
   const defaultDetailFor = (message: string) => {
     if (!message) {
@@ -105,12 +106,31 @@ export default function Callback() {
           (fatal as any).__fatal = true;
           throw fatal;
         }
-        const exchangeJson: any = await exchangeRes.json();
+        const exchangeText = await exchangeRes.text();
+        let exchangeJson: any = {};
+        try {
+          exchangeJson = exchangeText ? JSON.parse(exchangeText) : {};
+        } catch (parseErr) {
+          const fatal = new Error('Exchange response parse failed');
+          (fatal as any).detail = parseErr;
+          (fatal as any).__fatal = true;
+          throw fatal;
+        }
         const access_token = exchangeJson?.access_token;
         const site_id = exchangeJson?.site_id;
         const warning = exchangeJson?.warning;
 
         if (!access_token || !site_id) {
+          if (!retriedMissingTokenRef.current) {
+            retriedMissingTokenRef.current = true;
+            // Retry once on next tick to avoid iframe/pre-check interference.
+            setTimeout(() => {
+              if (!hasResponded.current) {
+                exchangeAndInject();
+              }
+            }, 20);
+            return;
+          }
           const fatal = new Error('Missing access token or site_id');
           (fatal as any).__fatal = true;
           throw fatal;
