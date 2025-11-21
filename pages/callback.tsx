@@ -78,8 +78,7 @@ export default function Callback() {
       const siteId = json.site_id;
 
       if (!access || !siteId) {
-        console.warn("⚠️ Retrying token exchange — incomplete payload...");
-        return retryExchangeOnce(code);
+        return fail("Missing access token or site_id.");
       }
 
       // Store to sessionStorage
@@ -123,18 +122,6 @@ export default function Callback() {
       console.error("❌ Critical callback error:", err);
       fail("Exchange failed.");
     }
-  };
-
-  /**
-   * Retry token exchange ONE TIME for Chrome iframe interruptions
-   */
-  const retryExchangeOnce = (code: string) => {
-    setTimeout(() => {
-      if (!hasFinished.current) {
-        console.log("🔁 Retrying token exchange due to incomplete payload…");
-        runFlow(code);
-      }
-    }, 40);
   };
 
   /**
