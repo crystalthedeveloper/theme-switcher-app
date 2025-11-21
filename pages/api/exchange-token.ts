@@ -93,11 +93,22 @@ const fetchAuthorizedUserSiteId = async (token: string) => {
 
     const site_id =
       json?.site?.id ||
+      json?.site?._id ||
+      json?.site?.siteId ||
       json?.site_id ||
       json?.authorized_user?.site?.id ||
+      json?.authorized_user?.site?._id ||
+      json?.authorized_user?.site?.siteId ||
       json?.authorized_user?.site_id ||
+      json?.authorized_user?.selected_site_id ||
+      json?.authorized_user?.selected_site?.id ||
+      json?.authorized_user?.selected_site?._id ||
       json?.authorized_user?.sites?.[0]?.id ||
+      json?.authorized_user?.sites?.[0]?._id ||
+      json?.authorized_user?.sites?.[0]?.siteId ||
       json?.sites?.[0]?.id ||
+      json?.sites?.[0]?._id ||
+      json?.sites?.[0]?.siteId ||
       '';
 
     return { site_id, detail: json };
@@ -169,8 +180,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { access_token, refresh_token, ...rest } = json || {};
     let site_id =
       json?.authorized_user?.site?.id ||
+      json?.authorized_user?.site?._id ||
+      json?.authorized_user?.site?.siteId ||
       json?.authorized_user?.site_id ||
+      json?.authorized_user?.selected_site_id ||
+      json?.authorized_user?.selected_site?.id ||
+      json?.authorized_user?.selected_site?._id ||
       json?.authorized_user?.sites?.[0]?.id ||
+      json?.authorized_user?.sites?.[0]?._id ||
+      json?.authorized_user?.sites?.[0]?.siteId ||
+      json?.site?.id ||
+      json?.site?._id ||
+      json?.site?.siteId ||
       json?.site_id ||
       '';
 
@@ -182,13 +203,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (!site_id) {
         warning = 'Webflow did not return a site_id; ensure include=authorized_user&include=site in OAuth and that a site was selected.';
       }
-    }
-
-    if (!site_id) {
-      return sendError(res, 400, 'Missing site_id from Webflow token exchange.', {
-        site_id,
-        warning: warning || null,
-      });
     }
 
     return res.status(200).json({
