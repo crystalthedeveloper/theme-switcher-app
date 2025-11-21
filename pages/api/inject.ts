@@ -143,31 +143,57 @@ type CustomCodeError = {
   };
 };
 
-const fetchCustomCode = async (siteId: string, token: string): Promise<CustomCodeSuccess | CustomCodeError> => {
+const resolveSiteContext = async (
+  siteId: string,
+  token: string,
+): Promise<{ basePath: typeof SITE_PATHS[number]; workspaceId?: string } | null> => {
   for (const path of SITE_PATHS) {
-    const url = `https://api.webflow.com/${path}/${siteId}/custom-code/settings`;
+    const url = `https://api.webflow.com/v2/${path}/${siteId}`;
     const headers: Record<string, string> = {
       Authorization: `Bearer ${token}`,
-      'Accept-Version': ACCEPT_VERSION,
+      'accept-version': ACCEPT_VERSION,
     };
 
     const { response, text } = await fetchWithRetries(siteId, token, url, { method: 'GET', headers });
-
-    if (response.status === 404) {
+    if (response.status === 404 || response.status === 403) {
       continue;
     }
-
     if (!response.ok) {
-      return { error: { status: response.status, body: text, path } };
+      console.warn(`⚠️ Unable to resolve site context for ${path}`, response.status, text);
+      continue;
     }
 
     const payload = (await safeJson(
       new Response(text, { headers: { 'Content-Type': 'application/json' } }),
-    )) as { head?: string; footer?: string } | null;
-    return { code: payload || {}, basePath: path };
+    )) as { workspaceId?: string } | null;
+
+    return { basePath: path, workspaceId: payload?.workspaceId };
   }
 
-  return { error: { status: 404, body: 'RouteNotFound: Custom Code API not enabled for this site/workspace' } };
+  return null;
+};
+
+const fetchCustomCode = async (
+  siteId: string,
+  token: string,
+  basePath: typeof SITE_PATHS[number],
+): Promise<CustomCodeSuccess | CustomCodeError> => {
+  const url = `https://api.webflow.com/${basePath}/${siteId}/custom-code/settings`;
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    'Accept-Version': ACCEPT_VERSION,
+  };
+
+  const { response, text } = await fetchWithRetries(siteId, token, url, { method: 'GET', headers });
+
+  if (!response.ok) {
+    return { error: { status: response.status, body: text, path: basePath } };
+  }
+
+  const payload = (await safeJson(
+    new Response(text, { headers: { 'Content-Type': 'application/json' } }),
+  )) as { head?: string; footer?: string } | null;
+  return { code: payload || {}, basePath };
 };
 
 const patchHead = async (siteId: string, token: string, basePath: string, head: string) => {
@@ -210,7 +236,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!token) return sendError(res, 401, 'Missing access token');
 
   try {
-    const customCodeResult = await fetchCustomCode(siteId, token);
+    const context = await resolveSiteContext(siteId, token);
+    if (!context) {
+      return sendError(
+        res,
+        404,
+        'Custom Code API not enabled for this site/workspace. Select a site from a workspace with Custom Code API access.',
+      );
+    }
+
+    const customCodeResult = await fetchCustomCode(siteId, token, context.basePath);
 
     if ('error' in customCodeResult) {
       const { status, body } = customCodeResult.error;
