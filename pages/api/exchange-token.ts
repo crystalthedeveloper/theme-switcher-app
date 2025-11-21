@@ -133,12 +133,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const { access_token, refresh_token, ...rest } = json || {};
+    const site_id = (json && (json.site_id || json?.authorized_user?.site_id)) || '';
+    const warning = site_id ? undefined : 'Webflow did not return a site_id in the token response.';
 
     return res.status(200).json({
       success: true,
       ...rest,
       access_token,
       refresh_token,
+      site_id,
+      warning,
     });
   } catch (err: any) {
     return sendError(res, 500, 'Unexpected error during token exchange.', err?.message || err);
