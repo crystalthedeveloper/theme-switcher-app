@@ -14,6 +14,7 @@ export default function Callback() {
   const [error, setError] = useState('');
   const [errorDetail, setErrorDetail] = useState('');
   const hasResponded = useRef(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const defaultDetailFor = (message: string) => {
     if (!message) {
@@ -48,13 +49,18 @@ export default function Callback() {
   };
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       if (loading && !hasResponded.current) {
         console.warn('⏰ Exchange timeout triggered after 15 seconds');
         setErrorAndStop('Request timed out. Please try again.');
       }
     }, 15000);
-    return () => clearTimeout(timeout);
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
   }, [loading]);
 
   useEffect(() => {
@@ -136,8 +142,16 @@ export default function Callback() {
         storage.setItem('webflow_last_registration', 'success');
 
         hasResponded.current = true;
+        setLoading(false);
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
         const redirectUrl = isTest ? '/installed?test=true' : '/installed';
-        window.location.replace(redirectUrl);
+        setTimeout(() => {
+          window.location.href = redirectUrl;
+        }, 40);
+        return;
       } catch (err: any) {
         console.error('❌ Exchange error:', err);
         const message = err?.message || 'Token exchange failed.';
@@ -156,6 +170,8 @@ export default function Callback() {
     if (!loading && !error) return 'success';
     return undefined;
   }, [loading, error]);
+
+  if (hasResponded.current) return null;
 
   return (
     <div className={shellStyles.shell}>
