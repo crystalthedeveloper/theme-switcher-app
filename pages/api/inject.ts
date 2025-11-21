@@ -143,10 +143,19 @@ type CustomCodeError = {
   };
 };
 
+type SiteMeta = {
+  workspaceId?: string;
+  capabilities?: {
+    customCodeApiAccess?: boolean;
+    custom_code_api_access?: boolean;
+    customCode?: { enabled?: boolean };
+  };
+};
+
 const resolveSiteContext = async (
   siteId: string,
   token: string,
-): Promise<{ basePath: typeof SITE_PATHS[number]; workspaceId?: string } | null> => {
+): Promise<{ basePath: typeof SITE_PATHS[number]; workspaceId?: string; supportsCustomCode: boolean } | null> => {
   for (const path of SITE_PATHS) {
     const url = `https://api.webflow.com/v2/${path}/${siteId}`;
     const headers: Record<string, string> = {
@@ -165,9 +174,14 @@ const resolveSiteContext = async (
 
     const payload = (await safeJson(
       new Response(text, { headers: { 'Content-Type': 'application/json' } }),
-    )) as { workspaceId?: string } | null;
+    )) as SiteMeta | null;
 
-    return { basePath: path, workspaceId: payload?.workspaceId };
+    const supportsCustomCode =
+      !!payload?.capabilities?.customCodeApiAccess ||
+      !!payload?.capabilities?.custom_code_api_access ||
+      !!payload?.capabilities?.customCode?.enabled;
+
+    return { basePath: path, workspaceId: payload?.workspaceId, supportsCustomCode };
   }
 
   return null;
@@ -242,6 +256,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         res,
         404,
         'Custom Code API not enabled for this site/workspace. Select a site from a workspace with Custom Code API access.',
+      );
+    }
+
+    if (!context.supportsCustomCode) {
+      return sendError(
+        res,
+        403,
+        'Custom Code API is not enabled for this site/workspace. Choose a site in a workspace with Custom Code API access.',
       );
     }
 
