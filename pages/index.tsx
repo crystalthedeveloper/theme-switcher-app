@@ -47,7 +47,7 @@ export default function Home() {
   const clientId = process.env.NEXT_PUBLIC_WEBFLOW_CLIENT_ID;
   const redirectUri = process.env.NEXT_PUBLIC_WEBFLOW_REDIRECT_URI;
 
-  const authURL = `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&scope=custom_code:read custom_code:write sites:read sites:write pages:read pages:write authorized_user:read&prompt=consent${redirectUri ? `&redirect_uri=${encodeURIComponent(redirectUri)}` : ''}`;
+  const authURL = `https://webflow.com/oauth/authorize?client_id=${clientId}&response_type=code&scope=custom_code:read custom_code:write sites:read sites:write pages:read pages:write authorized_user:read&prompt=consent&include=authorized_user${redirectUri ? `&redirect_uri=${encodeURIComponent(redirectUri)}` : ''}`;
 
   const handleInjectClick = async () => {
     setInjecting(true);

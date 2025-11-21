@@ -133,8 +133,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const { access_token, refresh_token, ...rest } = json || {};
-    const site_id = (json && (json.site_id || json?.authorized_user?.site_id)) || '';
-    const warning = site_id ? undefined : 'Webflow did not return a site_id in the token response.';
+    const site_id =
+      json?.authorized_user?.site?.id ||
+      json?.authorized_user?.site_id ||
+      json?.authorized_user?.sites?.[0]?.id ||
+      json?.site_id ||
+      '';
+    const warning = site_id ? undefined : 'Webflow did not return a site_id (check authorized_user scopes/includes).';
 
     return res.status(200).json({
       success: true,
