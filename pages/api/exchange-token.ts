@@ -74,7 +74,7 @@ const invalidGrantMessage = () =>
 
 const fetchAuthorizedUserSiteId = async (token: string) => {
   try {
-    const url = 'https://api.webflow.com/authorized-user?include=sites';
+    const url = 'https://api.webflow.com/authorized-user?include=sites,site';
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -91,29 +91,43 @@ const fetchAuthorizedUserSiteId = async (token: string) => {
       // ignore parse error; will return empty
     }
 
-    const site_id =
-      json?.site?.id ||
-      json?.site?._id ||
-      json?.site?.siteId ||
-      json?.site_id ||
-      json?.authorized_user?.site?.id ||
-      json?.authorized_user?.site?._id ||
-      json?.authorized_user?.site?.siteId ||
-      json?.authorized_user?.site_id ||
-      json?.authorized_user?.selected_site_id ||
-      json?.authorized_user?.selected_site?.id ||
-      json?.authorized_user?.selected_site?._id ||
-      json?.authorized_user?.sites?.[0]?.id ||
-      json?.authorized_user?.sites?.[0]?._id ||
-      json?.authorized_user?.sites?.[0]?.siteId ||
-      json?.sites?.[0]?.id ||
-      json?.sites?.[0]?._id ||
-      json?.sites?.[0]?.siteId ||
-      '';
+    const candidates = new Set<string>();
 
-    return { site_id, detail: json };
+    const add = (val?: string) => {
+      if (val && typeof val === 'string') candidates.add(val);
+    };
+
+    add(json?.site?.id);
+    add(json?.site?._id);
+    add(json?.site?.siteId);
+    add(json?.site_id);
+
+    add(json?.authorized_user?.site?.id);
+    add(json?.authorized_user?.site?._id);
+    add(json?.authorized_user?.site?.siteId);
+    add(json?.authorized_user?.site_id);
+    add(json?.authorized_user?.selected_site_id);
+    add(json?.authorized_user?.selected_site?.id);
+    add(json?.authorized_user?.selected_site?._id);
+
+    (json?.authorized_user?.sites || []).forEach((s: any) => {
+      add(s?.id);
+      add(s?._id);
+      add(s?.siteId);
+    });
+
+    (json?.sites || []).forEach((s: any) => {
+      add(s?.id);
+      add(s?._id);
+      add(s?.siteId);
+    });
+
+    const site_candidates = Array.from(candidates);
+    const site_id = site_candidates[0] || '';
+
+    return { site_id, site_candidates, detail: json };
   } catch (err) {
-    return { site_id: '', detail: err };
+    return { site_id: '', site_candidates: [], detail: err };
   }
 };
 
@@ -195,12 +209,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       json?.site_id ||
       '';
 
+    let site_candidates: string[] = [];
     let warning: string | undefined;
 
     if (!site_id && access_token) {
       const fallback = await fetchAuthorizedUserSiteId(access_token);
       site_id = fallback.site_id;
-      if (!site_id) {
+      site_candidates = fallback.site_candidates || [];
+      if (!site_id && site_candidates.length > 0) {
+        site_id = site_candidates[0];
+        warning = 'Using first site from authorized-user response; Webflow did not return explicit site_id.';
+      } else if (!site_id) {
         warning = 'Webflow did not return a site_id; ensure include=authorized_user&include=site in OAuth and that a site was selected.';
       }
     }
@@ -211,6 +230,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       access_token,
       refresh_token,
       site_id,
+      site_candidates,
       warning,
     });
   } catch (err: any) {
