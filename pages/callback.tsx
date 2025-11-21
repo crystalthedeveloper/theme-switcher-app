@@ -75,46 +75,22 @@ export default function Callback() {
       }
 
       const access = json.access_token;
-      const siteId = json.site_id;
+      const siteId = json.site_id || json.site?.id || json.site?._id || json.site?.siteId || json?.authorized_user?.site_id;
 
-      if (!access || !siteId) {
-        return fail("Missing access token or site_id.");
+      if (!access) {
+        return fail("Missing access token.");
       }
 
       // Store to sessionStorage
       const storage = window.sessionStorage;
       storage.setItem('webflow_token', access);
-      storage.setItem('webflow_site_id', siteId);
+      if (siteId) {
+        storage.setItem('webflow_site_id', siteId);
+      }
       storage.setItem('webflow_app_installed', 'true');
 
       // -------------------------------
-      // 2) INJECT SCRIPT
-      // -------------------------------
-      const inject = await fetch('/api/inject', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${access}`,
-        },
-        body: JSON.stringify({ siteId }),
-      });
-
-      let injectJson: any = {};
-      try {
-        injectJson = await inject.json();
-      } catch (err) {
-        console.warn("⚠️ Inject JSON parse warning:", err);
-      }
-
-      if (!inject.ok || !injectJson.success) {
-        console.error("❌ Injection failed:", injectJson);
-        return fail("Script registration failed.");
-      }
-
-      storage.setItem('webflow_last_registration', 'success');
-
-      // -------------------------------
-      // 3) REDIRECT SAFELY
+      // 2) REDIRECT SAFELY
       // -------------------------------
       successRedirect();
 
