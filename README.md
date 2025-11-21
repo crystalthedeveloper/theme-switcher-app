@@ -59,7 +59,6 @@ NEXT_PUBLIC_BASE_URL=https://theme-toggle-webflow.vercel.app
 NEXT_PUBLIC_WEBFLOW_CLIENT_ID=your_webflow_client_id
 WEBFLOW_CLIENT_SECRET=your_webflow_client_secret
 WEBFLOW_REDIRECT_URI=https://theme-toggle-webflow.vercel.app/callback
-NEXT_PUBLIC_WEBFLOW_WORKSPACE_ID=your_webflow_workspace_internal_id # e.g., 66af73ece9dd4200080f8b56
 ```
 
 ---
