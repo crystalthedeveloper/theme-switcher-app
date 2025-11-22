@@ -193,15 +193,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!token) return sendError(res, 401, 'Missing access token');
 
   try {
-    const context = await resolveSiteContext(siteId, token);
-    if (!context) {
-      return sendError(
-        res,
-        404,
-        'Custom Code API not enabled for this site/workspace. Select a site from a workspace with Custom Code API access.',
-      );
-    }
-
     const current = await fetchCurrentCustomCode(siteId, token);
     const currentHead = current.head || '';
     const currentFooter = current.footer || '';
