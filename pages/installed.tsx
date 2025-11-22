@@ -138,15 +138,9 @@ export default function Installed() {
 
   const handleInjectClick = async () => {
     const targetSiteId = selectedSiteId || siteId;
-    const selectedSite = findSelectedSite(targetSiteId);
     if (!token || !targetSiteId) {
       console.warn('❌ Cannot inject — missing token or siteId:', { token, targetSiteId });
       setMessage('❌ Missing token or site ID.');
-      return;
-    }
-
-    if (selectedSite && selectedSite.supportsCustomCodeApi === false) {
-      setMessage('❌ Custom Code API is not enabled for this workspace. Pick another site.');
       return;
     }
 
