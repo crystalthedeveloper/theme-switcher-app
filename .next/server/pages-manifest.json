@@ -1,8 +1,8 @@
 {
   "/api/exchange-token": "pages/api/exchange-token.js",
   "/callback": "pages/callback.html",
-  "/": "pages/index.html",
   "/privacy": "pages/privacy.html",
+  "/": "pages/index.html",
   "/success": "pages/success.html",
   "/terms": "pages/terms.html",
   "/_app": "pages/_app.js",

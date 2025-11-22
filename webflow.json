@@ -1,0 +1,7 @@
+{
+  "name": "Theme Switcher",
+  "slug": "theme-switcher",
+  "version": "1.0.0",
+  "engine": "0.2.0",
+  "source": "src/index.html"
+}
