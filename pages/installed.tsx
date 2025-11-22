@@ -28,14 +28,6 @@ export default function Installed() {
   const [sitesLoading, setSitesLoading] = useState(false);
   const [sitesError, setSitesError] = useState('');
 
-  const findSelectedSite = (id: string) => {
-    for (const ws of workspaceGroups) {
-      const found = ws.sites.find((s) => s.id === id);
-      if (found) return found;
-    }
-    return ungroupedSites.find((s) => s.id === id);
-  };
-
   useEffect(() => {
     const storage = window.sessionStorage;
 
@@ -118,17 +110,11 @@ export default function Installed() {
           .flatMap((workspace: any) => workspace.sites || [])
           .concat(ungroupedList);
 
-        const eligibleSites = flattenedPreferredList.filter(
-          (item: any) => item.supportsCustomCodeApi ?? workspaceList.find((w: any) => w.id === item.workspaceId)?.supportsCustomCodeApi,
-        );
-
         if (
           !flattenedPreferredList.some((item: any) => item.id === selectedSiteId) &&
           flattenedPreferredList.length > 0
         ) {
           const preferred =
-            eligibleSites.find((item: any) => item.id === siteId) ||
-            eligibleSites[0] ||
             flattenedPreferredList.find((item: any) => item.id === siteId) ||
             flattenedPreferredList[0];
           if (preferred) {
@@ -229,14 +215,10 @@ export default function Installed() {
               >
                 <option value="">Select a Webflow site…</option>
                 {workspaceGroups.map((workspace) => (
-                  <optgroup
-                    key={workspace.id}
-                    label={`${workspace.name}${workspace.supportsCustomCodeApi ? '' : ' (no Custom Code API)'}`}
-                  >
+                  <optgroup key={workspace.id} label={workspace.name}>
                     {workspace.sites.map((site) => (
-                      <option key={site.id} value={site.id} disabled={site.supportsCustomCodeApi === false}>
+                      <option key={site.id} value={site.id}>
                         {site.name}
-                        {site.supportsCustomCodeApi === false ? ' — not eligible' : ''}
                       </option>
                     ))}
                   </optgroup>
@@ -244,17 +226,15 @@ export default function Installed() {
                 {workspaceGroups.length > 0 && ungroupedSites.length > 0 ? (
                   <optgroup label="Other Sites">
                     {ungroupedSites.map((site) => (
-                      <option key={site.id} value={site.id} disabled={site.supportsCustomCodeApi === false}>
+                      <option key={site.id} value={site.id}>
                         {site.name}
-                        {site.supportsCustomCodeApi === false ? ' — not eligible' : ''}
                       </option>
                     ))}
                   </optgroup>
                 ) : (
                   ungroupedSites.map((site) => (
-                    <option key={site.id} value={site.id} disabled={site.supportsCustomCodeApi === false}>
+                    <option key={site.id} value={site.id}>
                       {site.name}
-                      {site.supportsCustomCodeApi === false ? ' — not eligible' : ''}
                     </option>
                   ))
                 )}
@@ -265,23 +245,13 @@ export default function Installed() {
                   {sitesError}
                 </p>
               )}
-              {selectedSiteId && findSelectedSite(selectedSiteId)?.supportsCustomCodeApi === false && (
-                <p style={{ color: '#b00000', fontSize: '0.9rem' }} role="alert">
-                  Custom Code API is not enabled for this workspace. Choose a site from another workspace.
-                </p>
-              )}
             </div>
 
             <div className={styles.controls}>
               <button
                 className={styles.buttonPrimary}
                 onClick={handleInjectClick}
-                disabled={
-                  injecting ||
-                  !token ||
-                  !selectedSiteId ||
-                  (selectedSiteId ? findSelectedSite(selectedSiteId)?.supportsCustomCodeApi === false : false)
-                }
+                disabled={injecting || !token || !selectedSiteId}
               >
                 {injecting ? 'Refreshing…' : 'Re-register Theme Switcher Script'}
               </button>

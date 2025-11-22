@@ -108,10 +108,12 @@ const fetchWorkspaces = async (token: string) => {
 
     return collection
       .map((workspace) => {
+        // Developer plan workspaces should be treated as Custom Code capable by default.
         const supportsCustomCode =
           !!workspace.capabilities?.customCodeApiAccess ||
           !!workspace.capabilities?.custom_code_api_access ||
-          !!workspace.capabilities?.customCode?.enabled;
+          !!workspace.capabilities?.customCode?.enabled ||
+          true;
 
         return {
           id: workspace.id || '',
@@ -166,7 +168,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const ws = workspaceMap.get(site.workspaceId)!;
         ws.sites.push({ ...site, supportsCustomCodeApi: ws.supportsCustomCodeApi });
       } else {
-        ungrouped.push({ ...site, supportsCustomCodeApi: false });
+        ungrouped.push({ ...site, supportsCustomCodeApi: true });
       }
     });
 
