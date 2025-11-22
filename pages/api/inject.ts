@@ -250,8 +250,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if ('error' in customCodeResult) {
       const { status, body } = customCodeResult.error;
-      if (status === 404) {
-        return sendError(res, 404, 'RouteNotFound: Custom Code API not enabled for this site/workspace');
+      if (status === 404 || status === 403) {
+        return res.status(200).json({
+          success: false,
+          message:
+            'Custom Code API is not available for this site/workspace. If you can edit Custom Code in the Webflow Designer, please paste the Theme Switcher snippet manually.',
+          detail: body,
+        });
       }
       return sendError(res, status || 500, 'Failed to load custom code settings', body);
     }
