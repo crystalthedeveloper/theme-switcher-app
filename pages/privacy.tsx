@@ -14,16 +14,14 @@ export default function Privacy() {
           We only request the permissions required to register the Theme Switcher script in your Webflow site.
         </p>
 
-        <ul className={shellStyles.list}>
-          <li>Access tokens are stored in <code>sessionStorage</code> for the current browser session only.</li>
-          <li>No tokens are logged or persisted server-side beyond transient request handling.</li>
-          <li>Only the Webflow Data (REST) API is used for authorization, site lookup, and Custom Code updates.</li>
-          <li>No end-user visitor data is collected.</li>
-          <li>You can revoke access anytime from Webflow Apps &amp; Integrations.</li>
-        </ul>
+        <p className={shellStyles.subheading}>
+          Access tokens are stored in sessionStorage for the current browser session only. No tokens are logged or
+          persisted server-side beyond transient request handling. Only Webflow authorization APIs are used; no
+          end-user visitor data is collected. You can revoke access anytime from Webflow Apps &amp; Integrations.
+        </p>
 
         <p className={shellStyles.footer}>
-          Questions? <a href="mailto:support@crystalthedeveloper.com">support@crystalthedeveloper.com</a>
+          Questions? <a href="mailto:contact@crystalthedeveloper.ca">contact@crystalthedeveloper.ca</a>
         </p>
       </main>
     </div>
