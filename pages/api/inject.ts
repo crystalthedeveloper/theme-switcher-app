@@ -15,7 +15,6 @@ const SCRIPT_BLOCK = [
   MARKER_END,
 ].join('\n');
 
-const SITE_PATHS = ['sites', 'dev-sites'] as const;
 const ACCEPT_VERSION = '1.0.0';
 const HEAD_SIZE_LIMIT_BYTES = 200 * 1024;
 const RETRY_DELAYS = [0, 300, 1000, 3000];
@@ -130,89 +129,46 @@ const fetchWithRetries = async (
   return { response: lastResponse, text: lastBody };
 };
 
-type CustomCodeSuccess = {
-  code: { head?: string; footer?: string };
-  basePath: typeof SITE_PATHS[number];
-};
+type CustomCodePayload = { head?: string; footer?: string };
 
-type CustomCodeError = {
-  error: {
-    status: number;
-    body: string;
-    path?: typeof SITE_PATHS[number];
-  };
-};
+const customCodeUrl = (siteId: string) => `https://api.webflow.com/v1/sites/${siteId}/customcode`;
 
-const resolveSiteContext = async (
-  siteId: string,
-  token: string,
-): Promise<{ basePath: typeof SITE_PATHS[number]; workspaceId?: string } | null> => {
-  for (const path of SITE_PATHS) {
-    const url = `https://api.webflow.com/v2/${path}/${siteId}`;
-    const headers: Record<string, string> = {
-      Authorization: `Bearer ${token}`,
-      'accept-version': ACCEPT_VERSION,
-    };
-
-    const { response, text } = await fetchWithRetries(siteId, token, url, { method: 'GET', headers });
-    if (response.status === 404 || response.status === 403) {
-      continue;
-    }
-    if (!response.ok) {
-      console.warn(`⚠️ Unable to resolve site context for ${path}`, response.status, text);
-      continue;
-    }
-
-    const payload = (await safeJson(
-      new Response(text, { headers: { 'Content-Type': 'application/json' } }),
-    )) as { workspaceId?: string } | null;
-
-    // Assume Custom Code API is available for developer/eligible workspaces (no hard capability gating)
-    return { basePath: path, workspaceId: payload?.workspaceId };
-  }
-
-  return null;
-};
-
-const fetchCustomCode = async (
-  siteId: string,
-  token: string,
-  basePath: typeof SITE_PATHS[number],
-): Promise<CustomCodeSuccess | CustomCodeError> => {
-  const url = `https://api.webflow.com/${basePath}/${siteId}/custom-code/settings`;
+const fetchCurrentCustomCode = async (siteId: string, token: string): Promise<CustomCodePayload> => {
   const headers: Record<string, string> = {
     Authorization: `Bearer ${token}`,
-    'Accept-Version': ACCEPT_VERSION,
+    'accept-version': ACCEPT_VERSION,
   };
 
-  const { response, text } = await fetchWithRetries(siteId, token, url, { method: 'GET', headers });
+  const { response, text } = await fetchWithRetries(siteId, token, customCodeUrl(siteId), { method: 'GET', headers });
 
   if (!response.ok) {
-    return { error: { status: response.status, body: text, path: basePath } };
+    console.warn('⚠️ Unable to read existing custom code; proceeding with empty head', {
+      status: response.status,
+      body: text,
+    });
+    return { head: '', footer: '' };
   }
 
   const payload = (await safeJson(
     new Response(text, { headers: { 'Content-Type': 'application/json' } }),
-  )) as { head?: string; footer?: string } | null;
-  return { code: payload || {}, basePath };
+  )) as CustomCodePayload | null;
+
+  return payload || { head: '', footer: '' };
 };
 
-const patchHead = async (siteId: string, token: string, basePath: string, head: string) => {
-  const url = `https://api.webflow.com/${basePath}/${siteId}/custom-code/settings`;
+const patchCustomCode = async (siteId: string, token: string, head: string, footer: string) => {
   const headers: Record<string, string> = {
     Authorization: `Bearer ${token}`,
-    'Accept-Version': ACCEPT_VERSION,
+    'accept-version': ACCEPT_VERSION,
     'Content-Type': 'application/json',
   };
 
-  const body = JSON.stringify({ head });
-  const { response, text } = await fetchWithRetries(siteId, token, url, {
+  const body = JSON.stringify({ head, footer });
+  return fetchWithRetries(siteId, token, customCodeUrl(siteId), {
     method: 'PATCH',
     headers,
     body,
   });
-
-  return { response, text };
 };
 
 const sendError = (
@@ -246,23 +202,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       );
     }
 
-    const customCodeResult = await fetchCustomCode(siteId, token, context.basePath);
-
-    if ('error' in customCodeResult) {
-      const { status, body } = customCodeResult.error;
-      if (status === 404 || status === 403) {
-        return res.status(200).json({
-          success: false,
-          message:
-            'Custom Code API is not available for this site/workspace. If you can edit Custom Code in the Webflow Designer, please paste the Theme Switcher snippet manually.',
-          detail: body,
-        });
-      }
-      return sendError(res, status || 500, 'Failed to load custom code settings', body);
-    }
-
-    const { code, basePath } = customCodeResult;
-    const currentHead = code.head || '';
+    const current = await fetchCurrentCustomCode(siteId, token);
+    const currentHead = current.head || '';
+    const currentFooter = current.footer || '';
     const mergedHead = mergeHead(currentHead);
 
     if (Buffer.byteLength(mergedHead, 'utf8') > HEAD_SIZE_LIMIT_BYTES) {
@@ -281,7 +223,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({ success: true, message: 'No change; marker already present' });
     }
 
-    const { response: patchResponse, text: patchText } = await patchHead(siteId, token, basePath, mergedHead);
+    const { response: patchResponse, text: patchText } = await patchCustomCode(
+      siteId,
+      token,
+      mergedHead,
+      currentFooter || '',
+    );
 
     if (!patchResponse.ok) {
       const detail = patchText || 'Unknown error';

@@ -159,7 +159,7 @@ export default function Installed() {
       });
 
       const data = await res.json();
-      setMessage(data.success ? '✅ Theme Switcher script refreshed!' : `❌ ${data.message || 'Injection failed'}`);
+      setMessage(data.success ? '✅ Theme Switcher script injected!' : `❌ ${data.message || 'Injection failed'}`);
     } catch (err) {
       console.error('❌ Injection error:', err);
       setMessage('❌ Script injection error.');
