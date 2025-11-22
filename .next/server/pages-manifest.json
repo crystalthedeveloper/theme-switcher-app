@@ -1,10 +1,10 @@
 {
-  "/api/exchange-token": "pages/api/exchange-token.js",
   "/callback": "pages/callback.html",
   "/privacy": "pages/privacy.html",
-  "/": "pages/index.html",
-  "/success": "pages/success.html",
+  "/api/exchange-token": "pages/api/exchange-token.js",
   "/terms": "pages/terms.html",
+  "/success": "pages/success.html",
+  "/": "pages/index.html",
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
