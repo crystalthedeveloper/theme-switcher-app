@@ -1,6 +1,6 @@
 # 🌓 Theme Switcher App for Webflow
 
-A simple OAuth-powered Webflow app + Designer extension that injects the Theme Switcher script into your project head.
+Designer extension that injects the Theme Switcher script into your project head (no REST injection).
 
 ---
 
@@ -17,11 +17,10 @@ A simple OAuth-powered Webflow app + Designer extension that injects the Theme S
 
 ## 🚀 How It Works
 
-1. User clicks **Connect to Webflow**
-2. OAuth exchange returns `access_token` + `site_id`
-3. App shows status and copyable script
-4. Open the Designer extension and click **Enable Theme Switcher**
-5. Script is injected into head automatically; publish to go live
+1. Install the app from the Webflow Apps panel.
+2. Open **Webflow Designer → Apps → Theme Switcher**.
+3. Click **Enable Theme Switcher**; the extension injects the script into the project head.
+4. Publish your site.
 
 ---
 
@@ -39,9 +38,9 @@ The Designer extension injects:
 
 | Page | Purpose |
 |------|---------|
-| `/` | Home page with "Connect to Webflow" button |
-| `/callback` | Handles Webflow OAuth and token exchange |
-| `/installed` | Post-auth confirmation and extension guidance |
+| `/` | Homepage with extension instructions |
+| `/callback` | (If enabled) Handles Webflow OAuth and token exchange |
+| `/success` | Post-auth confirmation |
 | `/public/extension.js` | Webflow Designer Extension UI (auto-injects via Designer API) |
 
 ---
@@ -70,7 +69,7 @@ WEBFLOW_REDIRECT_URI=https://theme-toggle-webflow.vercel.app/callback
 
 ## 🧾 Marketplace Notes
 
-- Uses **Webflow OAuth** + **Designer Extension API** for injection
+- Uses **Designer Extension API** for injection (no REST Custom Code calls)
 - All actions require **user confirmation**
 - Fully uninstallable via Webflow **Apps & Integrations**
 
@@ -78,11 +77,10 @@ WEBFLOW_REDIRECT_URI=https://theme-toggle-webflow.vercel.app/callback
 
 ## ✅ Review Checklist (Webflow)
 
-- **Scopes requested**: `custom_code:read custom_code:write sites:read sites:write pages:read pages:write authorized_user:read` (drop `pages:write` if not required).
-- **Includes**: `include=authorized_user&include=site` in the authorize URL to fetch user/site context.
-- **Redirect URI**: `https://theme-toggle-webflow.vercel.app/callback` (must match in Webflow app settings).
+- **Scopes requested**: Minimal (Designer Extension only; no REST injection).
+- **Redirect URI**: `https://theme-toggle-webflow.vercel.app/callback` (if OAuth is enabled).
 - **Paid-plan note**: Custom Code requires a paid/hosted Webflow site; free sites will not auto-inject.
-- **Success callback**: `/callback` performs exchange → redirects to `/installed`; injection is performed via the Designer extension.
+- **Success callback**: `/callback` performs exchange → redirects to `/success`; injection is performed via the Designer extension.
 - **Uninstall**: Users can remove access in Webflow Apps & Integrations; tokens are stored only in `sessionStorage` and not persisted server-side.
 - **Policies**: Privacy Policy at `/privacy`; Terms of Use at `/terms`; support link `mailto:support@crystalthedeveloper.com`.
 

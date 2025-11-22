@@ -85,18 +85,13 @@ export default function Callback() {
       }
 
       const access = json.access_token;
-      const siteId = json.site_id || json.site?.id || json.site?._id || json.site?.siteId || json?.authorized_user?.site_id;
 
       if (!access) {
         return fail("Missing access token.");
       }
 
-      // Store to sessionStorage
+      // Mark installed (token is not needed for Designer extension flow)
       const storage = window.sessionStorage;
-      storage.setItem('webflow_token', access);
-      if (siteId) {
-        storage.setItem('webflow_site_id', siteId);
-      }
       storage.setItem('webflow_app_installed', 'true');
 
       // -------------------------------
@@ -120,7 +115,7 @@ export default function Callback() {
 
     // Must use microtask to avoid hydration re-renders
     queueMicrotask(() => {
-      window.location.href = '/installed';
+      window.location.href = '/success';
     });
   };
 

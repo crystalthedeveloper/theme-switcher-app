@@ -18,8 +18,8 @@ export default function Success() {
 
         <h1 className={shellStyles.heading}>Theme Switcher Installed</h1>
         <p className={shellStyles.subheading}>
-          Your Webflow site is now powered by Theme Switcher. Reopen the app anytime to refresh the script or update
-          your settings.
+          Your Webflow site is now powered by Theme Switcher. Open Webflow Designer → Apps → Theme Switcher and click
+          “Enable” if you need to refresh the script.
         </p>
 
         <div className={shellStyles.controls}>
