@@ -1,16 +1,13 @@
 # 🌓 Theme Switcher App for Webflow
 
-A simple OAuth-powered Webflow app that helps users toggle between dark and light themes on their site — with a clean UI and a one-click script copy.
-
-> ⚠️ Webflow does **not currently support automatic script injection** into Site or Page Settings via the API. Users must **manually paste** the script into **Site Settings → Custom Code**.
+A simple OAuth-powered Webflow app + Designer extension that injects the Theme Switcher script into your project head.
 
 ---
 
 ## ✨ Features
 
 - 🔐 Secure OAuth flow with Webflow
-- 🧩 Webflow Designer Extension with install buttons
-- 🎨 One-click script copy for easy manual paste
+- 🧩 Webflow Designer Extension with one-click injection
 - 🧼 Clean, accessible UI built in Next.js
 - 📱 Mobile-friendly and responsive layout
 - ✅ Session-based install status detection
@@ -23,14 +20,14 @@ A simple OAuth-powered Webflow app that helps users toggle between dark and ligh
 1. User clicks **Connect to Webflow**
 2. OAuth exchange returns `access_token` + `site_id`
 3. App shows status and copyable script
-4. User pastes script into Webflow **Footer Code**
-5. Done — theme switcher works on all published pages
+4. Open the Designer extension and click **Enable Theme Switcher**
+5. Script is injected into head automatically; publish to go live
 
 ---
 
-## 🧩 Script to Add
+## 🧩 Script Injected
 
-Paste this in **Webflow → Site Settings → Custom Code → Footer Code**:
+The Designer extension injects:
 
 ```html
 <script src="https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js" defer></script>
@@ -44,9 +41,8 @@ Paste this in **Webflow → Site Settings → Custom Code → Footer Code**:
 |------|---------|
 | `/` | Home page with "Connect to Webflow" button |
 | `/callback` | Handles Webflow OAuth and token exchange |
-| `/installed` | (Optional) Post-auth confirmation and re-injection |
-| `/public/extension.js` | Webflow Designer Extension UI |
-| `/api/inject` | Calls Webflow's PATCH `/custom-code` endpoint |
+| `/installed` | Post-auth confirmation and extension guidance |
+| `/public/extension.js` | Webflow Designer Extension UI (auto-injects via Designer API) |
 
 ---
 
@@ -65,17 +61,16 @@ WEBFLOW_REDIRECT_URI=https://theme-toggle-webflow.vercel.app/callback
 
 ## 🧪 Testing Notes
 
-- ✅ Works on **paid or hosted Webflow sites**
-- 🚫 Won’t auto-inject on free projects (Webflow restriction)
-- 🧩 Designer extension gives fallback UI
+- ✅ Works on **paid or hosted Webflow sites** (Designer extension injects into head)
+- 🚫 Free projects cannot publish Custom Code
+- 🧩 Designer extension is the only injection path
 - 🔍 Add `?test=true` in the URL to enable console debug logs
 
 ---
 
 ## 🧾 Marketplace Notes
 
-- Uses only **Webflow Data (REST) API**
-- No auto-injection into Settings (against current policy)
+- Uses **Webflow OAuth** + **Designer Extension API** for injection
 - All actions require **user confirmation**
 - Fully uninstallable via Webflow **Apps & Integrations**
 
@@ -87,7 +82,7 @@ WEBFLOW_REDIRECT_URI=https://theme-toggle-webflow.vercel.app/callback
 - **Includes**: `include=authorized_user&include=site` in the authorize URL to fetch user/site context.
 - **Redirect URI**: `https://theme-toggle-webflow.vercel.app/callback` (must match in Webflow app settings).
 - **Paid-plan note**: Custom Code requires a paid/hosted Webflow site; free sites will not auto-inject.
-- **Success callback**: `/callback` performs exchange → injection → redirects to `/installed` (no visible error page on success).
+- **Success callback**: `/callback` performs exchange → redirects to `/installed`; injection is performed via the Designer extension.
 - **Uninstall**: Users can remove access in Webflow Apps & Integrations; tokens are stored only in `sessionStorage` and not persisted server-side.
 - **Policies**: Privacy Policy at `/privacy`; Terms of Use at `/terms`; support link `mailto:support@crystalthedeveloper.com`.
 

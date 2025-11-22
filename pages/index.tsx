@@ -51,26 +51,8 @@ export default function Home() {
 
   const handleInjectClick = async () => {
     setInjecting(true);
-    setMessage('');
-
-    try {
-      const res = await fetch('/api/inject', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ siteId }),
-      });
-
-      const data = await res.json();
-      setMessage(data.success ? '✅ Theme Switcher script refreshed!' : `❌ ${data.message || 'Injection failed'}`);
-    } catch (err) {
-      console.error('❌ Injection error:', err);
-      setMessage('❌ Script injection error.');
-    } finally {
-      setInjecting(false);
-    }
+    setMessage('Open Webflow Designer and click "Enable Theme Switcher" in the extension to inject automatically.');
+    setTimeout(() => setInjecting(false), 600);
   };
 
   return (
@@ -106,7 +88,7 @@ export default function Home() {
         ) : (
           <>
             <p className={styles.subheading} style={{ maxWidth: '460px', marginBottom: '1.5rem' }}>
-              The Theme Switcher script is registered automatically after install. Use the button below if you need to refresh it manually.
+              The Theme Switcher script is registered via the Webflow Designer extension. Click below for extension instructions.
             </p>
             <div className={styles.controls}>
               <button

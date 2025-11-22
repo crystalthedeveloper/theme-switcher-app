@@ -137,35 +137,11 @@ export default function Installed() {
   }, [token, siteId]);
 
   const handleInjectClick = async () => {
-    const targetSiteId = selectedSiteId || siteId;
-    if (!token || !targetSiteId) {
-      console.warn('❌ Cannot inject — missing token or siteId:', { token, targetSiteId });
-      setMessage('❌ Missing token or site ID.');
-      return;
-    }
-
     setInjecting(true);
-    setMessage('');
-    setAutoMessage('');
-
-    try {
-      const res = await fetch('/api/inject', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ siteId: targetSiteId }),
-      });
-
-      const data = await res.json();
-      setMessage(data.success ? '✅ Theme Switcher script injected!' : `❌ ${data.message || 'Injection failed'}`);
-    } catch (err) {
-      console.error('❌ Injection error:', err);
-      setMessage('❌ Script injection error.');
-    } finally {
-      setInjecting(false);
-    }
+    setMessage(
+      'Open Webflow Designer, launch the Theme Switcher extension, and click "Enable Theme Switcher" to inject automatically.'
+    );
+    setTimeout(() => setInjecting(false), 600);
   };
 
   return (
