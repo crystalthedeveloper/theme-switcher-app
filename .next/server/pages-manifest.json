@@ -1,11 +1,11 @@
 {
-  "/api/exchange-token": "pages/api/exchange-token.js",
-  "/_app": "pages/_app.js",
-  "/": "pages/index.html",
   "/callback": "pages/callback.html",
-  "/success": "pages/success.html",
+  "/": "pages/index.html",
   "/privacy": "pages/privacy.html",
+  "/api/exchange-token": "pages/api/exchange-token.js",
   "/terms": "pages/terms.html",
+  "/success": "pages/success.html",
+  "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/404": "pages/404.html"
