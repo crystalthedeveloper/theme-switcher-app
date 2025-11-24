@@ -1,5 +1,5 @@
 (() => {
-  const SCRIPT_SRC = 'https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher/theme-switcher.js';
+  const SCRIPT_SRC = 'https://cdn.jsdelivr.net/gh/crystalthedeveloper/theme-switcher@v1.0.0/theme-switcher.js';
   const MARK_START = '<!-- THEME-SWITCHER-START -->';
   const MARK_END = '<!-- THEME-SWITCHER-END -->';
   const SNIPPET = [MARK_START, `<script src="${SCRIPT_SRC}" defer></script>`, MARK_END].join('\n');
