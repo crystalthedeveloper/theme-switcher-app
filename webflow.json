@@ -1,7 +1,8 @@
 {
   "name": "Theme Switcher",
   "slug": "theme-switcher",
+  "publicDir": "public",
   "version": "1.0.0",
   "engine": "0.2.0",
-  "source": "index.html"
+  "source": "public/index.html"
 }

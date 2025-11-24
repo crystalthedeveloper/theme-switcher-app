@@ -31,7 +31,7 @@ Injected snippet:
 
 ## Packaging the Designer Extension
 
-Bundle the Designer Extension with the Webflow CLI (it automatically picks up the `public/` directory):
+Bundle the Designer Extension with the Webflow CLI. `webflow.json` declares `"publicDir": "public"`, so the CLI grabs everything inside `public/` plus the manifest automatically:
 
 ```bash
 WEBFLOW_SKIP_UPDATE_CHECKS=true npm run package:extension
