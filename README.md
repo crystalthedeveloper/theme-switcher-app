@@ -31,13 +31,13 @@ Injected snippet:
 
 ## Packaging the Designer Extension
 
-Use the Webflow CLI packaging command with the `public/` directory as the public dir:
+Bundle the Designer Extension with the Webflow CLI (it automatically picks up the `public/` directory):
 
 ```bash
 WEBFLOW_SKIP_UPDATE_CHECKS=true npm run package:extension
 ```
 
-This zips `webflow.json` and the `public/` tree into `bundle.zip`, which you can upload in the Webflow Apps dashboard.
+This outputs `bundle.zip` that contains `webflow.json` plus the files from `public/` (flattened at the archive root), ready to upload to Webflow Apps.
 
 ---
 

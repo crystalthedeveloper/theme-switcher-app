@@ -25,6 +25,7 @@ Thumbs.db
 # Build artifacts
 dist/
 build/
+bundle.zip
 
 # Coverage reports (if you run tests)
 coverage/
