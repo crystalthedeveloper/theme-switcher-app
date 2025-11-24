@@ -4,101 +4,100 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Theme Switcher Extension</title>
+
     <style>
       :root {
         color-scheme: light;
       }
+
       * {
         box-sizing: border-box;
       }
+
+      /* FULL-WIDTH LAYOUT IN WEBFLOW DESIGNER */
       body {
         font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
         margin: 0;
-        min-height: 100vh;
-        padding: 32px;
-        background: radial-gradient(circle at top, #f8fbff 0%, #edf1f5 45%, #dbe3ea 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        padding: 16px;
+        background: #f3f5f7;
       }
+
       main {
         width: 100%;
-        max-width: 420px;
+        margin: 0;
       }
+
       .panel {
-        background: #fff;
-        border-radius: 18px;
-        padding: 32px 28px;
-        box-shadow: 0 20px 35px rgba(15, 23, 42, 0.08);
-        border: 1px solid rgba(15, 23, 42, 0.06);
+        width: 100%; /* fill iframe width */
+        background: #ffffff;
+        border-radius: 14px;
+        padding: 20px 18px;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
       }
+
       h1 {
-        margin: 0 0 12px 0;
-        font-size: 28px;
+        margin: 0 0 10px;
+        font-size: 22px; /* intentionally smaller to look good in narrow panel */
         font-weight: 600;
         color: #0f172a;
       }
+
       .description {
-        margin: 0 0 28px 0;
-        font-size: 16px;
-        line-height: 1.6;
+        margin: 0 0 22px;
+        font-size: 15px;
+        line-height: 1.55;
         color: #475467;
       }
+
       button {
         width: 100%;
-        padding: 14px 16px;
+        padding: 12px 14px;
         border: none;
-        border-radius: 10px;
-        background: linear-gradient(135deg, #111827, #1d4ed8);
+        border-radius: 8px;
+        background: #111827;
         color: #fff;
         cursor: pointer;
         font-size: 15px;
         font-weight: 600;
-        letter-spacing: 0.01em;
-        transition: transform 120ms ease, box-shadow 120ms ease;
       }
+
       button:hover:not(:disabled) {
-        transform: translateY(-1px);
-        box-shadow: 0 8px 20px rgba(29, 78, 216, 0.25);
+        background: #000;
       }
+
       button:disabled {
-        opacity: 0.65;
+        opacity: 0.6;
         cursor: not-allowed;
-        box-shadow: none;
       }
+
       #status {
-        margin-top: 18px;
-        padding: 12px 14px;
+        margin-top: 14px;
         font-size: 14px;
-        line-height: 1.4;
-        color: #0f172a;
+        padding: 10px;
         background: #f8fafc;
-        border-radius: 10px;
-        border: 1px solid rgba(15, 23, 42, 0.05);
-      }
-      @media (max-width: 480px) {
-        body {
-          padding: 20px;
-        }
-        .panel {
-          padding: 28px 22px;
-        }
-        h1 {
-          font-size: 24px;
-        }
+        border-radius: 8px;
+        border: 1px solid rgba(15, 23, 42, 0.06);
+        color: #0f172a;
       }
     </style>
   </head>
+
   <body>
     <main>
       <section class="panel">
         <h1>Theme Switcher</h1>
+
         <p class="description">
-          Inject the Theme Switcher script into your Webflow project head to instantly enable your light/dark
-          systems. Setup is one-click and safe to run multiple times.
+          Inject the Theme Switcher script into your Webflow project head to enable
+          light/dark theme behavior. One-click setup, safe to run multiple times.
         </p>
+
         <button id="enable">Enable Theme Switcher</button>
-        <div id="status" role="status" aria-live="polite">Ready to enable</div>
+
+        <div id="status" aria-live="polite" role="status">
+          Ready to enable
+        </div>
       </section>
     </main>
 
