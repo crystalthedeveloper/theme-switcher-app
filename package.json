@@ -4,7 +4,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "package:extension": "WEBFLOW_SKIP_UPDATE_CHECKS=true webflow apps package --publicDir public"
   },
   "dependencies": {
     "cookie": "^1.0.2",

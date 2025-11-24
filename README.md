@@ -29,6 +29,18 @@ Injected snippet:
 
 ---
 
+## Packaging the Designer Extension
+
+Use the Webflow CLI packaging command with the `public/` directory as the public dir:
+
+```bash
+WEBFLOW_SKIP_UPDATE_CHECKS=true npm run package:extension
+```
+
+This zips `webflow.json` and the `public/` tree into `bundle.zip`, which you can upload in the Webflow Apps dashboard.
+
+---
+
 ## Env (if OAuth is enabled)
 
 ```env
